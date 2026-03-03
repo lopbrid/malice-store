@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>{% block title %}MALICE{% endblock %}</title>
+    {% load static %}
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --bg-elevated: #111111;
+            --text: #fafafa;
+            --text-muted: #737373;
+            --border: #262626;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-size: 15px;
+            overflow-x: hidden;
+        }
+        
+        .font-bebas { font-family: 'Bebas Neue', sans-serif; letter-spacing: 0.02em; }
+        .font-space { font-family: 'Space Grotesk', sans-serif; letter-spacing: 0.01em; }
+        
+        /* Grain */
+        .grain {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+        
+        /* Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(38, 38, 38, 0.5);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.75rem;
+            letter-spacing: 0.05em;
+            color: var(--text);
+            text-decoration: none;
+            line-height: 1;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: color 0.25s ease;
+            position: relative;
+        }
+        
+        .nav-links a:hover { color: var(--text); }
+        
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            position: relative;
+        }
+        
+        .icon-btn:hover { opacity: 1; }
+        
+        .cart-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--text);
+            color: var(--bg);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 600;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        /* Cart Sidebar */
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .cart-overlay.active { opacity: 1; visibility: visible; }
+        
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 100%;
+            max-width: 420px;
+            height: 100vh;
+            background: var(--bg-elevated);
+            border-left: 1px solid var(--border);
+            z-index: 2001;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .cart-sidebar.active { transform: translateX(0); }
+        
+        .cart-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cart-header h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.02em;
+            font-weight: 400;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+            transition: color 0.2s;
+        }
+        
+        .close-btn:hover { color: var(--text); }
+        
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .cart-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        
+        .cart-item-img {
+            width: 70px;
+            height: 90px;
+            background: var(--bg);
+            border-radius: 4px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .cart-item-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .cart-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+        }
+        
+        .cart-item-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .cart-item-variant {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .cart-item-price {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        .cart-item-remove {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            padding: 0;
+            margin-top: 0.5rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: color 0.2s;
+        }
+        
+        .cart-item-remove:hover { color: #c44; }
+        
+        .cart-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .cart-subtotal {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem;
+            background: var(--text);
+            color: var(--bg);
+            border: none;
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            border-radius: 2px;
+        }
+        
+        .checkout-btn:hover { background: #e0e0e0; }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-muted);
+        }
+        
+        /* Search Overlay */
+        .search-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.98);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .search-overlay.active { opacity: 1; visibility: visible; }
+        
+        .search-container {
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .search-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            display: block;
+        }
+        
+        .search-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            font-size: clamp(1.5rem, 8vw, 3rem);
+            color: var(--text);
+            outline: none;
+            font-family: 'Bebas Neue', sans-serif;
+            text-align: center;
+            transition: border-color 0.3s;
+        }
+        
+        .search-input:focus { border-color: var(--text-muted); }
+        .search-input::placeholder { color: #333; }
+        
+        .search-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        
+        .search-close:hover { color: var(--text); }
+        
+        /* Mobile Menu - Clean & Proportional */
+        .mobile-menu {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 1500;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            padding: 5rem 1.5rem 2rem;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .mobile-menu.active { transform: translateX(0); }
+        
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .mobile-menu-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+            color: var(--text);
+        }
+        
+        .mobile-menu-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 0.5rem;
+        }
+        
+        .mobile-menu-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .mobile-menu-links a {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.25rem;
+            color: var(--text);
+            text-decoration: none;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+            letter-spacing: 0.02em;
+            font-weight: 500;
+        }
+        
+        .mobile-menu-links a:last-child { border-bottom: none; }
+        
+        .mobile-menu-footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .mobile-menu-footer p {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: #555;
+            letter-spacing: 0.05em;
+        }
+        
+        /* Footer */
+        .footer {
+            background: var(--bg-elevated);
+            border-top: 1px solid var(--border);
+            padding: 4rem 1.5rem 2rem;
+        }
+        
+        .footer-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 3rem;
+            margin-bottom: 3rem;
+        }
+        
+        .footer-brand h3 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.75rem;
+            letter-spacing: 0.02em;
+            margin-bottom: 1rem;
+            font-weight: 400;
+        }
+        
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.7;
+            max-width: 300px;
+        }
+        
+        .footer-section h4 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            margin-bottom: 1.25rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        
+        .footer-section a {
+            display: block;
+            color: #888;
+            text-decoration: none;
+            padding: 0.35rem 0;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+        
+        .footer-section a:hover { color: var(--text); }
+        
+        .footer-bottom {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        
+        .footer-bottom a {
+            color: #666;
+            text-decoration: none;
+            margin-left: 1.5rem;
+            transition: color 0.2s;
+        }
+        
+        .footer-bottom a:hover { color: var(--text); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+        
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 2.5rem;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .menu-toggle { display: block; }
+            .nav-container { padding: 0.875rem 1rem; }
+            .logo { font-size: 1.5rem; }
+            .nav-right { gap: 0.75rem; }
+            .icon-btn { padding: 0.375rem; }
+            .cart-badge { width: 14px; height: 14px; font-size: 0.6rem; }
+            
+            .cart-sidebar { max-width: 100%; }
+            .cart-header { padding: 1.25rem; }
+            .cart-header h2 { font-size: 1.25rem; }
+            .cart-items { padding: 0.875rem; }
+            .cart-item { padding: 0.875rem; gap: 0.875rem; }
+            .cart-item-img { width: 60px; height: 80px; }
+            .cart-item-name { font-size: 0.85rem; }
+            .cart-footer { padding: 1.25rem; }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+                margin-bottom: 2rem;
+            }
+            
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .footer-bottom a { margin: 0 0.75rem; }
+            
+            .search-input { font-size: 2rem; padding: 0.75rem 0; }
+            .search-close { top: 1rem; right: 1rem; font-size: 1.75rem; }
+        }
+        
+        @media (max-width: 480px) {
+            .logo { font-size: 1.35rem; }
+            .mobile-menu-links a { font-size: 1.1rem; padding: 0.875rem 0; }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="grain"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Menu">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            
+            <a href="{% url 'home' %}" class="logo">MALICE</a>
+            
+            <div class="nav-links">
+                <a href="{% url 'product_list' %}">Shop</a>
+                <a href="{% url 'product_list' %}?category=new">New</a>
+                <a href="{% url 'product_list' %}?category=best">Collections</a>
+                <a href="#footer" onclick="document.getElementById('footer').scrollIntoView({behavior: 'smooth'})">About</a>
+            </div>
+            
+            <div class="nav-right">
+                <button class="icon-btn" onclick="toggleSearch()" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+                <button class="icon-btn" onclick="toggleCart()" aria-label="Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                        <path d="M3 6h18"></path>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    <span class="cart-badge" id="cart-count" style="display: none;">0</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Mobile Menu - Clean & Proportional -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <span class="mobile-menu-logo">MALICE</span>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        
+        <div class="mobile-menu-links">
+            <a href="{% url 'home' %}" onclick="toggleMobileMenu()">Home</a>
+            <a href="{% url 'product_list' %}" onclick="toggleMobileMenu()">Shop All</a>
+            <a href="{% url 'product_list' %}?category=new" onclick="toggleMobileMenu()">New Arrivals</a>
+            <a href="{% url 'product_list' %}?category=best" onclick="toggleMobileMenu()">Collections</a>
+            <a href="#footer" onclick="toggleMobileMenu(); document.getElementById('footer').scrollIntoView({behavior: 'smooth'})">About</a>
+        </div>
+        
+        <div class="mobile-menu-footer">
+            <p>&copy; 2024 MALICE. All rights reserved.</p>
+        </div>
+    </div>
+    
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <button class="search-close" onclick="toggleSearch()">×</button>
+        <div class="search-container">
+            <span class="search-label">Search the collection</span>
+            <form action="{% url 'product_list' %}" method="get">
+                <input type="text" name="q" class="search-input" placeholder="TYPE TO SEARCH..." autofocus autocomplete="off">
+            </form>
+        </div>
+    </div>
+    
+    <!-- Cart Sidebar -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h2>YOUR CART (<span id="sidebar-cart-count">0</span>)</h2>
+            <button class="close-btn" onclick="toggleCart()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="empty-cart">
+                <p>Your cart is empty</p>
+                <span style="font-size: 0.8rem; color: #555;">Add items to begin</span>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-subtotal">
+                <span>Subtotal</span>
+                <span id="cartSubtotal">₱0.00</span>
+            </div>
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cartTotal">₱0.00</span>
+            </div>
+            <a href="{% url 'order_create' %}" class="checkout-btn">Proceed to Checkout</a>
+        </div>
+    </div>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="footer" id="footer">
+        <div class="footer-content">
+            <div class="footer-brand">
+                <h3>MALICE</h3>
+                <p>Minimalist streetwear crafted for the modern individual. Designed with intention, made to transcend trends.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Shop</h4>
+                <a href="{% url 'product_list' %}">All Products</a>
+                <a href="{% url 'product_list' %}?category=new">New Arrivals</a>
+                <a href="{% url 'product_list' %}?category=best">Best Sellers</a>
+            </div>
+            <div class="footer-section">
+                <h4>Help</h4>
+                <a href="#">Shipping & Returns</a>
+                <a href="#">Size Guide</a>
+                <a href="#">FAQ</a>
+                <a href="#">Contact</a>
+            </div>
+            <div class="footer-section">
+                <h4>Connect</h4>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+                <a href="#">Newsletter</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 MALICE. All rights reserved.</p>
+            <div>
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        function toggleCart() {
+            document.getElementById('cartSidebar').classList.toggle('active');
+            document.getElementById('cartOverlay').classList.toggle('active');
+            document.body.style.overflow = document.getElementById('cartSidebar').classList.contains('active') ? 'hidden' : '';
+        }
+        
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('active');
+            document.body.style.overflow = document.getElementById('mobileMenu').classList.contains('active') ? 'hidden' : '';
+        }
+        
+        function toggleSearch() {
+            const overlay = document.getElementById('searchOverlay');
+            overlay.classList.toggle('active');
+            if (overlay.classList.contains('active')) {
+                setTimeout(() => overlay.querySelector('input').focus(), 100);
+            }
+        }
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('searchOverlay').classList.remove('active');
+                document.getElementById('cartSidebar').classList.remove('active');
+                document.getElementById('cartOverlay').classList.remove('active');
+                document.getElementById('mobileMenu').classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+        
+        async function loadCart() {
+            try {
+                const response = await fetch('/cart/api/');
+                const data = await response.json();
+                updateCartUI(data);
+            } catch (error) {
+                console.error('Error loading cart:', error);
+            }
+        }
+        
+        function formatPeso(amount) {
+            return '₱' + parseFloat(amount).toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        function updateCartUI(data) {
+            const count = data.count || 0;
+            const countBadge = document.getElementById('cart-count');
+            const sidebarCount = document.getElementById('sidebar-cart-count');
+            const cartItems = document.getElementById('cartItems');
+            const cartSubtotal = document.getElementById('cartSubtotal');
+            const cartTotal = document.getElementById('cartTotal');
+            
+            countBadge.textContent = count;
+            countBadge.style.display = count > 0 ? 'flex' : 'none';
+            sidebarCount.textContent = count;
+            
+            if (count === 0) {
+                cartItems.innerHTML = `
+                    <div class="empty-cart">
+                        <p>Your cart is empty</p>
+                        <span style="font-size: 0.8rem; color: #555;">Add items to begin</span>
+                    </div>`;
+                cartSubtotal.textContent = formatPeso(0);
+                cartTotal.textContent = formatPeso(0);
+                return;
+            }
+            
+            cartItems.innerHTML = data.items.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-img">
+                        ${item.image ? `<img src="${item.image}" alt="${item.name}">` : ''}
+                    </div>
+                    <div class="cart-item-info">
+                        <div>
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-variant">Size: ${item.size} | Qty: ${item.quantity}</div>
+                            <div class="cart-item-price">${formatPeso(item.price)} each</div>
+                        </div>
+                        <button class="cart-item-remove" onclick="removeFromCart(${item.id})">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            cartSubtotal.textContent = formatPeso(data.subtotal);
+            cartTotal.textContent = formatPeso(data.total);
+        }
+        
+        async function addToCart(productId) {
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Adding...';
+            btn.style.opacity = '0.7';
+            
+            try {
+                const response = await fetch(`/cart/add/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                });
+                
+                if (response.ok) {
+                    await loadCart();
+                    toggleCart();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            } finally {
+                btn.textContent = originalText;
+                btn.style.opacity = '1';
+            }
+        }
+        
+        async function removeFromCart(itemId) {
+            try {
+                await fetch(`/cart/remove/${itemId}/`);
+                await loadCart();
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', loadCart);
+        
+        window.addEventListener('scroll', () => {
+            const navbar = document.getElementById('navbar');
+            if (window.pageYOffset > 50) {
+                navbar.style.background = 'rgba(10, 10, 10, 0.98)';
+            } else {
+                navbar.style.background = 'rgba(10, 10, 10, 0.95)';
+            }
+        }, { passive: true });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

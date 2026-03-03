@@ -1,0 +1,209 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}{{ product.name }} - MALICE{% endblock %}
+
+{% block content %}
+<section style="padding: 5rem 1rem 3rem; max-width: 1200px; margin: 0 auto;">
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; align-items: start;">
+        
+        <!-- Product Image -->
+        <div style="aspect-ratio: 4/5; background: #111; border-radius: 2px; overflow: hidden;">
+            {% if product.image %}
+                <img src="{{ product.image.url }}" alt="{{ product.name }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            {% else %}
+                <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #333; font-family: 'Space Grotesk', sans-serif;">
+                    <div style="text-align: center;">
+                        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 1.5rem; margin-bottom: 0.5rem;">Add Image</div>
+                        <div style="font-size: 0.8rem;">Upload in admin</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Product Info -->
+        <div style="position: sticky; top: 100px;">
+            <span style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: #555; letter-spacing: 0.15em; text-transform: uppercase; display: block; margin-bottom: 0.75rem; font-weight: 500;">
+                {{ product.category.name }}
+            </span>
+            
+            <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(1.75rem, 5vw, 2.5rem); font-weight: 400; letter-spacing: 0.02em; color: #fafafa; margin-bottom: 0.75rem; line-height: 1;">
+                {{ product.name }}
+            </h1>
+            
+            <p style="font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.25rem, 4vw, 1.5rem); color: #fafafa; margin-bottom: 1.5rem; font-weight: 500;">
+                ₱{{ product.price|floatformat:2 }}
+            </p>
+            
+            <p style="font-family: 'Inter', sans-serif; color: #777; line-height: 1.7; margin-bottom: 2rem; font-size: 0.9rem;">
+                {{ product.description }}
+            </p>
+            
+            <!-- Size Selection -->
+            <form action="{% url 'cart_add' product.id %}" method="post" id="addToCartForm" style="margin-bottom: 2rem;">
+                {% csrf_token %}
+                
+                <div style="margin-bottom: 1.25rem;">
+                    <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;">
+                        Select Size
+                    </label>
+                    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="sizeContainer">
+                        {% for variant in variants %}
+                        <label class="size-label" style="position: relative; cursor: pointer; margin: 0;">
+                            <input type="radio" name="size" value="{{ variant.size }}" 
+                                   data-stock="{{ variant.stock }}"
+                                   data-sku="MAL-{{ product.id|stringformat:"04d" }}-{{ variant.size }}"
+                                   {% if variant.stock == 0 %}disabled{% endif %}
+                                   {% if forloop.first and variant.stock > 0 %}checked{% endif %}
+                                   style="position: absolute; opacity: 0; pointer-events: none;"
+                                   onchange="selectSize(this)">
+                            <span class="size-box" 
+                                  style="display: flex; align-items: center; justify-content: center; min-width: 44px; height: 44px; padding: 0 0.5rem; border: 1px solid {% if variant.stock == 0 %}#333{% else %}#444{% endif %}; background: transparent; color: {% if variant.stock == 0 %}#555{% else %}#fafafa{% endif %}; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease; {% if variant.stock == 0 %}text-decoration: line-through; cursor: not-allowed;{% else %}cursor: pointer;{% endif %}">
+                                {{ variant.size }}
+                            </span>
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <p id="stockInfo" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #666; margin-top: 0.5rem; min-height: 1.2em;">
+                        Select a size
+                    </p>
+                </div>
+                
+                <!-- Quantity -->
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;">
+                        Quantity
+                    </label>
+                    <div style="display: flex; align-items: center; gap: 0; border: 1px solid #333; width: fit-content;">
+                        <button type="button" onclick="adjustQty(-1)" 
+                                style="width: 40px; height: 40px; background: transparent; border: none; border-right: 1px solid #333; color: #fafafa; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">−</button>
+                        <input type="number" name="quantity" id="qtyInput" value="1" min="1" max="10" readonly
+                               style="width: 50px; height: 40px; text-align: center; background: transparent; border: none; color: #fafafa; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; font-weight: 500;">
+                        <button type="button" onclick="adjustQty(1)" 
+                                style="width: 40px; height: 40px; background: transparent; border: none; border-left: 1px solid #333; color: #fafafa; font-size: 1rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">+</button>
+                    </div>
+                </div>
+                
+                <!-- Add to Cart Button -->
+                <button type="submit" id="addToCartBtn"
+                        style="width: 100%; padding: 1rem; background: #fafafa; color: #0a0a0a; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: background 0.25s;">
+                    Add to Cart — ₱{{ product.price|floatformat:2 }}
+                </button>
+            </form>
+            
+            <!-- Product Meta -->
+            <div style="border-top: 1px solid #222; padding-top: 1.5rem;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem;">
+                    <div>
+                        <span style="color: #555; display: block; margin-bottom: 0.25rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">SKU</span>
+                        <span style="color: #fafafa;" id="skuDisplay">Select a size</span>
+                    </div>
+                    <div>
+                        <span style="color: #555; display: block; margin-bottom: 0.25rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.05em;">Availability</span>
+                        <span style="color: #fafafa;" id="availabilityDisplay">—</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</section>
+
+<style>
+    .size-label input:checked + .size-box {
+        background: #fafafa !important;
+        color: #0a0a0a !important;
+        border-color: #fafafa !important;
+    }
+    
+    #qtyInput::-webkit-outer-spin-button,
+    #qtyInput::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+    
+    @media (max-width: 768px) {
+        section > div {
+            grid-template-columns: 1fr !important;
+            gap: 2rem !important;
+        }
+        
+        section > div > div:last-child {
+            position: static !important;
+        }
+        
+        .size-box {
+            min-width: 40px !important;
+            height: 40px !important;
+            font-size: 0.8rem !important;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const firstAvailable = document.querySelector('input[name="size"]:not(:disabled)');
+        if (firstAvailable) {
+            firstAvailable.checked = true;
+            selectSize(firstAvailable);
+        }
+    });
+    
+    function selectSize(input) {
+        const size = input.value;
+        const stock = parseInt(input.dataset.stock);
+        const sku = input.dataset.sku;
+        
+        const stockInfo = document.getElementById('stockInfo');
+        const skuDisplay = document.getElementById('skuDisplay');
+        const availabilityDisplay = document.getElementById('availabilityDisplay');
+        const addToCartBtn = document.getElementById('addToCartBtn');
+        const qtyInput = document.getElementById('qtyInput');
+        
+        skuDisplay.textContent = sku;
+        
+        if (stock === 0) {
+            stockInfo.textContent = `Size ${size} is out of stock`;
+            stockInfo.style.color = '#c44';
+            availabilityDisplay.textContent = 'Out of Stock';
+            addToCartBtn.disabled = true;
+            addToCartBtn.style.opacity = '0.5';
+            addToCartBtn.style.cursor = 'not-allowed';
+            addToCartBtn.textContent = 'Out of Stock';
+        } else if (stock < 5) {
+            stockInfo.textContent = `Only ${stock} left`;
+            stockInfo.style.color = '#ca4';
+            availabilityDisplay.textContent = `Low Stock (${stock})`;
+            availabilityDisplay.style.color = '#ca4';
+            addToCartBtn.disabled = false;
+            addToCartBtn.style.opacity = '1';
+            addToCartBtn.style.cursor = 'pointer';
+            addToCartBtn.textContent = `Add to Cart — ₱{{ product.price|floatformat:2 }}`;
+        } else {
+            stockInfo.textContent = `In stock`;
+            stockInfo.style.color = '#4a4';
+            availabilityDisplay.textContent = `In Stock (${stock})`;
+            availabilityDisplay.style.color = '#4a4';
+            addToCartBtn.disabled = false;
+            addToCartBtn.style.opacity = '1';
+            addToCartBtn.style.cursor = 'pointer';
+            addToCartBtn.textContent = `Add to Cart — ₱{{ product.price|floatformat:2 }}`;
+        }
+        
+        qtyInput.max = stock;
+        if (parseInt(qtyInput.value) > stock) {
+            qtyInput.value = stock;
+        }
+    }
+    
+    function adjustQty(delta) {
+        const input = document.getElementById('qtyInput');
+        const currentVal = parseInt(input.value);
+        const max = parseInt(input.max) || 10;
+        const newVal = currentVal + delta;
+        
+        if (newVal >= 1 && newVal <= max) {
+            input.value = newVal;
+        }
+    }
+</script>
+{% endblock %}

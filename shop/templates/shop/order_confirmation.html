@@ -1,0 +1,182 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Order Confirmed - MALICE{% endblock %}
+
+{% block content %}
+<section style="padding: 8rem 2rem 4rem; max-width: 800px; margin: 0 auto; text-align: center;">
+    
+    <div style="margin-bottom: 3rem;">
+        <div style="width: 80px; height: 80px; border: 2px solid #333; border-radius: 50%; margin: 0 auto 2rem; display: flex; align-items: center; justify-content: center;">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: #4a4;">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+        
+        <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 5vw, 3rem); font-weight: 400; letter-spacing: 0.02em; color: #fafafa; margin-bottom: 1rem;">
+            Order Placed
+        </h1>
+        <p style="font-family: 'Space Grotesk', sans-serif; color: #888; font-size: 1rem; line-height: 1.6;">
+            Order #{{ order.id }}<br>
+            We're preparing your items for shipment
+        </p>
+    </div>
+    
+    <!-- Status Tracker -->
+    <div style="background: #111; border: 1px solid #222; border-radius: 4px; padding: 2rem; margin-bottom: 3rem;">
+        <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: #555; margin-bottom: 2rem; font-weight: 500;">
+            Order Status
+        </h2>
+        
+        <div id="statusTracker" style="display: flex; justify-content: space-between; position: relative;">
+            <!-- Progress line -->
+            <div style="position: absolute; top: 15px; left: 10%; right: 10%; height: 2px; background: #222; z-index: 0;"></div>
+            <div id="progressLine" style="position: absolute; top: 15px; left: 10%; height: 2px; background: #4a4; z-index: 1; transition: width 0.5s; width: 0%;"></div>
+            
+            <!-- Steps -->
+            <div class="status-step" data-step="pending" style="position: relative; z-index: 2; text-align: center;">
+                <div style="width: 32px; height: 32px; background: #4a4; border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                </div>
+                <span style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #4a4; text-transform: uppercase; letter-spacing: 0.05em;">Placed</span>
+            </div>
+            
+            <div class="status-step" data-step="confirmed" style="position: relative; z-index: 2; text-align: center;">
+                <div id="stepConfirmed" style="width: 32px; height: 32px; background: #222; border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                    <span style="color: #666; font-size: 0.8rem; font-weight: 600;">2</span>
+                </div>
+                <span style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em;">Confirmed</span>
+            </div>
+            
+            <div class="status-step" data-step="shipped" style="position: relative; z-index: 2; text-align: center;">
+                <div id="stepShipped" style="width: 32px; height: 32px; background: #222; border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                    <span style="color: #666; font-size: 0.8rem; font-weight: 600;">3</span>
+                </div>
+                <span style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em;">Shipped</span>
+            </div>
+            
+            <div class="status-step" data-step="delivered" style="position: relative; z-index: 2; text-align: center;">
+                <div id="stepDelivered" style="width: 32px; height: 32px; background: #222; border-radius: 50%; margin: 0 auto 0.5rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s;">
+                    <span style="color: #666; font-size: 0.8rem; font-weight: 600;">4</span>
+                </div>
+                <span style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #666; text-transform: uppercase; letter-spacing: 0.05em;">Delivered</span>
+            </div>
+        </div>
+        
+        <p id="statusMessage" style="margin-top: 2rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #888;">
+            Waiting for admin confirmation...
+        </p>
+    </div>
+    
+    <!-- Order Details -->
+    <div style="text-align: left; background: #111; border: 1px solid #222; border-radius: 4px; padding: 2rem; margin-bottom: 2rem;">
+        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: #555; margin-bottom: 1.5rem; font-weight: 500;">
+            Order Details
+        </h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; margin-bottom: 1.5rem;">
+            <div>
+                <span style="color: #555; display: block; margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Payment Method</span>
+                <span style="color: #fafafa; text-transform: uppercase;">{{ order.get_payment_method_display }}</span>
+            </div>
+            <div>
+                <span style="color: #555; display: block; margin-bottom: 0.25rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Total Amount</span>
+                <span style="color: #fafafa; font-weight: 500;">₱{{ order.total|floatformat:2 }}</span>
+            </div>
+        </div>
+        
+        <div style="border-top: 1px solid #222; padding-top: 1.5rem;">
+            <span style="color: #555; display: block; margin-bottom: 0.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">Shipping To</span>
+            <p style="color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; line-height: 1.6;">
+                {{ order.first_name }} {{ order.last_name }}<br>
+                {{ order.phone }}<br>
+                {{ order.address }}<br>
+                {{ order.city }}, {{ order.postal_code }}
+            </p>
+        </div>
+    </div>
+    
+    <a href="{% url 'home' %}" style="display: inline-block; padding: 1rem 2.5rem; border: 1px solid #333; color: #fafafa; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; transition: all 0.25s ease;" onmouseover="this.style.borderColor='#fafafa'" onmouseout="this.style.borderColor='#333'">
+        Continue Shopping
+    </a>
+    
+</section>
+
+<script>
+    const orderId = {{ order.id }};
+    let checkInterval;
+    
+    function updateStatusUI(status) {
+        const progressLine = document.getElementById('progressLine');
+        const statusMessage = document.getElementById('statusMessage');
+        
+        const steps = {
+            'pending': { width: '0%', message: 'Waiting for admin confirmation...', confirmed: false, shipped: false, delivered: false },
+            'confirmed': { width: '33%', message: 'Order confirmed! Preparing for shipment...', confirmed: true, shipped: false, delivered: false },
+            'shipped': { width: '66%', message: 'Your order is on the way!', confirmed: true, shipped: true, delivered: false },
+            'delivered': { width: '100%', message: 'Order delivered. Thank you for shopping!', confirmed: true, shipped: true, delivered: true }
+        };
+        
+        const step = steps[status] || steps['pending'];
+        progressLine.style.width = step.width;
+        statusMessage.textContent = step.message;
+        statusMessage.style.color = step.confirmed ? '#4a4' : '#888';
+        
+        // Update step indicators
+        if (step.confirmed) {
+            const el = document.getElementById('stepConfirmed');
+            el.style.background = '#4a4';
+            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            el.nextElementSibling.style.color = '#4a4';
+        }
+        
+        if (step.shipped) {
+            const el = document.getElementById('stepShipped');
+            el.style.background = '#4a4';
+            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            el.nextElementSibling.style.color = '#4a4';
+        }
+        
+        if (step.delivered) {
+            const el = document.getElementById('stepDelivered');
+            el.style.background = '#4a4';
+            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            el.nextElementSibling.style.color = '#4a4';
+            
+            // Stop checking when delivered
+            clearInterval(checkInterval);
+        }
+        
+        // Notify user when confirmed
+        if (status === 'confirmed' && !window.hasNotified) {
+            window.hasNotified = true;
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('MALICE', {
+                    body: 'Your order has been confirmed and is being prepared!',
+                    icon: '/static/favicon.ico'
+                });
+            }
+        }
+    }
+    
+    async function checkStatus() {
+        try {
+            const response = await fetch(`/order/${orderId}/status/`);
+            const data = await response.json();
+            updateStatusUI(data.status);
+        } catch (error) {
+            console.error('Error checking status:', error);
+        }
+    }
+    
+    // Check immediately and then every 10 seconds
+    checkStatus();
+    checkInterval = setInterval(checkStatus, 10000);
+    
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Checkout - MALICE{% endblock %}
+
+{% block content %}
+<section style="padding: 8rem 2rem 4rem; max-width: 1000px; margin: 0 auto;">
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 5vw, 3rem); font-weight: 400; letter-spacing: 0.02em; color: #fafafa; margin-bottom: 3rem;">
+        Checkout
+    </h1>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+        
+        <!-- Order Summary -->
+        <div style="background: #111; padding: 2rem; border-radius: 4px; border: 1px solid #222; height: fit-content;">
+            <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: #555; margin-bottom: 1.5rem; font-weight: 500;">
+                Order Summary
+            </h2>
+            
+            {% for item in cart_items %}
+            <div style="display: flex; justify-content: space-between; padding: 1rem 0; border-bottom: 1px solid #222; font-family: 'Space Grotesk', sans-serif;">
+                <div>
+                    <div style="color: #fafafa; font-size: 0.95rem; margin-bottom: 0.25rem;">{{ item.product.name }}</div>
+                    <div style="color: #666; font-size: 0.8rem;">Size: {{ item.variant.size }} | Qty: {{ item.quantity }}</div>
+                </div>
+                <div style="color: #fafafa; font-size: 0.95rem;">
+                    ₱{{ item.total_price|floatformat:2 }}
+                </div>
+            </div>
+            {% endfor %}
+            
+            <div style="display: flex; justify-content: space-between; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #333; font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; font-weight: 600;">
+                <span style="color: #fafafa;">Total</span>
+                <span style="color: #fafafa;">₱{{ total|floatformat:2 }}</span>
+            </div>
+        </div>
+        
+        <!-- Shipping & Payment Form -->
+        <div>
+            <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: #555; margin-bottom: 1.5rem; font-weight: 500;">
+                Shipping & Payment
+            </h2>
+            
+            <form method="post" id="checkoutForm" style="display: flex; flex-direction: column; gap: 1.25rem;">
+                {% csrf_token %}
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">First Name *</label>
+                        <input type="text" name="first_name" required style="width: 100%; background: transparent; border: 1px solid #222; padding: 0.875rem; color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#444'" onblur="this.style.borderColor='#222'">
+                    </div>
+                    <div>
+                        <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Last Name *</label>
+                        <input type="text" name="last_name" required style="width: 100%; background: transparent; border: 1px solid #222; padding: 0.875rem; color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#444'" onblur="this.style.borderColor='#222'">
+                    </div>
+                </div>
+                
+                <div>
+                    <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Email *</label>
+                    <input type="email" name="email" required style="width: 100%; background: transparent; border: 1px solid #222; padding: 0.875rem; color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#444'" onblur="this.style.borderColor='#222'">
+                </div>
+                
+                <div>
+                    <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Phone Number *</label>
+                    <input type="tel" name="phone" required placeholder="09XX XXX XXXX" style="width: 100%; background: transparent; border: 1px solid #222; padding: 0.875rem; color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#444'" onblur="this.style.borderColor='#222'">
+                </div>
+                
+                <div>
+                    <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        Delivery Address *
+                        <button type="button" onclick="getLocation()" style="margin-left: 0.5rem; background: transparent; border: 1px solid #333; color: #666; padding: 0.25rem 0.5rem; font-size: 0.65rem; cursor: pointer; font-family: 'Space Grotesk', sans-serif; text-transform: uppercase; letter-spacing: 0.05em;">
+                            📍 Auto-fill
+                        </button>
+                    </label>
+                    <textarea name="address" id="addressField" required rows="3" style="width: 100%; background: transparent; border: 1px solid #222; padding: 0.875rem; color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; resize: vertical;" onfocus="this.style.borderColor='#444'" onblur="this.style.borderColor='#222'"></textarea>
+                    <p id="locationStatus" style="font-size: 0.75rem; color: #555; margin-top: 0.5rem;"></p>
+                </div>
+                
+                <!-- Hidden lat/long fields -->
+                <input type="hidden" name="latitude" id="latField">
+                <input type="hidden" name="longitude" id="lngField">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">City *</label>
+                        <input type="text" name="city" required style="width: 100%; background: transparent; border: 1px solid #222; padding: 0.875rem; color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#444'" onblur="this.style.borderColor='#222'">
+                    </div>
+                    <div>
+                        <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em;">Postal Code *</label>
+                        <input type="text" name="postal_code" required style="width: 100%; background: transparent; border: 1px solid #222; padding: 0.875rem; color: #fafafa; font-family: 'Inter', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='#444'" onblur="this.style.borderColor='#222'">
+                    </div>
+                </div>
+                
+                <!-- Payment Method -->
+                <div style="margin-top: 1rem;">
+                    <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">Payment Method *</label>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                        <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid #222; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#444'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#222'">
+                            <input type="radio" name="payment_method" value="cod" checked style="accent-color: #fafafa;">
+                            <div>
+                                <div style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #fafafa; font-weight: 500;">Cash on Delivery (COD)</div>
+                                <div style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">Pay when you receive</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid #222; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#444'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#222'">
+                            <input type="radio" name="payment_method" value="gcash" style="accent-color: #fafafa;">
+                            <div>
+                                <div style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #fafafa; font-weight: 500;">GCash</div>
+                                <div style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">Pay via GCash e-wallet</div>
+                            </div>
+                        </label>
+                        
+                        <label style="display: flex; align-items: center; gap: 1rem; padding: 1rem; border: 1px solid #222; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#444'" onmouseout="if(!this.querySelector('input').checked) this.style.borderColor='#222'">
+                            <input type="radio" name="payment_method" value="maya" style="accent-color: #fafafa;">
+                            <div>
+                                <div style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #fafafa; font-weight: 500;">Maya</div>
+                                <div style="font-size: 0.75rem; color: #666; margin-top: 0.25rem;">Pay via Maya e-wallet</div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                
+                <button type="submit" 
+                        style="margin-top: 1rem; width: 100%; padding: 1.25rem; background: #fafafa; color: #0a0a0a; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: all 0.25s ease;" 
+                        onmouseover="this.style.background='#e0e0e0'" 
+                        onmouseout="this.style.background='#fafafa'">
+                    Place Order — ₱{{ total|floatformat:2 }}
+                </button>
+                
+                <p style="font-family: 'Inter', sans-serif; font-size: 0.75rem; color: #555; text-align: center; margin-top: 1rem;">
+                    By placing this order, you agree to our Terms of Service and Privacy Policy
+                </p>
+            </form>
+        </div>
+        
+    </div>
+</section>
+
+<script>
+    function getLocation() {
+        const status = document.getElementById('locationStatus');
+        const addressField = document.getElementById('addressField');
+        const latField = document.getElementById('latField');
+        const lngField = document.getElementById('lngField');
+        
+        if (!navigator.geolocation) {
+            status.textContent = "Geolocation is not supported by your browser";
+            status.style.color = '#c44';
+            return;
+        }
+        
+        status.textContent = "Locating...";
+        status.style.color = '#ca4';
+        
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                latField.value = lat;
+                lngField.value = lng;
+                
+                // Try to reverse geocode using OpenStreetMap (free, no API key needed)
+                try {
+                    const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+                    const data = await response.json();
+                    
+                    if (data.display_name) {
+                        // Parse the address - OpenStreetMap returns full address
+                        addressField.value = data.display_name;
+                        status.textContent = "✓ Location detected and address auto-filled";
+                        status.style.color = '#4a4';
+                    } else {
+                        addressField.value = `Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}`;
+                        status.textContent = "✓ Coordinates captured (please add landmark details)";
+                        status.style.color = '#ca4';
+                    }
+                } catch (error) {
+                    addressField.value = `Location: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    status.textContent = "✓ Coordinates captured (please add full address)";
+                    status.style.color = '#ca4';
+                }
+            },
+            (error) => {
+                status.textContent = "Unable to retrieve your location. Please enter manually.";
+                status.style.color = '#c44';
+                console.error(error);
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            }
+        );
+    }
+</script>
+{% endblock %}
