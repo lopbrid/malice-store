@@ -1,29 +1,29 @@
 from django.contrib import admin
 from .models import Category, Product, ProductVariant, CartItem, Order, OrderItem
+from django.utils.text import slugify
 
 class ProductVariantInline(admin.TabularInline):
     model = ProductVariant
     extra = 1
     fields = ['size', 'stock', 'sku']
-    readonly_fields = ['sku']
+    readonly_fields = ['sku']  # Make SKU read-only (auto-generated)
 
-# Define this BEFORE OrderAdmin
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
-    readonly_fields = ['product', 'variant', 'price', 'quantity']
-    extra = 0
+    def get_formset(self, request, obj=None, **kwargs):
+        # Auto-generate SKU on save
+        formset = super().get_formset(request, obj, **kwargs)
+        return formset
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug']
-    prepopulated_fields = {'slug': ('name',)}
+    prepopulated_fields = {'slug': ('name',)}  # Auto-generate slug from name
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['name', 'slug', 'price', 'get_total_stock', 'available', 'created']
     list_filter = ['available', 'created', 'updated']
     list_editable = ['price', 'available']
-    prepopulated_fields = {'slug': ('name',)}
+    prepopulated_fields = {'slug': ('name',)}  # THIS auto-generates slug from name!
     inlines = [ProductVariantInline]
     search_fields = ['name', 'description']
     date_hierarchy = 'created'
@@ -38,15 +38,15 @@ class ProductVariantAdmin(admin.ModelAdmin):
     list_filter = ['size']
     search_fields = ['product__name', 'sku']
     list_editable = ['stock']
-    readonly_fields = ['sku']
+    readonly_fields = ['sku']  # Make SKU read-only in admin
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'first_name', 'last_name', 'email', 'phone', 'payment_method', 'status', 'total', 'created']
     list_filter = ['status', 'payment_method', 'created']
     search_fields = ['first_name', 'last_name', 'email', 'phone', 'address']
-    inlines = [OrderItemInline]  # Now it's defined above!
-    readonly_fields = ['created', 'updated', 'confirmed_at']
+    inlines = [OrderItemInline]
+    readonly_fields = ['created', 'updated', 'confirmed_at', 'sku']
     
     fieldsets = (
         ('Customer Info', {
