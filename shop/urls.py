@@ -15,4 +15,8 @@ urlpatterns = [
     path('order/<int:order_id>/', views.order_confirmation, name='order_confirmation'),
     path('order/<int:order_id>/status/', views.check_order_status, name='check_order_status'),
     path('variant/<int:variant_id>/stock/', views.check_variant_stock, name='check_variant_stock'),
+    path('login/', views.user_login, name='login'),
+    path('register/', views.user_register, name='register'),
+    path('logout/', views.user_logout, name='logout'),
+    path('profile/', views.user_profile, name='profile'),
 ]

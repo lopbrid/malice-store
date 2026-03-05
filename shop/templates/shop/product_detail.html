@@ -46,25 +46,34 @@
                     <label style="display: block; font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: #555; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;">
                         Select Size
                     </label>
+                    <!-- OLD CODE: -->
                     <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;" id="sizeContainer">
                         {% for variant in variants %}
                         <label class="size-label" style="position: relative; cursor: pointer; margin: 0;">
                             <input type="radio" name="size" value="{{ variant.size }}" 
-                                   data-stock="{{ variant.stock }}"
-                                   data-sku="MAL-{{ product.id|stringformat:"04d" }}-{{ variant.size }}"
-                                   {% if variant.stock == 0 %}disabled{% endif %}
-                                   {% if forloop.first and variant.stock > 0 %}checked{% endif %}
-                                   style="position: absolute; opacity: 0; pointer-events: none;"
-                                   onchange="selectSize(this)">
-                            <span class="size-box" 
-                                  style="display: flex; align-items: center; justify-content: center; min-width: 44px; height: 44px; padding: 0 0.5rem; border: 1px solid {% if variant.stock == 0 %}#333{% else %}#444{% endif %}; background: transparent; color: {% if variant.stock == 0 %}#555{% else %}#fafafa{% endif %}; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease; {% if variant.stock == 0 %}text-decoration: line-through; cursor: not-allowed;{% else %}cursor: pointer;{% endif %}">
-                                {{ variant.size }}
+                                data-stock="{{ variant.stock }}"
+                                data-sku="MAL-{{ product.id|stringformat:"04d" }}-{{ variant.size }}"
+                                {% if variant.stock == 0 %}disabled{% endif %}
+                                {% if forloop.first and variant.stock > 0 %}checked{% endif %}
+                                style="position: absolute; opacity: 0; pointer-events: none;"
+                                onchange="selectSize(this)">
+                            <span class="size-box {% if variant.stock == 0 %}disabled{% endif %}" 
+                                style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 50px; height: 50px; padding: 0 0.5rem; border: 1px solid {% if variant.stock == 0 %}#222{% else %}#444{% endif %}; background: transparent; color: {% if variant.stock == 0 %}#444{% else %}#fafafa{% endif %}; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; font-weight: 500; transition: all 0.2s ease; cursor: {% if variant.stock == 0 %}not-allowed{% else %}pointer{% endif %}; position: relative;">
+                                <span style="font-size: 0.9rem; font-weight: 600;">{{ variant.size }}</span>
+                                {% if variant.stock == 0 %}
+                                    <span style="font-size: 0.55rem; color: #c44; font-weight: 400; margin-top: 2px;">OUT</span>
+                                {% elif variant.stock < 5 %}
+                                    <span style="font-size: 0.55rem; color: #ca4; font-weight: 400; margin-top: 2px;">{{ variant.stock }} left</span>
+                                {% else %}
+                                    <span style="font-size: 0.55rem; color: #4a4; font-weight: 400; margin-top: 2px;">In Stock</span>
+                                {% endif %}
                             </span>
                         </label>
                         {% endfor %}
                     </div>
-                    <p id="stockInfo" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #666; margin-top: 0.5rem; min-height: 1.2em;">
-                        Select a size
+                    <!-- REPLACE: -->
+                    <p id="stockInfo" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; color: #666; margin-top: 0.75rem; min-height: 1.5em; padding: 0.5rem; background: #111; border-radius: 4px; border-left: 3px solid #333;">
+                        <span style="color: #555;">Select a size to see availability</span>
                     </p>
                 </div>
                 
@@ -84,10 +93,23 @@
                 </div>
                 
                 <!-- Add to Cart Button -->
+                                <!-- Add to Cart Button -->
+                {% if user.is_authenticated %}
                 <button type="submit" id="addToCartBtn"
                         style="width: 100%; padding: 1rem; background: #fafafa; color: #0a0a0a; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; cursor: pointer; transition: background 0.25s;">
                     Add to Cart — ₱{{ product.price|floatformat:2 }}
                 </button>
+                {% else %}
+                <a href="{% url 'login' %}?next={{ request.path|urlencode }}" 
+                   style="display: block; width: 100%; padding: 1rem; background: #333; color: #fafafa; border: 1px solid #444; text-align: center; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; transition: all 0.25s;"
+                   onmouseover="this.style.background='#444'" 
+                   onmouseout="this.style.background='#333'">
+                    Sign In to Add to Cart
+                </a>
+                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #666; text-align: center; margin-top: 0.75rem;">
+                    Each customer gets their own private cart
+                </p>
+                {% endif %}
             </form>
             
             <!-- Product Meta -->
@@ -120,6 +142,37 @@
         -webkit-appearance: none;
         margin: 0;
     }
+
+    /* Disabled size box styling */
+    .size-box.disabled {
+        border-color: #222 !important;
+        color: #444 !important;
+        text-decoration: line-through;
+        cursor: not-allowed;
+        background: transparent !important;
+    }
+
+    .size-box.disabled:hover {
+        border-color: #222 !important;
+        background: transparent !important;
+    }
+
+    /* Quantity button disabled state */
+    button[disabled] {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    /* Popup animation improvements */
+    @keyframes popupShake {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); }
+        25% { transform: translate(-48%, -50%) scale(1); }
+        75% { transform: translate(-52%, -50%) scale(1); }
+    }
+
+    #outOfStockPopup.show-shake {
+        animation: popupShake 0.4s ease;
+    }
     
     @media (max-width: 768px) {
         section > div {
@@ -148,7 +201,7 @@
         }
     });
     
-    function selectSize(input) {
+        function selectSize(input) {
         const size = input.value;
         const stock = parseInt(input.dataset.stock);
         const sku = input.dataset.sku;
@@ -162,36 +215,71 @@
         skuDisplay.textContent = sku;
         
         if (stock === 0) {
-            stockInfo.textContent = `Size ${size} is out of stock`;
-            stockInfo.style.color = '#c44';
-            availabilityDisplay.textContent = 'Out of Stock';
+            stockInfo.innerHTML = `<span style="color: #c44; font-weight: 500;">❌ Size ${size} is OUT OF STOCK</span>`;
+            stockInfo.style.borderLeftColor = '#c44';
+            availabilityDisplay.innerHTML = `<span style="color: #c44;">Out of Stock</span>`;
+            
+            // Disable add to cart button
             addToCartBtn.disabled = true;
             addToCartBtn.style.opacity = '0.5';
             addToCartBtn.style.cursor = 'not-allowed';
-            addToCartBtn.textContent = 'Out of Stock';
+            addToCartBtn.textContent = 'OUT OF STOCK';
+            addToCartBtn.style.background = '#222';
+            addToCartBtn.style.color = '#666';
+            
+            // Show popup notification
+            showOutOfStockPopup(`Size ${size} is currently out of stock. Please select another size.`);
+            
         } else if (stock < 5) {
-            stockInfo.textContent = `Only ${stock} left`;
-            stockInfo.style.color = '#ca4';
-            availabilityDisplay.textContent = `Low Stock (${stock})`;
-            availabilityDisplay.style.color = '#ca4';
+            stockInfo.innerHTML = `<span style="color: #ca4; font-weight: 500;">⚠️ LOW STOCK:</span> Only ${stock} items remaining for size ${size}`;
+            stockInfo.style.borderLeftColor = '#ca4';
+            availabilityDisplay.innerHTML = `<span style="color: #ca4; font-weight: 500;">${stock} available</span>`;
+            
+            // Enable button
             addToCartBtn.disabled = false;
             addToCartBtn.style.opacity = '1';
             addToCartBtn.style.cursor = 'pointer';
-            addToCartBtn.textContent = `Add to Cart — ₱{{ product.price|floatformat:2 }}`;
+            addToCartBtn.textContent = `ADD TO CART — ₱{{ product.price|floatformat:2 }}`;
+            addToCartBtn.style.background = '#fafafa';
+            addToCartBtn.style.color = '#0a0a0a';
+            
         } else {
-            stockInfo.textContent = `In stock`;
-            stockInfo.style.color = '#4a4';
-            availabilityDisplay.textContent = `In Stock (${stock})`;
-            availabilityDisplay.style.color = '#4a4';
+            stockInfo.innerHTML = `<span style="color: #4a4; font-weight: 500;">✓ IN STOCK:</span> ${stock} items available for size ${size}`;
+            stockInfo.style.borderLeftColor = '#4a4';
+            availabilityDisplay.innerHTML = `<span style="color: #4a4; font-weight: 500;">${stock} in stock</span>`;
+            
+            // Enable button
             addToCartBtn.disabled = false;
             addToCartBtn.style.opacity = '1';
             addToCartBtn.style.cursor = 'pointer';
-            addToCartBtn.textContent = `Add to Cart — ₱{{ product.price|floatformat:2 }}`;
+            addToCartBtn.textContent = `ADD TO CART — ₱{{ product.price|floatformat:2 }}`;
+            addToCartBtn.style.background = '#fafafa';
+            addToCartBtn.style.color = '#0a0a0a';
         }
         
         qtyInput.max = stock;
         if (parseInt(qtyInput.value) > stock) {
-            qtyInput.value = stock;
+            qtyInput.value = Math.max(1, stock);
+        }
+        
+        // Update quantity buttons state
+        const qtyMinusBtn = qtyInput.parentElement.querySelector('button:first-child');
+        const qtyPlusBtn = qtyInput.parentElement.querySelector('button:last-child');
+        
+        if (stock === 0) {
+            qtyMinusBtn.disabled = true;
+            qtyPlusBtn.disabled = true;
+            qtyMinusBtn.style.opacity = '0.3';
+            qtyPlusBtn.style.opacity = '0.3';
+            qtyMinusBtn.style.cursor = 'not-allowed';
+            qtyPlusBtn.style.cursor = 'not-allowed';
+        } else {
+            qtyMinusBtn.disabled = false;
+            qtyPlusBtn.disabled = false;
+            qtyMinusBtn.style.opacity = '1';
+            qtyPlusBtn.style.opacity = '1';
+            qtyMinusBtn.style.cursor = 'pointer';
+            qtyPlusBtn.style.cursor = 'pointer';
         }
     }
     
@@ -203,7 +291,160 @@
         
         if (newVal >= 1 && newVal <= max) {
             input.value = newVal;
+        } else if (newVal > max) {
+            // Show popup for max stock reached
+            showOutOfStockPopup(`Maximum available quantity is ${max}.`);
         }
     }
+    
+    // Out of Stock Popup Function
+    function showOutOfStockPopup(message) {
+        // Remove existing popup if any
+        const existingPopup = document.getElementById('outOfStockPopup');
+        if (existingPopup) {
+            existingPopup.remove();
+        }
+        
+        // Create popup element
+        const popup = document.createElement('div');
+        popup.id = 'outOfStockPopup';
+        popup.innerHTML = `
+            <div style="
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%) scale(0.9);
+                background: #111;
+                border: 1px solid #333;
+                border-radius: 8px;
+                padding: 2rem;
+                max-width: 320px;
+                width: 90%;
+                text-align: center;
+                z-index: 9999;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                opacity: 0;
+                transition: all 0.3s ease;
+            ">
+                <div style="
+                    width: 60px;
+                    height: 60px;
+                    background: rgba(204, 68, 68, 0.1);
+                    border-radius: 50%;
+                    margin: 0 auto 1rem;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                ">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c44" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="15" y1="9" x2="9" y2="15"></line>
+                        <line x1="9" y1="9" x2="15" y2="15"></line>
+                    </svg>
+                </div>
+                <h3 style="
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-size: 1.1rem;
+                    color: #fafafa;
+                    margin-bottom: 0.75rem;
+                    font-weight: 500;
+                ">Out of Stock</h3>
+                <p style="
+                    font-family: 'Inter', sans-serif;
+                    font-size: 0.9rem;
+                    color: #888;
+                    line-height: 1.6;
+                    margin-bottom: 1.5rem;
+                ">${message}</p>
+                <button onclick="closeOutOfStockPopup()" style="
+                    background: transparent;
+                    border: 1px solid #444;
+                    color: #fafafa;
+                    padding: 0.75rem 2rem;
+                    font-family: 'Space Grotesk', sans-serif;
+                    font-size: 0.8rem;
+                    letter-spacing: 0.05em;
+                    cursor: pointer;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                " onmouseover="this.style.borderColor='#fafafa'; this.style.background='#1a1a1a'" 
+                onmouseout="this.style.borderColor='#444'; this.style.background='transparent'">
+                    Got it
+                </button>
+            </div>
+            <div style="
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.7);
+                z-index: 9998;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+            " onclick="closeOutOfStockPopup()"></div>
+        `;
+        
+        document.body.appendChild(popup);
+        document.body.style.overflow = 'hidden';
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            popup.querySelector('div:first-child').style.opacity = '1';
+            popup.querySelector('div:first-child').style.transform = 'translate(-50%, -50%) scale(1)';
+            popup.querySelector('div:last-child').style.opacity = '1';
+        });
+        
+        // Auto close after 4 seconds if not clicked
+        setTimeout(() => {
+            if (document.getElementById('outOfStockPopup')) {
+                closeOutOfStockPopup();
+            }
+        }, 4000);
+    }
+    
+    function closeOutOfStockPopup() {
+        const popup = document.getElementById('outOfStockPopup');
+        if (popup) {
+            popup.querySelector('div:first-child').style.opacity = '0';
+            popup.querySelector('div:first-child').style.transform = 'translate(-50%, -50%) scale(0.9)';
+            popup.querySelector('div:last-child').style.opacity = '0';
+            
+            setTimeout(() => {
+                popup.remove();
+                document.body.style.overflow = '';
+            }, 300);
+        }
+    }
+    
+    // Form submission validation
+    document.getElementById('addToCartForm').addEventListener('submit', function(e) {
+        const selectedSize = document.querySelector('input[name="size"]:checked');
+        
+        if (!selectedSize) {
+            e.preventDefault();
+            showOutOfStockPopup('Please select a size first.');
+            return false;
+        }
+        
+        const stock = parseInt(selectedSize.dataset.stock);
+        const qty = parseInt(document.getElementById('qtyInput').value);
+        
+        if (stock === 0) {
+            e.preventDefault();
+            showOutOfStockPopup('Sorry, this item is out of stock.');
+            return false;
+        }
+        
+        if (qty > stock) {
+            e.preventDefault();
+            showOutOfStockPopup(`Only ${stock} items available. Please reduce quantity.`);
+            return false;
+        }
+        
+        // Show loading state
+        const btn = document.getElementById('addToCartBtn');
+        btn.textContent = 'Adding...';
+        btn.style.opacity = '0.7';
+        
+        return true;
+    });
 </script>
 {% endblock %}

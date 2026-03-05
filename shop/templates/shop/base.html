@@ -600,6 +600,31 @@
             .logo { font-size: 1.35rem; }
             .mobile-menu-links a { font-size: 1.1rem; padding: 0.875rem 0; }
         }
+
+        /* User menu responsive */
+        @media (min-width: 769px) {
+            .username-desktop {
+                display: inline !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #userDropdown {
+                position: fixed !important;
+                top: auto !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                border-radius: 12px 12px 0 0 !important;
+                transform: translateY(100%) !important;
+            }
+            
+            #userDropdown.active {
+                transform: translateY(0) !important;
+            }
+        }
+
     </style>
     
     {% block extra_css %}{% endblock %}
@@ -628,12 +653,15 @@
             </div>
             
             <div class="nav-right">
+                <!-- Search Button -->
                 <button class="icon-btn" onclick="toggleSearch()" aria-label="Search">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <circle cx="11" cy="11" r="8"></circle>
                         <path d="m21 21-4.35-4.35"></path>
                     </svg>
                 </button>
+                
+                <!-- Cart Button -->
                 <button class="icon-btn" onclick="toggleCart()" aria-label="Cart">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
@@ -642,6 +670,43 @@
                     </svg>
                     <span class="cart-badge" id="cart-count" style="display: none;">0</span>
                 </button>
+                
+                <!-- User Account / Login -->
+                {% if user.is_authenticated %}
+                    <div style="position: relative;" id="userMenuContainer">
+                        <button class="icon-btn" onclick="toggleUserMenu()" aria-label="Account" style="display: flex; align-items: center; gap: 0.25rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <span style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none;" class="username-desktop">
+                                {{ user.first_name|default:user.username }}
+                            </span>
+                        </button>
+                        
+                        <!-- User Dropdown Menu -->
+                        <div id="userDropdown" style="position: absolute; top: calc(100% + 0.5rem); right: 0; background: #111; border: 1px solid #222; border-radius: 4px; min-width: 180px; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: all 0.2s ease; z-index: 1001;">
+                            <div style="padding: 0.75rem 1rem; border-bottom: 1px solid #222;">
+                                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; color: #fafafa; margin: 0; font-weight: 500;">{{ user.first_name|default:user.username }}</p>
+                                <p style="font-family: 'Inter', sans-serif; font-size: 0.75rem; color: #666; margin: 0.25rem 0 0 0;">{{ user.email }}</p>
+                            </div>
+                            <a href="{% url 'profile' %}" style="display: block; padding: 0.75rem 1rem; color: #888; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; transition: all 0.2s;" onmouseover="this.style.background='#1a1a1a'; this.style.color='#fafafa'" onmouseout="this.style.background='transparent'; this.style.color='#888'">
+                                My Orders
+                            </a>
+                            <a href="{% url 'logout' %}" style="display: block; padding: 0.75rem 1rem; color: #c44; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; border-top: 1px solid #222; transition: all 0.2s;" onmouseover="this.style.background='#1a1a1a'" onmouseout="this.style.background='transparent'">
+                                Sign Out
+                            </a>
+                        </div>
+                    </div>
+                {% else %}
+                    <a href="{% url 'login' %}" class="icon-btn" aria-label="Sign In" style="text-decoration: none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10,17 15,12 10,7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                    </a>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -664,6 +729,18 @@
             <a href="{% url 'product_list' %}?category=new" onclick="toggleMobileMenu()">New Arrivals</a>
             <a href="{% url 'product_list' %}?category=best" onclick="toggleMobileMenu()">Collections</a>
             <a href="#footer" onclick="toggleMobileMenu(); document.getElementById('footer').scrollIntoView({behavior: 'smooth'})">About</a>
+            
+            {% if user.is_authenticated %}
+                <div style="padding: 1rem 0; border-top: 1px solid #222; margin-top: 0.5rem;">
+                    <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">Account</p>
+                    <a href="{% url 'profile' %}" onclick="toggleMobileMenu()" style="font-size: 1rem; border-bottom: none; padding: 0.75rem 0;">My Orders</a>
+                    <a href="{% url 'logout' %}" onclick="toggleMobileMenu()" style="font-size: 1rem; border-bottom: none; padding: 0.75rem 0; color: #c44;">Sign Out</a>
+                </div>
+            {% else %}
+                <div style="padding: 1rem 0; border-top: 1px solid #222; margin-top: 0.5rem;">
+                    <a href="{% url 'login' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; color: #fafafa; font-weight: 500;">Sign In / Register</a>
+                </div>
+            {% endif %}
         </div>
         
         <div class="mobile-menu-footer">
@@ -709,10 +786,45 @@
                 <span>Total</span>
                 <span id="cartTotal">₱0.00</span>
             </div>
+                        {% if user.is_authenticated %}
             <a href="{% url 'order_create' %}" class="checkout-btn">Proceed to Checkout</a>
+            {% else %}
+            <a href="{% url 'login' %}?next={% url 'order_create' %}" class="checkout-btn" style="background: #333; color: #fafafa;">Sign In to Checkout</a>
+            {% endif %}
         </div>
     </div>
     
+
+    <!-- Messages Display -->
+    {% if messages %}
+    <div style="position: fixed; top: 80px; left: 50%; transform: translateX(-50%); z-index: 9999; max-width: 90%; width: 400px;">
+        {% for message in messages %}
+        <div style="padding: 1rem 1.5rem; margin-bottom: 0.5rem; border-radius: 4px; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; animation: slideDown 0.3s ease; box-shadow: 0 4px 20px rgba(0,0,0,0.3); {% if message.tags == 'success' %}background: #1a3a1a; border: 1px solid #4a4; color: #4a4;{% elif message.tags == 'error' %}background: #3a1a1a; border: 1px solid #c44; color: #c44;{% else %}background: #1a1a2e; border: 1px solid #ca4; color: #ca4;{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+
+    <style>
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    </style>
+
+    <script>
+    // Auto-hide messages after 4 seconds
+    setTimeout(() => {
+        document.querySelectorAll('[style*="animation: slideDown"]').forEach(el => {
+            el.style.transition = 'all 0.3s ease';
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(-20px)';
+            setTimeout(() => el.remove(), 300);
+        });
+    }, 4000);
+    </script>
+    {% endif %}
+
     <main>
         {% block content %}{% endblock %}
     </main>
@@ -889,6 +1001,29 @@
                 navbar.style.background = 'rgba(10, 10, 10, 0.95)';
             }
         }, { passive: true });
+
+        // User menu toggle
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            if (dropdown) {
+                const isVisible = dropdown.style.opacity === '1';
+                dropdown.style.opacity = isVisible ? '0' : '1';
+                dropdown.style.visibility = isVisible ? 'hidden' : 'visible';
+                dropdown.style.transform = isVisible ? 'translateY(-10px)' : 'translateY(0)';
+            }
+        }
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const container = document.getElementById('userMenuContainer');
+            const dropdown = document.getElementById('userDropdown');
+            if (container && dropdown && !container.contains(e.target)) {
+                dropdown.style.opacity = '0';
+                dropdown.style.visibility = 'hidden';
+                dropdown.style.transform = 'translateY(-10px)';
+            }
+        });
+
     </script>
     
     {% block extra_js %}{% endblock %}

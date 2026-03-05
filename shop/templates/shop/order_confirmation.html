@@ -106,57 +106,90 @@
 <script>
     const orderId = {{ order.id }};
     let checkInterval;
+    let hasNotified = false;
     
     function updateStatusUI(status) {
         const progressLine = document.getElementById('progressLine');
         const statusMessage = document.getElementById('statusMessage');
+        const steps = document.querySelectorAll('.status-step');
         
-        const steps = {
-            'pending': { width: '0%', message: 'Waiting for admin confirmation...', confirmed: false, shipped: false, delivered: false },
-            'confirmed': { width: '33%', message: 'Order confirmed! Preparing for shipment...', confirmed: true, shipped: false, delivered: false },
-            'shipped': { width: '66%', message: 'Your order is on the way!', confirmed: true, shipped: true, delivered: false },
-            'delivered': { width: '100%', message: 'Order delivered. Thank you for shopping!', confirmed: true, shipped: true, delivered: true }
+        // Reset all steps
+        steps.forEach(step => {
+            step.classList.remove('completed', 'active');
+            const circle = step.querySelector('div:first-child');
+            const label = step.querySelector('span');
+            const stepName = step.dataset.step;
+            
+            // Reset to default state
+            if (stepName !== 'pending') {
+                circle.style.background = '#222';
+                circle.style.borderColor = 'transparent';
+                circle.innerHTML = '<span style="color: #666; font-size: 0.8rem; font-weight: 600;">' + 
+                    (stepName === 'confirmed' ? '2' : stepName === 'shipped' ? '3' : '4') + '</span>';
+                label.style.color = '#666';
+            }
+        });
+        
+        // Calculate progress width based on status
+        let progressWidth = '0%';
+        let message = 'Waiting for admin confirmation...';
+        let messageColor = '#888';
+        
+        const stepOrder = ['pending', 'confirmed', 'shipped', 'delivered'];
+        const currentIndex = stepOrder.indexOf(status);
+        
+        if (currentIndex >= 0) {
+            // Mark all previous steps as completed
+            for (let i = 0; i <= currentIndex; i++) {
+                const step = document.querySelector('[data-step="' + stepOrder[i] + '"]');
+                if (step) {
+                    step.classList.add('completed');
+                    const circle = step.querySelector('div:first-child');
+                    const label = step.querySelector('span');
+                    
+                    circle.style.background = '#4a4';
+                    circle.style.borderColor = '#4a4';
+                    circle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    label.style.color = '#4a4';
+                }
+            }
+            
+            // Set progress line width - stops before overlapping last step
+            if (status === 'pending') progressWidth = '0%';
+            else if (status === 'confirmed') progressWidth = '25%';
+            else if (status === 'shipped') progressWidth = '55%';
+            else if (status === 'delivered') progressWidth = '80%'; // Stops at 75% to avoid overlap
+        }
+        
+        // Update message
+        const messages = {
+            'pending': { text: 'Waiting for admin confirmation...', color: '#888' },
+            'confirmed': { text: 'Order confirmed! Preparing for shipment...', color: '#4a4' },
+            'shipped': { text: 'Your order is on the way!', color: '#4a4' },
+            'delivered': { text: 'Order delivered. Thank you for shopping!', color: '#4a4' }
         };
         
-        const step = steps[status] || steps['pending'];
-        progressLine.style.width = step.width;
-        statusMessage.textContent = step.message;
-        statusMessage.style.color = step.confirmed ? '#4a4' : '#888';
-        
-        // Update step indicators
-        if (step.confirmed) {
-            const el = document.getElementById('stepConfirmed');
-            el.style.background = '#4a4';
-            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-            el.nextElementSibling.style.color = '#4a4';
+        if (messages[status]) {
+            statusMessage.textContent = messages[status].text;
+            statusMessage.style.color = messages[status].color;
         }
         
-        if (step.shipped) {
-            const el = document.getElementById('stepShipped');
-            el.style.background = '#4a4';
-            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-            el.nextElementSibling.style.color = '#4a4';
-        }
+        progressLine.style.width = progressWidth;
         
-        if (step.delivered) {
-            const el = document.getElementById('stepDelivered');
-            el.style.background = '#4a4';
-            el.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-            el.nextElementSibling.style.color = '#4a4';
-            
-            // Stop checking when delivered
-            clearInterval(checkInterval);
-        }
-        
-        // Notify user when confirmed
-        if (status === 'confirmed' && !window.hasNotified) {
-            window.hasNotified = true;
+        // Notify when confirmed
+        if (status === 'confirmed' && !hasNotified) {
+            hasNotified = true;
             if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification('MALICE', {
                     body: 'Your order has been confirmed and is being prepared!',
                     icon: '/static/favicon.ico'
                 });
             }
+        }
+        
+        // Stop checking when delivered
+        if (status === 'delivered' && checkInterval) {
+            clearInterval(checkInterval);
         }
     }
     
@@ -170,14 +203,110 @@
         }
     }
     
-    // Check immediately and then every 10 seconds
-    checkStatus();
-    checkInterval = setInterval(checkStatus, 10000);
-    
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-        Notification.requestPermission();
-    }
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        checkStatus();
+        checkInterval = setInterval(checkStatus, 10000);
+        
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    });
 </script>
+
+<style>
+    /* Status Tracker Fixes */
+    #statusTracker {
+        position: relative;
+        padding: 0 5%;
+    }
+    
+    #progressLine {
+        position: absolute;
+        top: 15px;
+        left: 12.5%;
+        height: 2px;
+        background: #4a4;
+        z-index: 1;
+        transition: width 0.5s ease;
+        max-width: 80%; /* Prevent overlapping with last step */
+    }
+    
+    .status-step {
+        position: relative;
+        z-index: 2;
+        text-align: center;
+        flex: 1;
+        max-width: 80px; /* Constrain step width */
+    }
+    
+    .status-step > div:first-child {
+        width: 32px;
+        height: 32px;
+        background: #222;
+        border-radius: 50%;
+        margin: 0 auto 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    
+    .status-step[data-step="pending"] > div:first-child {
+        background: #4a4;
+    }
+    
+    .status-step span {
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.7rem;
+        color: #666;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: block;
+        white-space: nowrap;
+    }
+    
+    .status-step.completed > div:first-child,
+    .status-step.active > div:first-child {
+        background: #4a4;
+        border-color: #4a4;
+    }
+    
+    .status-step.completed span,
+    .status-step.active span {
+        color: #4a4;
+    }
+    
+    /* Mobile fixes for status tracker */
+    @media (max-width: 600px) {
+        #statusTracker {
+            padding: 0 2%;
+        }
+        
+        .status-step span {
+            font-size: 0.6rem;
+            letter-spacing: 0.02em;
+        }
+        
+        .status-step > div:first-child {
+            width: 28px;
+            height: 28px;
+        }
+        
+        #progressLine {
+            left: 14%;
+            max-width: 72%;
+            top: 13px;
+        }
+    }
+    
+    @media (max-width: 400px) {
+        .status-step span {
+            font-size: 0.55rem;
+        }
+    }
+</style>
 {% endblock %}
 
