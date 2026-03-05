@@ -8,12 +8,7 @@ _original_context_copy = context.Context.__copy__
 def _patched_context_copy(self):
     """
     Patched __copy__ for Django's Context class to work with Python 3.14+
-    
-    Python 3.14 changed how super() works with __copy__, causing
-    'super' object has no attribute 'dicts' error.
     """
-    # Create a new instance without calling super().__copy__()
-    # which is broken in Python 3.14
     from django.template.context import Context
     new_context = Context.__new__(Context)
     
@@ -35,10 +30,8 @@ def _patched_context_copy(self):
 # Apply the patch
 context.Context.__copy__ = _patched_context_copy
 
-# Also need to patch BaseContext if it has its own __copy__
+# Also patch BaseContext if needed
 if hasattr(context.BaseContext, '__copy__'):
-    _original_base_copy = context.BaseContext.__copy__
-    
     def _patched_base_copy(self):
         from django.template.context import BaseContext
         new_context = BaseContext.__new__(BaseContext)
