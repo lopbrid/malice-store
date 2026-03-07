@@ -1,0 +1,539 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Order #{{ order.order_number }} - MALICE{% endblock %}
+
+{% block extra_css %}
+<style>
+.order-detail-page {
+    min-height: 100vh;
+    padding: 120px 2rem 4rem;
+    background: var(--bg);
+}
+
+.order-detail-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.order-detail-header {
+    margin-bottom: 2rem;
+}
+
+.order-detail-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.order-detail-header p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.order-detail-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+}
+
+.order-detail-section {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-detail-section:last-child {
+    border-bottom: none;
+}
+
+.order-detail-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+.order-status-timeline {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 1.5rem;
+    position: relative;
+}
+
+.order-status-timeline::before {
+    content: '';
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: var(--bg);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timeline-dot.active {
+    background: var(--text);
+    border-color: var(--text);
+}
+
+.timeline-dot.completed {
+    background: #22c55e;
+    border-color: #22c55e;
+}
+
+.timeline-dot.cancelled {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+.timeline-dot svg {
+    width: 14px;
+    height: 14px;
+}
+
+.timeline-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: center;
+}
+
+.timeline-step.active .timeline-label {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.timeline-step.completed .timeline-label {
+    color: #22c55e;
+}
+
+.timeline-step.cancelled .timeline-label {
+    color: #ef4444;
+}
+
+.order-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.order-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.order-info-item label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.order-info-item span {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.order-info-item address {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+    font-style: normal;
+    line-height: 1.6;
+}
+
+.order-items-table {
+    width: 100%;
+}
+
+.order-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-item-row:last-child {
+    border-bottom: none;
+}
+
+.order-item-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.order-item-image {
+    width: 60px;
+    height: 80px;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.order-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.order-item-details h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.order-item-details p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.order-item-price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.order-totals {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 2px solid var(--border);
+}
+
+.order-total-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.order-total-row span:first-child {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.order-total-row span:last-child {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.order-total-row.grand-total {
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.order-total-row.grand-total span:first-child {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.order-total-row.grand-total span:last-child {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.order-actions {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: var(--bg-elevated);
+}
+
+.order-action-btn {
+    padding: 0.875rem 1.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.order-action-btn.primary {
+    background: var(--text);
+    color: var(--bg);
+}
+
+.order-action-btn.primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
+}
+
+.order-action-btn.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.order-action-btn.secondary:hover {
+    border-color: var(--text-muted);
+    background: var(--bg-hover);
+}
+
+.order-action-btn.danger {
+    background: transparent;
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.order-action-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+@media (max-width: 640px) {
+    .order-info-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-status-timeline {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .order-status-timeline::before {
+        display: none;
+    }
+    
+    .order-item-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .order-actions {
+        flex-direction: column;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="order-detail-page">
+    <div class="order-detail-container">
+        <div class="order-detail-header reveal">
+            <h1>Order #{{ order.order_number }}</h1>
+            <p>Placed on {{ order.created_at|date:"F j, Y" }} at {{ order.created_at|time:"g:i A" }}</p>
+        </div>
+        
+        <!-- Order Status -->
+        <div class="order-detail-card reveal stagger-1">
+            <div class="order-detail-section">
+                <h2>Order Status</h2>
+                <div class="order-status-timeline">
+                    <!-- Pending Step -->
+                    <div class="timeline-step 
+                        {% if order.status == 'pending' %}active{% endif %}
+                        {% if order.status == 'confirmed' or order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %}
+                        {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                        <div class="timeline-dot 
+                            {% if order.status == 'pending' %}active{% endif %}
+                            {% if order.status == 'confirmed' or order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %}
+                            {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                            {% if order.status == 'confirmed' or order.status == 'shipped' or order.status == 'delivered' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <span class="timeline-label">Pending</span>
+                    </div>
+                    
+                    <!-- Confirmed Step -->
+                    <div class="timeline-step 
+                        {% if order.status == 'confirmed' %}active{% endif %}
+                        {% if order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %}
+                        {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                        <div class="timeline-dot 
+                            {% if order.status == 'confirmed' %}active{% endif %}
+                            {% if order.status == 'shipped' or order.status == 'delivered' %}completed{% endif %}
+                            {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                            {% if order.status == 'shipped' or order.status == 'delivered' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <span class="timeline-label">Confirmed</span>
+                    </div>
+                    
+                    <!-- Shipped Step -->
+                    <div class="timeline-step 
+                        {% if order.status == 'shipped' %}active{% endif %}
+                        {% if order.status == 'delivered' %}completed{% endif %}
+                        {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                        <div class="timeline-dot 
+                            {% if order.status == 'shipped' %}active{% endif %}
+                            {% if order.status == 'delivered' %}completed{% endif %}
+                            {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                            {% if order.status == 'delivered' %}
+                            <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            {% endif %}
+                        </div>
+                        <span class="timeline-label">Shipped</span>
+                    </div>
+                    
+                    <!-- Delivered Step -->
+                    <div class="timeline-step 
+                        {% if order.status == 'delivered' %}active{% endif %}
+                        {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                        <div class="timeline-dot 
+                            {% if order.status == 'delivered' %}active{% endif %}
+                            {% if order.status == 'cancelled' %}cancelled{% endif %}">
+                        </div>
+                        <span class="timeline-label">Delivered</span>
+                    </div>
+                </div>
+                
+                {% if order.status == 'cancelled' %}
+                <div style="margin-top:1.5rem;padding:1rem;background:rgba(239,68,68,0.1);border-radius:8px;text-align:center;">
+                    <span style="color:#ef4444;font-family:'Space Grotesk',sans-serif;font-size:0.9rem;">
+                        This order was cancelled on {{ order.cancelled_at|date:"F j, Y" }}
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>    
+        <!-- Order Info -->
+        <div class="order-detail-card reveal stagger-2">
+            <div class="order-detail-section">
+                <h2>Order Information</h2>
+                <div class="order-info-grid">
+                    <div class="order-info-item">
+                        <label>Order Number</label>
+                        <span>#{{ order.order_number }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <label>Order Date</label>
+                        <span>{{ order.created_at|date:"F j, Y" }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <label>Email</label>
+                        <span>{{ order.email }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <label>Phone</label>
+                        <span>{{ order.phone }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <label>Payment Method</label>
+                        <span>{{ order.get_payment_method_display }}</span>
+                    </div>
+                    <div class="order-info-item">
+                        <label>Shipping Method</label>
+                        <span>{{ order.get_shipping_method_display }}</span>
+                    </div>
+                    {% if order.tracking_number %}
+                    <div class="order-info-item">
+                        <label>Tracking Number</label>
+                        <span>{{ order.tracking_number }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="order-detail-section">
+                <h2>Shipping Address</h2>
+                <div class="order-info-item">
+                    <address>
+                        {{ order.first_name }} {{ order.last_name }}<br>
+                        {{ order.address }}{% if order.apartment %}, {{ order.apartment }}{% endif %}<br>
+                        {{ order.city }}, {{ order.postal_code }}<br>
+                        {{ order.get_country_display }}
+                    </address>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="order-detail-card reveal stagger-3">
+            <div class="order-detail-section">
+                <h2>Order Items</h2>
+                <div class="order-items-table">
+                    {% for item in order.items.all %}
+                    <div class="order-item-row">
+                        <div class="order-item-info">
+                            <div class="order-item-image">
+                                {% if item.product and item.product.image %}
+                                <img src="{{ item.product.image.url }}" alt="{{ item.product_name }}">
+                                {% else %}
+                                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text-dim);font-size:0.7rem;">
+                                    No Image
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="order-item-details">
+                                <h4>{{ item.product_name }}</h4>
+                                <p>Size: {{ item.variant_size }} | Qty: {{ item.quantity }}</p>
+                            </div>
+                        </div>
+                        <span class="order-item-price">₱{{ item.get_total|floatformat:2 }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="order-totals">
+                    <div class="order-total-row">
+                        <span>Subtotal</span>
+                        <span>₱{{ order.subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="order-total-row">
+                        <span>Shipping</span>
+                        <span>₱{{ order.shipping_cost|floatformat:2 }}</span>
+                    </div>
+                    <div class="order-total-row grand-total">
+                        <span>Total</span>
+                        <span>₱{{ order.total|floatformat:2 }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Actions -->
+        <div class="order-actions reveal stagger-4">
+            <a href="{% url 'profile' %}" class="order-action-btn secondary">Back to Orders</a>
+            {% if order.can_cancel %}
+            <form method="post" action="{% url 'cancel_order' order.order_number %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this order? This action cannot be undone.');">
+                {% csrf_token %}
+                <button type="submit" class="order-action-btn danger">Cancel Order</button>
+            </form>
+            {% endif %}
+            <a href="{% url 'product_list' %}" class="order-action-btn primary">Continue Shopping</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

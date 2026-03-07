@@ -1,0 +1,544 @@
+<!-- Quick Add Variant Modal -->
+<div class="modal-overlay" id="quickAddModal" onclick="closeQuickAddModalOnOverlay(event)">
+    <div class="modal quick-add-modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+            <h3>Select Options</h3>
+            <button class="modal-close" onclick="closeQuickAddModal()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="modal-content" id="quickAddModalContent">
+            <!-- Content loaded dynamically -->
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-add-modal {
+    max-width: 480px !important;
+}
+
+.quick-add-product {
+    display: flex;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.quick-add-product-image {
+    width: 90px;
+    height: 120px;
+    background: var(--bg-elevated);
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.quick-add-product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.quick-add-product-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.quick-add-product-info h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+}
+
+.quick-add-product-info .price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.variant-section {
+    margin-bottom: 1.5rem;
+}
+
+.variant-section h5 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.variant-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+    gap: 0.5rem;
+}
+
+.variant-option-btn {
+    position: relative;
+    padding: 0.75rem 0.5rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.variant-option-btn:hover:not(.disabled):not(.out-of-stock) {
+    border-color: var(--text-muted);
+}
+
+.variant-option-btn.selected {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+}
+
+.variant-option-btn.out-of-stock {
+    opacity: 0.5;
+    cursor: not-allowed;
+    text-decoration: line-through;
+}
+
+.variant-option-btn .stock-indicator {
+    font-size: 0.6rem;
+    color: var(--text-dim);
+    white-space: nowrap;
+}
+
+.variant-option-btn.selected .stock-indicator {
+    color: var(--bg);
+    opacity: 0.8;
+}
+
+.variant-option-btn.out-of-stock .stock-indicator {
+    color: var(--error);
+}
+
+.quantity-selector-sm {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+}
+
+.quantity-selector-sm button {
+    width: 40px;
+    height: 40px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-selector-sm button:hover {
+    border-color: var(--text-muted);
+    background: var(--bg-hover);
+}
+
+.quantity-selector-sm button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.quantity-selector-sm input {
+    width: 60px;
+    height: 40px;
+    text-align: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 0.5rem;
+    border-radius: 8px;
+    outline: none;
+}
+
+.quick-add-actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+}
+
+.quick-add-cart-btn {
+    flex: 2;
+    padding: 1rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.quick-add-cart-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+}
+
+.quick-add-cart-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.quick-add-cart-btn .spinner {
+    width: 16px;
+    height: 16px;
+    border-color: var(--bg);
+    border-top-color: transparent;
+}
+
+.quick-add-wishlist-btn {
+    flex: 1;
+    padding: 1rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quick-add-wishlist-btn:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.quick-add-wishlist-btn.active {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+}
+
+.quick-add-wishlist-btn.active svg {
+    fill: currentColor;
+}
+
+@media (max-width: 480px) {
+    .quick-add-product {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .quick-add-product-image {
+        width: 100%;
+        height: 180px;
+    }
+    
+    .variant-options-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .quick-add-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+<script>
+// ============================================
+// GLOBAL VARIABLES - DECLARE ONCE ONLY
+// ============================================
+let currentQuickAddProductId = null;
+let selectedVariant = null;
+let quickAddQuantity = 1;
+let maxStock;  // Declared once, no initial value
+let inWishlist = false;
+
+// ============================================
+// MODAL FUNCTIONS
+// ============================================
+function openQuickAddModal(productId, productName, productPrice, productImage, variants, wishlistStatus = false) {
+    currentQuickAddProductId = productId;
+    selectedVariant = null;
+    quickAddQuantity = 1;
+    inWishlist = wishlistStatus;
+    
+    const modal = document.getElementById('quickAddModal');
+    const content = document.getElementById('quickAddModalContent');
+    
+    // Sort variants by size
+    const sortedVariants = [...variants].sort((a, b) => {
+        const sizeOrder = {'XS':1, 'S':2, 'M':3, 'L':4, 'XL':5, 'XXL':6, 'ONE':7};
+        return (sizeOrder[a.size] || 99) - (sizeOrder[b.size] || 99);
+    });
+    
+    // Find first available variant
+    const firstAvailable = sortedVariants.find(v => v.stock > 0);
+    if (firstAvailable) {
+        selectedVariant = { id: firstAvailable.id, size: firstAvailable.size, stock: firstAvailable.stock };
+        maxStock = firstAvailable.stock;
+    } else {
+        maxStock = 0;
+    }
+    
+    // Build variants HTML
+    let variantsHtml = '';
+    if (sortedVariants && sortedVariants.length > 0) {
+        variantsHtml = `
+            <div class="variant-section">
+                <h5>Select Size</h5>
+                <div class="variant-options-grid">
+                    ${sortedVariants.map((v) => {
+                        const isOutOfStock = v.stock === 0;
+                        const isLowStock = v.stock > 0 && v.stock < 5;
+                        let stockText = '';
+                        if (isOutOfStock) {
+                            stockText = 'Out of Stock';
+                        } else if (isLowStock) {
+                            stockText = `${v.stock} left`;
+                        } else {
+                            stockText = 'In Stock';
+                        }
+                        return `
+                            <button class="variant-option-btn ${isOutOfStock ? 'out-of-stock' : ''}" 
+                                    onclick="selectVariantOption(this, ${v.id}, '${v.size}', ${v.stock})"
+                                    ${isOutOfStock ? 'disabled' : ''}>
+                                ${v.size}
+                                <span class="stock-indicator">${stockText}</span>
+                            </button>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    content.innerHTML = `
+        <div class="quick-add-product">
+            <div class="quick-add-product-image">
+                ${productImage ? `<img src="${productImage}" alt="${productName}">` : 
+                    `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text-dim);">No Image</div>`}
+            </div>
+            <div class="quick-add-product-info">
+                <h4>${productName}</h4>
+                <p class="price">₱${parseFloat(productPrice).toLocaleString('en-PH', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</p>
+            </div>
+        </div>
+        ${variantsHtml}
+        <div class="variant-section">
+            <h5>Quantity</h5>
+            <div class="quantity-selector-sm">
+                <button onclick="updateQuickAddQuantity(-1)" id="qtyMinus">−</button>
+                <input type="number" id="quickAddQuantity" value="1" min="1" max="${maxStock || 1}" readonly>
+                <button onclick="updateQuickAddQuantity(1)" id="qtyPlus">+</button>
+            </div>
+        </div>
+        <div class="quick-add-actions">
+            <button class="quick-add-cart-btn" id="addToCartBtn" onclick="addToCartFromQuickAdd()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                    <path d="M3 6h18"></path>
+                    <path d="M16 10a4 4 0 0 1-8 0"></path>
+                </svg>
+                Add to Cart
+            </button>
+            <button class="quick-add-wishlist-btn ${inWishlist ? 'active' : ''}" onclick="toggleWishlistFromQuickAdd()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="${inWishlist ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.5">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                </svg>
+            </button>
+        </div>
+    `;
+    
+    // Mark first available variant as selected
+    if (firstAvailable) {
+        const firstBtn = content.querySelector('.variant-option-btn:not(.out-of-stock)');
+        if (firstBtn) {
+            firstBtn.classList.add('selected');
+        }
+    }
+    
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeQuickAddModal() {
+    const modal = document.getElementById('quickAddModal');
+    modal.classList.remove('active');
+    document.body.style.overflow = '';
+    selectedVariant = null;
+    quickAddQuantity = 1;
+}
+
+function closeQuickAddModalOnOverlay(event) {
+    if (event.target.id === 'quickAddModal') {
+        closeQuickAddModal();
+    }
+}
+
+function selectVariantOption(btn, variantId, size, stock) {
+    // Remove selected class from all variant buttons
+    document.querySelectorAll('.variant-option-btn').forEach(b => b.classList.remove('selected'));
+    
+    // Add selected class to clicked button
+    btn.classList.add('selected');
+    
+    // Update selected variant
+    selectedVariant = { id: variantId, size: size, stock: stock };
+    maxStock = stock;
+    
+    // Reset quantity if it exceeds new max
+    if (quickAddQuantity > maxStock) {
+        quickAddQuantity = 1;
+        document.getElementById('quickAddQuantity').value = quickAddQuantity;
+    }
+    
+    // Update max attribute
+    document.getElementById('quickAddQuantity').max = maxStock;
+    
+    // Update button states
+    updateQuantityButtons();
+}
+
+function updateQuickAddQuantity(change) {
+    const input = document.getElementById('quickAddQuantity');
+    let val = parseInt(input.value) + change;
+    
+    if (val < 1) val = 1;
+    if (val > maxStock) val = maxStock;
+    
+    input.value = val;
+    quickAddQuantity = val;
+    
+    updateQuantityButtons();
+}
+
+function updateQuantityButtons() {
+    const minusBtn = document.getElementById('qtyMinus');
+    const plusBtn = document.getElementById('qtyPlus');
+    
+    if (minusBtn) minusBtn.disabled = quickAddQuantity <= 1;
+    if (plusBtn) plusBtn.disabled = quickAddQuantity >= maxStock;
+}
+
+async function addToCartFromQuickAdd() {
+    if (!currentQuickAddProductId) {
+        showToast('Product ID is missing', 'error');
+        return;
+    }
+    
+    // Check if product has variants and if one is selected
+    const variantButtons = document.querySelectorAll('.variant-option-btn');
+    if (variantButtons.length > 0 && !selectedVariant) {
+        showToast('Please select a size', 'error');
+        return;
+    }
+    
+    const btn = document.getElementById('addToCartBtn');
+    const originalContent = btn.innerHTML;
+    btn.innerHTML = '<div class="spinner"></div>';
+    btn.disabled = true;
+    
+    try {
+        const formData = new FormData();
+        formData.append('product_id', currentQuickAddProductId);
+        formData.append('quantity', quickAddQuantity);
+        if (selectedVariant) {
+            formData.append('variant_id', selectedVariant.id);
+            formData.append('size', selectedVariant.size);
+        }
+        
+        const response = await fetch('/cart/quick-add/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': CSRF_TOKEN,
+            },
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            closeQuickAddModal();
+            await loadCart();
+            showToast(data.message || 'Added to cart', 'success');
+        } else {
+            showToast(data.error || 'Failed to add item', 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to add item', 'error');
+    } finally {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }
+}
+
+async function toggleWishlistFromQuickAdd() {
+    if (!currentQuickAddProductId) return;
+    
+    const btn = document.querySelector('.quick-add-wishlist-btn');
+    const svg = btn.querySelector('svg');
+    
+    try {
+        const response = await fetch(`/wishlist/toggle/${currentQuickAddProductId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': CSRF_TOKEN,
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            inWishlist = data.in_wishlist;
+            btn.classList.toggle('active', inWishlist);
+            svg.setAttribute('fill', inWishlist ? 'currentColor' : 'none');
+            showToast(data.message, 'success');
+            
+            // Update wishlist count in navbar
+            const wishlistCount = document.getElementById('wishlist-count');
+            if (wishlistCount) {
+                wishlistCount.textContent = data.wishlist_count;
+                wishlistCount.style.display = data.wishlist_count > 0 ? 'flex' : 'none';
+            }
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('Failed to update wishlist', 'error');
+    }
+}
+</script>

@@ -1,0 +1,351 @@
+{% extends 'shop/base.html' %}
+
+{% block title %}Cart - MALICE{% endblock %}
+
+{% block content %}
+<section style="padding: 6rem 1rem 3rem; max-width: 1200px; margin: 0 auto; min-height: 60vh;">
+    
+    <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 8vw, 3rem); font-weight: 400; letter-spacing: 0.02em; color: #fafafa; margin-bottom: 2rem; padding: 0 0.5rem;">
+        Shopping Cart
+    </h1>
+    
+    {% if cart_items %}
+    <div style="display: grid; grid-template-columns: 1fr 350px; gap: 2rem; align-items: start;">
+        
+        <!-- Cart Items -->
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for item in cart_items %}
+            <div class="cart-item" style="display: flex; gap: 1rem; padding: 1rem; background: #111; border: 1px solid #222; border-radius: 2px;">
+                
+                <!-- Item Image -->
+                <div style="width: 100px; height: 130px; background: #0a0a0a; border-radius: 2px; overflow: hidden; flex-shrink: 0;">
+                    {% if item.product.image %}
+                        <img src="{{ item.product.image.url }}" alt="{{ item.product.name }}" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                    {% else %}
+                        <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #333; font-size: 0.7rem;">No Image</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Item Details -->
+                <div class="cart-item-info" style="flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-width: 0;">
+                    <div>
+                        <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.95rem; font-weight: 500; color: #fafafa; margin-bottom: 0.25rem; letter-spacing: 0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ item.product.name }}
+                        </h3>
+                        <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; color: #666; margin-bottom: 0.5rem;">
+                            Size: {{ item.variant.size }}
+                        </p>
+                        <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #fafafa; font-weight: 500;">
+                            ₱{{ item.product.price|floatformat:2 }}
+                        </p>
+                    </div>
+                    
+                    <!-- Quantity & Remove -->
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+                        <!-- NEW CODE: -->
+                        <div style="display: flex; align-items: center; gap: 0; border: 1px solid #333;">
+                            <a href="{% url 'cart_update' item.id 'decrease' %}" 
+                            style="width: 36px; height: 36px; background: transparent; border-right: 1px solid #333; color: #fafafa; text-decoration: none; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                            onmouseover="this.style.background='#222'" 
+                            onmouseout="this.style.background='transparent'">−</a>
+                            <span style="width: 44px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #fafafa; background: #0a0a0a;">{{ item.quantity }}</span>
+                            <a href="{% url 'cart_update' item.id 'increase' %}" 
+                            style="width: 36px; height: 36px; background: transparent; border-left: 1px solid #333; color: #fafafa; text-decoration: none; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.2s;"
+                            onmouseover="this.style.background='#222'" 
+                            onmouseout="this.style.background='transparent'">+</a>
+                        </div>
+                        
+                        <div style="display: flex; align-items: center; gap: 1rem;">
+                            <p style="font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: #fafafa; font-weight: 500;">
+                                ₱{{ item.total_price|floatformat:2 }}
+                            </p>
+                            <a href="{% url 'cart_remove' item.id %}" 
+                            style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: #666; text-decoration: none; text-transform: uppercase; letter-spacing: 0.05em; transition: color 0.2s;">Remove</a>
+                        </div>
+                    </div>
+                </div>
+                
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Order Summary -->
+        <div style="background: #111; padding: 1.5rem; border: 1px solid #222; border-radius: 2px; position: sticky; top: 100px;">
+            <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: #555; margin-bottom: 1.25rem; font-weight: 500;">
+                Order Summary
+            </h2>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.75rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #888;">
+                <span>Subtotal</span>
+                <span>₱{{ total|floatformat:2 }}</span>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 1.25rem; padding-top: 0.75rem; border-top: 1px solid #222; font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; font-weight: 500; color: #fafafa;">
+                <span>Total</span>
+                <span>₱{{ total|floatformat:2 }}</span>
+            </div>
+            
+            <!-- Desktop Checkout Button -->
+            <a href="{% url 'order_create' %}" 
+            style="display: block; width: 100%; padding: 1rem; background: #fafafa; color: #0a0a0a; text-align: center; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; transition: background 0.25s; border-radius: 2px;">
+                Proceed to Checkout
+            </a>
+            
+            <a href="{% url 'product_list' %}" 
+            style="display: block; text-align: center; margin-top: 0.875rem; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #666; text-decoration: none; letter-spacing: 0.05em; text-transform: uppercase; transition: color 0.2s;">
+                Continue Shopping
+            </a>
+        </div>
+
+        <!-- Mobile Fixed Checkout Bar -->
+        <div class="mobile-checkout-bar">
+            <div class="total-info">
+                <span class="label">Total</span>
+                <span class="amount">₱{{ total|floatformat:2 }}</span>
+            </div>
+            <a href="{% url 'order_create' %}" class="checkout-btn-mobile">
+                Checkout
+            </a>
+        </div>
+        
+    </div>
+    
+    {% else %}
+    
+    <!-- Empty Cart -->
+    <div style="text-align: center; padding: 5rem 1rem;">
+        <p style="font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: #666; margin-bottom: 1.5rem;">Your cart is empty</p>
+        <a href="{% url 'product_list' %}" 
+           style="display: inline-block; padding: 1rem 2rem; border: 1px solid #333; color: #fafafa; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; transition: border-color 0.25s;">
+            Start Shopping
+        </a>
+    </div>
+    
+    {% endif %}
+    
+</section>
+
+<style>
+    /* Desktop layout */
+    @media (min-width: 901px) {
+        section > div[style*="grid-template-columns"] {
+            grid-template-columns: 1fr 350px !important;
+        }
+    }
+    
+    /* Tablet and Mobile layout */
+    @media (max-width: 900px) {
+        section {
+            padding: 5rem 1rem 2rem !important;
+        }
+        
+        section > div[style*="grid-template-columns"] {
+            grid-template-columns: 1fr !important;
+            gap: 1.5rem !important;
+        }
+        
+        /* Order summary moves to top on mobile */
+        section > div > div:last-child {
+            position: static !important;
+            order: -1;
+            margin-bottom: 1rem;
+        }
+        
+        h1 {
+            font-size: 1.75rem !important;
+            margin-bottom: 1.5rem !important;
+        }
+    }
+    
+    /* Mobile specific fixes */
+    @media (max-width: 768px) {
+        section {
+            padding: 5rem 0.75rem 100px !important; /* Extra bottom padding for fixed button */
+            min-height: auto !important;
+        }
+        
+        /* Cart items spacing */
+        section > div > div:first-child {
+            gap: 0.75rem !important;
+        }
+        
+        /* Individual cart item */
+        .cart-item {
+            padding: 0.875rem !important;
+            gap: 0.875rem !important;
+        }
+        
+        .cart-item > div:first-child {
+            width: 80px !important;
+            height: 100px !important;
+        }
+        
+        .cart-item h3 {
+            font-size: 0.85rem !important;
+        }
+        
+        /* Quantity controls */
+        .cart-item > div:last-child > div:last-child {
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 0.75rem !important;
+            flex-wrap: wrap;
+        }
+        
+        /* Order summary card */
+        section > div > div:last-child {
+            padding: 1.25rem !important;
+            border-radius: 4px !important;
+        }
+        
+        /* Fixed checkout button for mobile */
+        .mobile-checkout-bar {
+            display: flex !important;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #111;
+            border-top: 1px solid #222;
+            padding: 1rem;
+            z-index: 100;
+            gap: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .mobile-checkout-bar .total-info {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        
+        .mobile-checkout-bar .total-info .label {
+            font-size: 0.7rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        .mobile-checkout-bar .total-info .amount {
+            font-size: 1.1rem;
+            color: #fafafa;
+            font-weight: 600;
+        }
+        
+        .mobile-checkout-bar .checkout-btn-mobile {
+            background: #fafafa;
+            color: #0a0a0a;
+            border: none;
+            padding: 0.875rem 1.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 2px;
+            white-space: nowrap;
+        }
+        
+        /* Hide desktop checkout button on mobile */
+        section > div > div:last-child > a[href*="order_create"] {
+            display: none !important;
+        }
+    }
+    
+    /* Extra small devices */
+    @media (max-width: 480px) {
+        section {
+            padding: 4.5rem 0.5rem 100px !important;
+        }
+        
+        h1 {
+            font-size: 1.5rem !important;
+        }
+        
+        .cart-item {
+            padding: 0.75rem !important;
+        }
+        
+        .cart-item > div:first-child {
+            width: 70px !important;
+            height: 90px !important;
+        }
+        
+        /* Stack quantity controls vertically on very small screens */
+        .cart-item > div:last-child > div:last-child {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+            width: 100%;
+        }
+        
+        .cart-item > div:last-child > div:last-child > div {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        /* Mobile checkout bar adjustments */
+        .mobile-checkout-bar {
+            padding: 0.75rem;
+        }
+        
+        .mobile-checkout-bar .checkout-btn-mobile {
+            padding: 0.75rem 1rem;
+            font-size: 0.7rem;
+        }
+    }
+    
+    /* Prevent horizontal overflow */
+    body {
+        overflow-x: hidden;
+    }
+    
+    /* Ensure cart items don't overflow */
+    .cart-item {
+        max-width: 100%;
+    }
+    
+    .cart-item-info {
+        min-width: 0;
+    }
+    
+    /* Hide mobile checkout bar on desktop */
+    .mobile-checkout-bar {
+        display: none;
+    }
+</style>
+
+<script>
+    // AJAX quantity update for smoother experience
+    async function updateQuantity(itemId, action, event) {
+        event.preventDefault();
+        
+        try {
+            const response = await fetch(`/cart/update/${itemId}/${action}/`);
+            if (response.ok) {
+                // Reload page to show updated totals
+                window.location.reload();
+            } else {
+                throw new Error('Update failed');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            // Fallback to regular link behavior
+            window.location.href = event.target.href;
+        }
+    }
+    
+    // Attach to quantity buttons
+    document.querySelectorAll('a[href*="cart_update"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            updateQuantity(
+                this.href.split('/')[3],  // item_id
+                this.href.split('/')[4],  // action
+                e
+            );
+        });
+    });
+</script>
+{% endblock %}

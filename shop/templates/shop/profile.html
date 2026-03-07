@@ -2,112 +2,657 @@
 
 {% block title %}My Account - MALICE{% endblock %}
 
+{% block extra_css %}
+<style>
+.profile-page {
+    min-height: 100vh;
+    padding: 120px 2rem 4rem;
+    background: var(--bg);
+}
+
+.profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.profile-header {
+    margin-bottom: 2rem;
+}
+
+.profile-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.profile-header p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.profile-content {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 2rem;
+}
+
+/* Sidebar */
+.profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.profile-card h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.profile-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 1rem;
+}
+
+.profile-info-item:last-child {
+    margin-bottom: 0;
+}
+
+.profile-info-item label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.profile-info-item span {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+/* Tabs */
+.profile-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.tab-btn {
+    padding: 1rem 1.5rem;
+    background: none;
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.tab-btn:hover {
+    color: var(--text);
+}
+
+.tab-btn.active {
+    color: var(--text);
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--text);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Orders */
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.order-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    border-color: var(--border-light);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-info h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.order-info p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.order-status {
+    display: inline-block;
+    padding: 0.4rem 0.875rem;
+    border-radius: 20px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.order-status.pending {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+.order-status.confirmed {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+}
+
+.order-status.shipped {
+    background: rgba(192, 132, 252, 0.15);
+    color: #c084fc;
+}
+
+.order-status.delivered {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.order-status.cancelled {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.order-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.order-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+}
+
+.order-item span:first-child {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.order-item span:last-child {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.order-total {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.order-actions {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.order-btn {
+    padding: 0.5rem 1rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.order-btn.primary {
+    background: var(--text);
+    color: var(--bg);
+}
+
+.order-btn.primary:hover {
+    transform: translateY(-1px);
+}
+
+.order-btn.secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+}
+
+.order-btn.secondary:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+}
+
+.order-btn.danger {
+    background: transparent;
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.order-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+}
+
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    border: 2px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+}
+
+.empty-state h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+/* Forms */
+.form-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-section h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 1.25rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: #ffffff !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: var(--text-muted);
+    background: var(--bg-elevated);
+}
+
+.form-control:-webkit-autofill {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--bg) inset !important;
+}
+
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+.submit-btn {
+    padding: 0.875rem 1.5rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 1024px) {
+    .profile-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-sidebar {
+        order: 2;
+    }
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .order-footer {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .profile-tabs {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .tab-btn {
+        white-space: nowrap;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
-<section style="padding: 8rem 1rem 4rem; max-width: 1000px; margin: 0 auto; min-height: 70vh;">
-    
-    <!-- Account Header -->
-    <div style="margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 1px solid #222;">
-        <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(2rem, 6vw, 2.5rem); font-weight: 400; letter-spacing: 0.02em; color: #fafafa; margin-bottom: 0.5rem;">
-            My Account
-        </h1>
-        <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #666;">
-            {{ user.email }}
-        </p>
-    </div>
-    
-    <!-- Account Info -->
-    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 3rem; margin-bottom: 4rem;">
+<div class="profile-page">
+    <div class="profile-container">
+        <div class="profile-header reveal">
+            <h1>My Account</h1>
+            <p>Manage your profile, orders, and preferences</p>
+        </div>
         
-        <!-- Sidebar -->
-        <div>
-            <div style="background: #111; border: 1px solid #222; border-radius: 4px; padding: 1.5rem; margin-bottom: 1.5rem;">
-                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; color: #555; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.1em;">
-                    Profile Info
-                </h3>
-                <div style="font-family: 'Inter', sans-serif; font-size: 0.9rem; color: #888; line-height: 1.8;">
-                    <p style="margin-bottom: 0.5rem;"><strong style="color: #fafafa; font-weight: 500;">Name:</strong><br>
-                    {{ user.first_name }} {{ user.last_name }}</p>
-                    <p style="margin-bottom: 0.5rem;"><strong style="color: #fafafa; font-weight: 500;">Email:</strong><br>
-                    {{ user.email }}</p>
-                    <p><strong style="color: #fafafa; font-weight: 500;">Phone:</strong><br>
-                    {{ user.username }}</p>
+        <div class="profile-content">
+            <!-- Sidebar -->
+            <div class="profile-sidebar reveal stagger-1">
+                <div class="profile-card">
+                    <h3>Profile Info</h3>
+                    <div class="profile-info-item">
+                        <label>Name</label>
+                        <span>{{ user.first_name }} {{ user.last_name }}</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Email</label>
+                        <span>{{ user.email }}</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Username</label>
+                        <span>{{ user.username }}</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Member Since</label>
+                        <span>{{ user.date_joined|date:"F Y" }}</span>
+                    </div>
+                </div>
+                
+                <div class="profile-card">
+                    <h3>Order Summary</h3>
+                    <div class="profile-info-item">
+                        <label>Total Orders</label>
+                        <span>{{ orders|length }}</span>
+                    </div>
+                    <div class="profile-info-item">
+                        <label>Pending</label>
+                        <span>{{ orders|dictsortreversed:"status"|length }}</span>
+                    </div>
                 </div>
             </div>
             
-            <a href="{% url 'logout' %}" style="display: block; padding: 1rem; background: transparent; border: 1px solid #333; color: #c44; text-align: center; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; border-radius: 2px; transition: all 0.25s;" onmouseover="this.style.borderColor='#c44'" onmouseout="this.style.borderColor='#333'">
-                Sign Out
-            </a>
-        </div>
-        
-        <!-- Orders -->
-        <div>
-            <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; color: #555; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 500;">
-                My Orders
-            </h2>
-            
-            {% if orders %}
-                <div style="display: flex; flex-direction: column; gap: 1rem;">
-                    {% for order in orders %}
-                    <div style="background: #111; border: 1px solid #222; border-radius: 4px; padding: 1.5rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
-                            <div>
-                                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #fafafa; font-weight: 500; margin-bottom: 0.25rem;">
-                                    Order #{{ order.id }}
-                                </p>
-                                <p style="font-family: 'Inter', sans-serif; font-size: 0.8rem; color: #666;">
-                                    {{ order.created|date:"F d, Y" }}
-                                </p>
+            <!-- Main Content -->
+            <div class="reveal stagger-2">
+                <div class="profile-tabs">
+                    <button class="tab-btn active" onclick="showTab('orders')">My Orders</button>
+                    <button class="tab-btn" onclick="showTab('profile')">Edit Profile</button>
+                    <button class="tab-btn" onclick="showTab('password')">Change Password</button>
+                </div>
+                
+                <!-- Orders Tab -->
+                <div id="orders-tab" class="tab-content active">
+                    {% if orders %}
+                    <div class="orders-list">
+                        {% for order in orders %}
+                        <div class="order-card">
+                            <div class="order-header">
+                                <div class="order-info">
+                                    <h4>Order #{{ order.order_number }}</h4>
+                                    <p>{{ order.created_at|date:"F j, Y" }} &bull; {{ order.items.count }} item{{ order.items.count|pluralize }}</p>
+                                </div>
+                                <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
                             </div>
-                            <span style="display: inline-block; padding: 0.35rem 0.75rem; background: 
-                                {% if order.status == 'delivered' %}rgba(68, 170, 68, 0.1){% elif order.status == 'cancelled' %}rgba(204, 68, 68, 0.1){% else %}rgba(202, 170, 68, 0.1){% endif %}; 
-                                color: {% if order.status == 'delivered' %}#4a4{% elif order.status == 'cancelled' %}#c44{% else %}#ca4{% endif %}; 
-                                font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; border-radius: 2px; font-weight: 500;">
-                                {{ order.get_status_display }}
-                            </span>
+                            
+                            <div class="order-items">
+                                {% for item in order.items.all|slice:":3" %}
+                                <div class="order-item">
+                                    <span>{{ item.product_name }} ({{ item.variant_size }}) x{{ item.quantity }}</span>
+                                    <span>₱{{ item.get_total|floatformat:2 }}</span>
+                                </div>
+                                {% endfor %}
+                                {% if order.items.count > 3 %}
+                                <div class="order-item">
+                                    <span style="color:var(--text-dim);">+ {{ order.items.count|add:"-3" }} more item{{ order.items.count|add:"-3"|pluralize }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="order-footer">
+                                <span class="order-total">Total: ₱{{ order.total|floatformat:2 }}</span>
+                                <div class="order-actions">
+                                    <a href="{% url 'order_detail' order.order_number %}" class="order-btn primary">View Details</a>
+                                    {% if order.can_cancel %}
+                                    <form method="post" action="{% url 'cancel_order' order.order_number %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="order-btn danger">Cancel</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                        
-                        <div style="border-top: 1px solid #222; padding-top: 1rem; margin-bottom: 1rem;">
-                            <p style="font-family: 'Inter', sans-serif; font-size: 0.85rem; color: #888; margin-bottom: 0.5rem;">
-                                {{ order.items.count }} item{{ order.items.count|pluralize }}
-                            </p>
-                            <p style="font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: #fafafa; font-weight: 500;">
-                                Total: ₱{{ order.total|floatformat:2 }}
-                            </p>
-                        </div>
-                        
-                        <!-- NEW CODE: -->
-                        <a href="{% url 'order_confirmation' order_id=order.id %}" style="display: inline-block; padding: 0.75rem 1.25rem; border: 1px solid #333; color: #888; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.05em; text-transform: uppercase; border-radius: 2px; transition: all 0.2s;" onmouseover="this.style.borderColor='#555'; this.style.color='#fafafa'" onmouseout="this.style.borderColor='#333'; this.style.color='#888'">
-                            View Details
-                        </a>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
+                    {% else %}
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                                <path d="M3 6h18"></path>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                        </div>
+                        <h3>No orders yet</h3>
+                        <p>Start shopping to see your orders here</p>
+                        <a href="{% url 'product_list' %}" class="order-btn primary" style="display:inline-block;margin-top:1rem;">Shop Now</a>
+                    </div>
+                    {% endif %}
                 </div>
-            {% else %}
-                <div style="text-align: center; padding: 3rem; background: #111; border: 1px solid #222; border-radius: 4px;">
-                    <p style="font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: #666; margin-bottom: 1rem;">
-                        No orders yet
-                    </p>
-                    <a href="{% url 'product_list' %}" style="display: inline-block; padding: 0.875rem 1.5rem; background: #fafafa; color: #0a0a0a; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; border-radius: 2px;">
-                        Start Shopping
-                    </a>
+                
+                <!-- Profile Tab -->
+                <div id="profile-tab" class="tab-content">
+                    <form method="post" class="form-section">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="profile">
+                        <h3>Edit Profile</h3>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Phone Number</label>
+                                <input type="tel" name="phone" class="form-control" value="{{ profile_form.phone.value|default:'' }}" placeholder="+63 912 345 6789">
+                            </div>
+                            <div class="form-group">
+                                <label>City</label>
+                                <input type="text" name="city" class="form-control" value="{{ profile_form.city.value|default:'' }}" placeholder="Manila">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Address</label>
+                            <textarea name="address" class="form-control" rows="3" placeholder="Enter your full address">{{ profile_form.address.value|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Postal Code</label>
+                                <input type="text" name="postal_code" class="form-control" value="{{ profile_form.postal_code.value|default:'' }}" placeholder="1000">
+                            </div>
+                            <div class="form-group">
+                                <label>Country</label>
+                                <select name="country" class="form-control">
+                                    <option value="PH" {% if profile_form.country.value == 'PH' %}selected{% endif %}>Philippines</option>
+                                    <option value="US" {% if profile_form.country.value == 'US' %}selected{% endif %}>United States</option>
+                                    <option value="SG" {% if profile_form.country.value == 'SG' %}selected{% endif %}>Singapore</option>
+                                    <option value="JP" {% if profile_form.country.value == 'JP' %}selected{% endif %}>Japan</option>
+                                    <option value="OTHER" {% if profile_form.country.value == 'OTHER' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Save Changes</button>
+                    </form>
                 </div>
-            {% endif %}
+                
+                <!-- Password Tab -->
+                <div id="password-tab" class="tab-content">
+                    <form method="post" class="form-section">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="password">
+                        <h3>Change Password</h3>
+                        
+                        <div class="form-group">
+                            <label>Current Password</label>
+                            <input type="password" name="current_password" class="form-control" placeholder="Enter current password" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" name="new_password" class="form-control" placeholder="Enter new password" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirm New Password</label>
+                                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm new password" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Update Password</button>
+                    </form>
+                </div>
+            </div>
         </div>
-        
     </div>
-    
-</section>
+</div>
 
-<style>
-    @media (max-width: 768px) {
-        section {
-            padding: 6rem 1rem 2rem !important;
+<script>
+function showTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.toLowerCase().includes(tabName)) {
+            btn.classList.add('active');
         }
-        
-        section > div[style*="grid-template-columns"] {
-            grid-template-columns: 1fr !important;
-            gap: 2rem !important;
-        }
-    }
-</style>
+    });
+    
+    // Update tab content
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.getElementById(tabName + '-tab').classList.add('active');
+}
+</script>
 {% endblock %}

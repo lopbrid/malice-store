@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from pathlib import Path
 import os
 import dj_database_url
+from django.templatetags.static import static
+from django.urls import reverse_lazy
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -34,6 +36,7 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    "unfold",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -43,17 +46,32 @@ INSTALLED_APPS = [
     'shop',
 ]
 
+# Add to MIDDLEWARE (first position)
 MIDDLEWARE = [
+    'shop.middleware.AdminNoCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',  # Add this
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'shop.middleware.SeparateAdminSessionMiddleware',  # Must be FIRST, before SessionMiddleware
+    'shop.middleware.SeparateAdminSessionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',  # Add this
 ]
+
+# Cache settings - prevent admin caching
+CACHE_MIDDLEWARE_SECONDS = 0
+CACHE_MIDDLEWARE_KEY_PREFIX = ''
+
+# Admin-specific settings to prevent caching
+ADMIN_CACHE_CONTROL = {
+    'Cache-Control': 'no-cache, no-store, must-revalidate, max-age=0',
+    'Pragma': 'no-cache',
+    'Expires': '0',
+}
 
 ROOT_URLCONF = 'config.urls'
 
@@ -166,4 +184,98 @@ MESSAGE_TAGS = {
     messages.SUCCESS: 'success',
     messages.WARNING: 'warning',
     messages.ERROR: 'error',
+}
+
+# Add Unfold configuration at the bottom of settings.py
+UNFOLD = {
+    "SITE_TITLE": "MALICE Admin",
+    "SITE_HEADER": "MALICE Administration",
+    "SITE_SUBHEADER": "E-Commerce Management",
+    "SITE_DROPDOWN": [
+        {
+            "icon": "person",
+            "title": "View Site",
+            "link": "/",
+        },
+    ],
+    "SITE_LOGO": {
+        "light": lambda request: static("shop/img/logo-light.svg"),  # Optional
+        "dark": lambda request: static("shop/img/logo-dark.svg"),   # Optional
+    },
+    "SITE_SYMBOL": "shopping_bag",  # Material symbol icon
+    
+    "DARK_MODE": True,  # Enable dark mode toggle
+    "SHOW_HISTORY": True,
+    "SHOW_VIEW_ON_SITE": True,
+    
+    "SIDEBAR": {
+        "show_search": True,  # Search in sidebar
+        "show_all_applications": True,
+        "navigation": [
+            {
+                "title": "Shop Management",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Products",
+                        "icon": "inventory_2",
+                        "link": reverse_lazy("admin:shop_product_changelist"),
+                    },
+                    {
+                        "title": "Categories",
+                        "icon": "category",
+                        "link": reverse_lazy("admin:shop_category_changelist"),
+                    },
+                    {
+                        "title": "Product Variants",
+                        "icon": "format_size",
+                        "link": reverse_lazy("admin:shop_productvariant_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Orders & Customers",
+                "separator": True,
+                "collapsible": True,
+                "items": [
+                    {
+                        "title": "Orders",
+                        "icon": "shopping_cart",
+                        "link": reverse_lazy("admin:shop_order_changelist"),
+                    },
+                    {
+                        "title": "Cart Items",
+                        "icon": "shopping_bag",
+                        "link": reverse_lazy("admin:shop_cartitem_changelist"),
+                    },
+                ],
+            },
+        ],
+    },
+    
+    "COLORS": {
+        "primary": {
+            "50": "#fafafa",
+            "100": "#f5f5f5",
+            "200": "#e5e5e5",
+            "300": "#d4d4d4",
+            "400": "#a3a3a3",
+            "500": "#737373",
+            "600": "#525252",
+            "700": "#404040",
+            "800": "#262626",
+            "900": "#171717",
+            "950": "#0a0a0a",
+        },
+    },
+    
+    "EXTENSIONS": {
+        "modeltranslation": {
+            "flags": {
+                "en": "🇬🇧",
+                "fil": "🇵🇭",
+            },
+        },
+    },
 }

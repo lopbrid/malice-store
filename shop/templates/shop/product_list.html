@@ -1,49 +1,427 @@
 {% extends 'shop/base.html' %}
 
-{% block title %}Shop - MALICE{% endblock %}
+{% block title %}{% if category_slug == 'new' %}New Arrivals{% elif category_slug == 'best' %}Best Sellers{% else %}Shop All{% endif %} - MALICE{% endblock %}
+
+{% block extra_css %}
+<style>
+.shop-page {
+    min-height: 100vh;
+    padding: 120px 2rem 4rem;
+    background: var(--bg);
+}
+
+.shop-container {
+    max-width: 1440px;
+    margin: 0 auto;
+}
+
+.shop-header {
+    margin-bottom: 2rem;
+}
+
+.shop-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.shop-header p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.shop-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.results-count {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.sort-dropdown {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.sort-dropdown label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sort-dropdown select {
+    padding: 0.5rem 2rem 0.5rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+}
+
+.sort-dropdown select:focus {
+    outline: none;
+    border-color: var(--text-muted);
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.product-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.4s var(--ease-out-expo);
+}
+
+.product-card:hover {
+    border-color: var(--border-light);
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+}
+
+.product-image {
+    position: relative;
+    aspect-ratio: 3/4;
+    background: var(--bg-elevated);
+    overflow: hidden;
+}
+
+.product-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease-out-expo);
+}
+
+.product-card:hover .product-image img {
+    transform: scale(1.05);
+}
+
+.product-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 1rem;
+}
+
+.product-card:hover .product-overlay {
+    opacity: 1;
+}
+
+.quick-add-btn {
+    width: 100%;
+    padding: 0.875rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.quick-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.2);
+}
+
+.wishlist-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(10px);
+    border: none;
+    border-radius: 50%;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.wishlist-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.wishlist-btn.active {
+    background: #ef4444;
+    color: white;
+}
+
+.wishlist-btn.active svg {
+    fill: currentColor;
+}
+
+.product-info {
+    padding: 1.25rem;
+}
+
+.product-name {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text);
+    text-decoration: none;
+    display: block;
+    margin-bottom: 0.5rem;
+    transition: color 0.2s ease;
+}
+
+.product-name:hover {
+    color: var(--text-muted);
+}
+
+.product-price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.stock-badge {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text);
+}
+
+.stock-badge.low {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+.stock-badge.out {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 3rem;
+}
+
+.pagination a,
+.pagination span {
+    padding: 0.75rem 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.pagination a:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+}
+
+.pagination .current {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+}
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.empty-state h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 1200px) {
+    .product-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 900px) {
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .shop-controls {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+    }
+}
+</style>
+{% endblock %}
 
 {% block content %}
-<section style="padding: 8rem 2rem 4rem; max-width: 1400px; margin: 0 auto;">
-    <div style="margin-bottom: 3rem;">
-        <span style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; color: #555; letter-spacing: 0.2em; text-transform: uppercase; display: block; margin-bottom: 0.5rem; font-weight: 500;">
-            {% if query %}Search Results{% else %}All Products{% endif %}
-        </span>
-        <h1 style="font-family: 'Bebas Neue', sans-serif; font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 400; letter-spacing: 0.02em; color: #fafafa;">
-            {% if query %}"{{ query }}"{% else %}Shop All{% endif %}
-        </h1>
-        <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #666; margin-top: 0.5rem;">
-            {{ products.count }} items
-        </p>
-    </div>
-    
-    {% if products %}
-    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2.5rem;">
-        {% for product in products %}
-        <article onclick="window.location.href='{% url 'product_detail' product.slug %}'" style="cursor: pointer;">
-            <div style="aspect-ratio: 4/5; background: #111; margin-bottom: 1.25rem; overflow: hidden; border-radius: 2px;">
-                {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}" 
-                         style="width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s;" 
-                         onmouseover="this.style.transform='scale(1.03)'" 
-                         onmouseout="this.style.transform='scale(1)'">
+<div class="shop-page">
+    <div class="shop-container">
+        <div class="shop-header reveal">
+            <h1>
+                {% if category_slug == 'new' %}
+                    New Arrivals
+                {% elif category_slug == 'best' %}
+                    Best Sellers
+                {% elif search_query %}
+                    Search Results
                 {% else %}
-                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #333; font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;">
+                    Shop All
+                {% endif %}
+            </h1>
+            <p>
+                {% if search_query %}
+                    Results for "{{ search_query }}"
+                {% else %}
+                    Discover our collection of minimalist streetwear
+                {% endif %}
+            </p>
+        </div>
+        
+        <div class="shop-controls reveal stagger-1">
+            <span class="results-count">{{ products.paginator.count }} products</span>
+            
+            <div class="sort-dropdown">
+                <label>Sort by</label>
+                <select onchange="window.location.href = '?{% if category_slug %}category={{ category_slug }}&{% endif %}{% if search_query %}q={{ search_query }}&{% endif %}sort=' + this.value;">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="price-low" {% if sort_by == 'price-low' %}selected{% endif %}>Price: Low to High</option>
+                    <option value="price-high" {% if sort_by == 'price-high' %}selected{% endif %}>Price: High to Low</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name</option>
+                </select>
+            </div>
+        </div>
+        
+        {% if products %}
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-card reveal stagger-{{ forloop.counter|add:1 }}">
+                <div class="product-image">
+                    {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                    {% else %}
+                    <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--text-dim);">
                         No Image
                     </div>
+                    {% endif %}
+                    
+                    {% with total_stock=product.get_total_stock %}
+                    {% if total_stock == 0 %}
+                    <span class="stock-badge out">Out of Stock</span>
+                    {% elif total_stock < 5 %}
+                    <span class="stock-badge low">Low Stock</span>
+                    {% endif %}
+                    {% endwith %}
+                    
+                    <button class="wishlist-btn" onclick="event.stopPropagation(); toggleWishlist({{ product.id }}, this)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                    </button>
+                    
+                    <div class="product-overlay">
+                        <button class="quick-add-btn" onclick="quickAddToCart({{ product.id }}, null, event)">Quick Add</button>
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <a href="{% url 'product_detail' product.slug %}" class="product-name">{{ product.name }}</a>
+                    <div class="product-price">₱{{ product.price|floatformat:2 }}</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        {% if products.has_other_pages %}
+        <div class="pagination">
+            {% if products.has_previous %}
+            <a href="?page={{ products.previous_page_number }}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">&laquo; Previous</a>
+            {% endif %}
+            
+            {% for num in products.paginator.page_range %}
+                {% if products.number == num %}
+                <span class="current">{{ num }}</span>
+                {% elif num > products.number|add:'-3' and num < products.number|add:'3' %}
+                <a href="?page={{ num }}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">{{ num }}</a>
                 {% endif %}
-            </div>
-            <div style="text-align: center;">
-                <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 1rem; font-weight: 500; margin-bottom: 0.5rem; color: #fafafa;">{{ product.name }}</h3>
-                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: #666;">₱{{ product.price|floatformat:2 }}</p>
-            </div>
-        </article>
-        {% endfor %}
+            {% endfor %}
+            
+            {% if products.has_next %}
+            <a href="?page={{ products.next_page_number }}{% if category_slug %}&category={{ category_slug }}{% endif %}{% if sort_by %}&sort={{ sort_by }}{% endif %}{% if search_query %}&q={{ search_query }}{% endif %}">Next &raquo;</a>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state reveal">
+            <h2>No products found</h2>
+            <p>Try adjusting your search or browse all products</p>
+            <a href="{% url 'product_list' %}" class="hero-cta" style="display:inline-block;margin-top:1rem;">View All Products</a>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div style="text-align: center; padding: 4rem; color: #555;">
-        <p style="font-family: 'Space Grotesk', sans-serif; font-size: 1.1rem; margin-bottom: 1rem;">No products found.</p>
-        <a href="{% url 'product_list' %}" style="color: #fafafa; text-decoration: none; border-bottom: 1px solid #fafafa; padding-bottom: 2px; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem;">View all products</a>
-    </div>
-    {% endif %}
-</section>
+</div>
 {% endblock %}

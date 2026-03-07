@@ -2,6 +2,24 @@ from django.conf import settings
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.utils.deprecation import MiddlewareMixin
 
+# Add this to your existing middleware.py
+
+class AdminNoCacheMiddleware:
+    """Prevent caching of admin pages to avoid stale data"""
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        
+        # Prevent caching for admin pages
+        if request.path.startswith('/admin/'):
+            response['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+            response['Pragma'] = 'no-cache'
+            response['Expires'] = '0'
+            
+        return response
+
 class SeparateAdminSessionMiddleware(MiddlewareMixin):
     """
     Middleware to separate admin sessions from frontend sessions.

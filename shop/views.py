@@ -1,517 +1,859 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
-from django.contrib import messages
-from django.views.decorators.http import require_POST
-from django.utils import timezone
-from .models import Product, ProductVariant, Category, CartItem, Order, OrderItem
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
-import re
-from django.urls import reverse
-from django.db import models
+from django.contrib import messages
+from django.http import JsonResponse
+from django.db.models import Q, Sum
+from django.core.paginator import Paginator
+from django.views.decorators.http import require_POST, require_http_methods
+from django.utils import timezone
+import json
 
-def user_login(request):
-    """User login with email or phone + password"""
-    if request.method == 'POST':
-        identifier = request.POST.get('identifier', '').strip()
-        password = request.POST.get('password', '')
-        next_url = request.POST.get('next', 'home')
-        
-        user = None
-        
-        # Try to authenticate by email
-        if '@' in identifier:
-            try:
-                user_obj = User.objects.get(email=identifier.lower())
-                user = authenticate(request, username=user_obj.username, password=password)
-            except User.DoesNotExist:
-                pass
-        else:
-            # Try by username (phone number)
-            user = authenticate(request, username=identifier, password=password)
-        
-        if user is not None:
-            login(request, user)
-            
-            messages.success(request, f'Welcome back, {user.first_name or user.username}!')
-            
-            # Check if there was a pending cart addition before login
-                        # Check if there was a pending cart addition before login
-            pending_product = request.session.pop('pending_cart_product', None)
-            if pending_product:
-                # Add the pending item to cart
-                product = get_object_or_404(Product, id=pending_product)
-                size = request.session.pop('pending_cart_size', 'M')
-                qty = request.session.pop('pending_cart_qty', 1)
-                
-                variant = get_object_or_404(ProductVariant, product=product, size=size)
-                
-                if variant.stock >= qty:
-                    item, created = CartItem.objects.get_or_create(
-                        user=user,
-                        product=product,
-                        variant=variant,
-                        defaults={'quantity': qty}
-                    )
-                    if not created:
-                        item.quantity += qty
-                        item.save()
-                    messages.success(request, f'Added {product.name} to your cart!')
-                else:
-                    messages.error(request, f'Not enough stock for {product.name}')
-                
-                return redirect('cart_detail')
-            
-            # IMPORTANT FIX: Check if checkout intent exists
-            if request.session.get('checkout_intent'):
-                del request.session['checkout_intent']
-                return redirect('order_create')
-            
-            # Otherwise redirect to next URL or home
-            return redirect(next_url if next_url else 'home')
-        else:
-            messages.error(request, 'Invalid email/phone or password.')
-    
-    # GET request - check if there's a next parameter for checkout
-    next_url = request.GET.get('next', '')
-    # If next is checkout, set checkout_intent flag
-    if 'checkout' in next_url.lower():
-        request.session['checkout_intent'] = True
-        # Store cart count for display
-        cart_count = 0
-        if request.session.session_key:
-            cart_count = CartItem.objects.filter(session_id=request.session.session_key).aggregate(
-                total=models.Sum('quantity')
-            )['total'] or 0
-        request.session['cart_count'] = int(cart_count)
-    
-    return render(request, 'shop/login.html', {'next': next_url})
-def user_register(request):
-    """User registration with phone validation"""
-    if request.method == 'POST':
-        first_name = request.POST.get('first_name', '').strip()
-        last_name = request.POST.get('last_name', '').strip()
-        email = request.POST.get('email', '').strip().lower()
-        phone = request.POST.get('phone', '').strip()
-        password = request.POST.get('password', '')
-        confirm_password = request.POST.get('confirm_password', '')
-        next_url = request.POST.get('next', 'home')
-        
-        # Validation
-        errors = []
-        
-        if not first_name:
-            errors.append('First name is required.')
-        if not last_name:
-            errors.append('Last name is required.')
-        
-        # Email validation
-        if not email:
-            errors.append('Email is required.')
-        else:
-            try:
-                validate_email(email)
-            except ValidationError:
-                errors.append('Please enter a valid email address.')
-            if User.objects.filter(email=email).exists():
-                errors.append('This email is already registered.')
-        
-        # Phone validation
-        if not phone:
-            errors.append('Phone number is required.')
-        else:
-            phone_clean = re.sub(r'[\s\-]', '', phone)
-            if not re.match(r'^09\d{9}$', phone_clean):
-                errors.append('Please enter a valid Philippine mobile number (09XXXXXXXXX).')
-            elif User.objects.filter(username=phone_clean).exists():
-                errors.append('This phone number is already registered.')
-        
-        # Password validation
-        if len(password) < 8:
-            errors.append('Password must be at least 8 characters.')
-        if password != confirm_password:
-            errors.append('Passwords do not match.')
-        
-        if errors:
-            for error in errors:
-                messages.error(request, error)
-            return render(request, 'shop/register.html', {
-                'first_name': first_name,
-                'last_name': last_name,
-                'email': email,
-                'phone': phone,
-                'next': next_url,
-            })
-        
-        # Create user
-                # Store session key BEFORE creating user (it will change after login)
-        old_session_key = request.session.session_key
-        
-        # Create user
-        username = phone_clean
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name
-        )
-        
-        # Log in the user immediately
-        login(request, user)
-        
-        # Restore the old session key to preserve cart
-        if old_session_key:
-            request.session.cycle_key()
-            # Copy old session data to new session
-            from django.contrib.sessions.models import Session
-            try:
-                old_session = Session.objects.get(session_key=old_session_key)
-                old_data = old_session.get_decoded()
-                for key, value in old_data.items():
-                    if key not in request.session:
-                        request.session[key] = value
-            except Session.DoesNotExist:
-                pass
-        
-        # Log in the user immediately
-        login(request, user)
-        
-        # Merge session cart if exists
-                # Merge session cart if exists
-               # Merge session cart using OLD session key (before login changed it)
-        if old_session_key:
-            session_items = CartItem.objects.filter(session_id=old_session_key)
-            for item in session_items:
-                # Check if user already has this item
-                existing = CartItem.objects.filter(
-                    user=user,
-                    product=item.product,
-                    variant=item.variant
-                ).first()
-                
-                if existing:
-                    # Add quantities together
-                    existing.quantity += item.quantity
-                    existing.save()
-                else:
-                    # Transfer item to user
-                    item.user = user
-                    item.session_id = None
-                    item.save()
-        
-        messages.success(request, f'✓ Account created successfully! Welcome, {first_name}! You can now complete your order.')
-        
-        # IMPORTANT FIX: Check if checkout intent exists and redirect accordingly
-        if request.session.get('checkout_intent'):
-            # Clear the checkout intent flag but keep cart data
-            del request.session['checkout_intent']
-            # Redirect to checkout page
-            return redirect('order_create')
-        
-        # If next URL is provided and not empty, use it
-        if next_url and next_url != 'home':
-            return redirect(next_url)
-        
-        return redirect('home')
-    
-    # GET request
-    next_url = request.GET.get('next', 'home')
-    return render(request, 'shop/register.html', {'next': next_url})
+from .models import (
+    Product, Category, ProductVariant, Cart, CartItem,
+    Wishlist, Order, OrderItem, UserProfile
+)
+from .forms import (
+    CustomAuthenticationForm, CustomUserCreationForm,
+    CheckoutForm, UserProfileForm, PasswordChangeForm
+)
 
-@login_required
-def user_logout(request):
-    logout(request)
-    messages.success(request, 'You have been logged out.')
-    return redirect('home')
-
-@login_required
-def user_profile(request):
-    """User profile with order history"""
-    orders = Order.objects.filter(user=request.user).order_by('-created')
-    return render(request, 'shop/profile.html', {
-        'user': request.user,
-        'orders': orders
-    })
-
-@login_required
-def cart_update(request, item_id, action):
-    """Update cart item quantity with stock checking - requires login"""
-    item = get_object_or_404(CartItem, id=item_id, user=request.user)
-    
-    if action == 'increase':
-        # Check stock before increasing
-        if item.variant.stock > item.quantity:
-            item.quantity += 1
-            item.save()
-            messages.success(request, f'Quantity updated for {item.product.name}')
-        else:
-            messages.error(request, f'Maximum stock reached for {item.product.name} size {item.variant.size} (Stock: {item.variant.stock})')
-    
-    elif action == 'decrease':
-        if item.quantity > 1:
-            item.quantity -= 1
-            item.save()
-            messages.success(request, f'Quantity updated for {item.product.name}')
-        else:
-            # Remove if quantity would be 0
-            item.delete()
-            messages.success(request, 'Item removed from cart')
-            return redirect('cart_detail')
-    
-    return redirect('cart_detail')
 
 def home(request):
-    featured = Product.objects.filter(available=True)[:5]
-    return render(request, 'shop/home.html', {'featured': featured})
+    """Home page view"""
+    featured_products = Product.objects.filter(
+        is_active=True, is_featured=True
+    ).select_related('category').prefetch_related('variants')[:6]
+    
+    new_arrivals = Product.objects.filter(
+        is_active=True, is_new=True
+    ).select_related('category').prefetch_related('variants')[:4]
+    
+    best_sellers = Product.objects.filter(
+        is_active=True, is_best_seller=True
+    ).select_related('category').prefetch_related('variants')[:4]
+    
+    context = {
+        'featured': featured_products,
+        'new_arrivals': new_arrivals,
+        'best_sellers': best_sellers,
+    }
+    return render(request, 'shop/home.html', context)
 
-def product_list(request, category_slug=None):
-    category = None
-    categories = Category.objects.all()
-    products = Product.objects.filter(available=True)
+
+def product_list(request):
+    """Product list view with filtering and sorting"""
+    products = Product.objects.filter(is_active=True).prefetch_related('variants')
     
-    query = request.GET.get('q')
-    if query:
-        products = products.filter(name__icontains=query)
+    # Get query parameters
+    category_slug = request.GET.get('category')
+    search_query = request.GET.get('q')
+    sort_by = request.GET.get('sort', 'newest')
     
+    # Filter by category
     if category_slug:
-        category = get_object_or_404(Category, slug=category_slug)
-        products = products.filter(category=category)
+        if category_slug == 'new':
+            products = products.filter(is_new=True)
+        elif category_slug == 'best':
+            products = products.filter(is_best_seller=True)
+        else:
+            products = products.filter(category__slug=category_slug)
     
-    filter_type = request.GET.get('category')
-    if filter_type == 'new':
-        products = products.order_by('-created')[:12]
-    elif filter_type == 'best':
-        products = products.order_by('?')[:12]
+    # Search
+    if search_query:
+        products = products.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(category__name__icontains=search_query)
+        )
     
-    return render(request, 'shop/product_list.html', {
-        'category': category,
-        'categories': categories,
+    # Sorting
+    if sort_by == 'price-low':
+        products = products.order_by('price')
+    elif sort_by == 'price-high':
+        products = products.order_by('-price')
+    elif sort_by == 'name':
+        products = products.order_by('name')
+    else:  # newest
+        products = products.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(products, 12)
+    page_number = request.GET.get('page')
+    products = paginator.get_page(page_number)
+    
+    context = {
         'products': products,
-        'query': query,
-    })
+        'category_slug': category_slug,
+        'search_query': search_query,
+        'sort_by': sort_by,
+    }
+    return render(request, 'shop/product_list.html', context)
+
 
 def product_detail(request, slug):
-    product = get_object_or_404(Product, slug=slug, available=True)
-    variants = product.variants.all().order_by('size')
-    return render(request, 'shop/product_detail.html', {
-        'product': product,
-        'variants': variants,
-    })
-
-@login_required
-def cart_detail(request):
-    """Cart detail - requires login"""
-    cart_items = CartItem.objects.filter(user=request.user).select_related('product', 'variant')
-    total = sum(item.total_price() for item in cart_items)
-    return render(request, 'shop/cart.html', {'cart_items': cart_items, 'total': total})
-
-@require_POST
-def cart_add(request, product_id):
-    """Add to cart - requires login to prevent session sharing issues"""
-    # Require login for adding to cart
-    if not request.user.is_authenticated:
-        messages.info(request, 'Please sign in to add items to your cart.')
-        # Store the product they wanted to add
-        request.session['pending_cart_product'] = product_id
-        request.session['pending_cart_size'] = request.POST.get('size', 'M')
-        request.session['pending_cart_qty'] = int(request.POST.get('quantity', 1))
-        return redirect(f"{reverse('login')}?next={reverse('product_detail', args=[get_object_or_404(Product, id=product_id).slug])}")
-    
-    product = get_object_or_404(Product, id=product_id)
-    size = request.POST.get('size', 'M')
-    quantity = int(request.POST.get('quantity', 1))
-    
-    # Get variant
-    variant = get_object_or_404(ProductVariant, product=product, size=size)
-    
-    # Check stock
-    if variant.stock < quantity:
-        messages.error(request, f'Only {variant.stock} items available in size {size}')
-        return redirect('product_detail', slug=product.slug)
-    
-    # Only authenticated users can have carts now
-    item, created = CartItem.objects.get_or_create(
-        user=request.user,
-        product=product,
-        variant=variant,
-        defaults={'quantity': quantity}
+    """Product detail view"""
+    product = get_object_or_404(
+        Product.objects.prefetch_related('variants'),
+        slug=slug, is_active=True
     )
-    if not created:
-        item.quantity += quantity
-        item.save()
     
-    messages.success(request, f'Added {product.name} (Size {size}) to cart')
-    return redirect('cart_detail')
-
-@login_required
-def cart_remove(request, item_id):
-    """Remove item from cart - requires login"""
-    item = get_object_or_404(CartItem, id=item_id, user=request.user)
-    item.delete()
-    messages.success(request, 'Item removed from cart')
-    return redirect('cart_detail')
-
-def order_create(request):
-    """Create order - requires login at checkout"""
-    cart_items = []
+    # Get related products
+    related_products = Product.objects.filter(
+        category=product.category, is_active=True
+    ).exclude(id=product.id).prefetch_related('variants')[:4]
     
-    # Get cart items for both guest and logged-in users
+    # Check if product is in user's wishlist
+    in_wishlist = False
     if request.user.is_authenticated:
-        cart_items = CartItem.objects.filter(user=request.user).select_related('product', 'variant')
-    else:
-        session_id = request.session.session_key
-        if session_id:
-            cart_items = CartItem.objects.filter(session_id=session_id).select_related('product', 'variant')
+        in_wishlist = Wishlist.objects.filter(
+            user=request.user, product=product
+        ).exists()
     
-    if not cart_items:
-        messages.error(request, 'Your cart is empty')
-        return redirect('cart_detail')
-    
-    # If not logged in, redirect to login with "checkout" intent
-    if not request.user.is_authenticated:
-        # Store checkout intent in session
-        request.session['checkout_intent'] = True
-        request.session['cart_count'] = sum(item.quantity for item in cart_items)
-        messages.info(request, 'Please sign in or create an account to complete your order.')
-        return redirect(f"{reverse('login')}?next={reverse('order_create')}")
-    
-    # User is logged in - proceed with checkout
-    total = sum(item.total_price() for item in cart_items)
-    
-    # Pre-fill with user data
-    initial_data = {
-        'first_name': request.user.first_name,
-        'last_name': request.user.last_name,
-        'email': request.user.email,
-        'phone': request.user.username,  # Phone stored as username
+    context = {
+        'product': product,
+        'related_products': related_products,
+        'in_wishlist': in_wishlist,
     }
-    
-    if request.method == 'POST':
-        # Validate stock
-        for item in cart_items:
-            if item.variant.stock < item.quantity:
-                messages.error(request, f'Not enough stock for {item.product.name} size {item.variant.size}')
-                return redirect('cart_detail')
-        
-        # Get form data
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        address = request.POST.get('address')
-        city = request.POST.get('city')
-        postal_code = request.POST.get('postal_code')
-        
-        # Validate required fields
-        if not all([first_name, last_name, email, phone, address, city, postal_code]):
-            messages.error(request, 'Please fill in all required fields.')
-            return render(request, 'shop/checkout.html', {
-                'cart_items': cart_items,
-                'total': total,
-                'initial_data': {
-                    'first_name': first_name,
-                    'last_name': last_name,
-                    'email': email,
-                    'phone': phone,
-                }
-            })
-        
-        # Create order
-        order = Order.objects.create(
-            user=request.user,
-            first_name=first_name,
-            last_name=last_name,
-            email=email,
-            phone=phone,
-            address=address,
-            city=city,
-            postal_code=postal_code,
-            payment_method=request.POST.get('payment_method', 'cod'),
-            latitude=request.POST.get('latitude') or None,
-            longitude=request.POST.get('longitude') or None,
-            total=total,
-            status='pending'
+    return render(request, 'shop/product_detail.html', context)
+
+
+def product_data_api(request, product_id):
+    """API endpoint to get product data for quick add modal"""
+    try:
+        product = Product.objects.prefetch_related('variants').get(
+            id=product_id, is_active=True
         )
         
-        # Create order items and reduce stock
-        for item in cart_items:
-            OrderItem.objects.create(
-                order=order,
-                product=item.product,
-                variant=item.variant,
-                price=item.product.price,
-                quantity=item.quantity
-            )
-            item.variant.stock -= item.quantity
-            item.variant.save()
+        variants_data = []
+        for variant in product.variants.all():
+            variants_data.append({
+                'id': variant.id,
+                'size': variant.size,
+                'stock': variant.stock,
+            })
         
-        # Clear cart
-        cart_items.delete()
+        in_wishlist = False
+        if request.user.is_authenticated:
+            in_wishlist = Wishlist.objects.filter(
+                user=request.user, product=product
+            ).exists()
         
-        # Clear checkout intent
-        if 'checkout_intent' in request.session:
-            del request.session['checkout_intent']
-        
-        messages.success(request, 'Order placed successfully! We will confirm your order soon.')
-        return redirect('order_confirmation', order_id=order.id)
+        data = {
+            'success': True,
+            'id': product.id,
+            'name': product.name,
+            'price': str(product.price),
+            'image': product.image.url if product.image else None,
+            'variants': variants_data,
+            'in_wishlist': in_wishlist,
+        }
+        return JsonResponse(data)
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
+
+
+# ==================== AUTHENTICATION VIEWS ====================
+
+def login_view(request):
+    """Login view"""
+    if request.user.is_authenticated:
+        return redirect('home')
     
-    return render(request, 'shop/checkout.html', {
+    if request.method == 'POST':
+        form = CustomAuthenticationForm(request.POST)
+        if form.is_valid():
+            identifier = form.cleaned_data['identifier']
+            password = form.cleaned_data['password']
+            
+            # Try to authenticate with username first
+            user = authenticate(request, username=identifier, password=password)
+            
+            # If that fails, try with email
+            if user is None:
+                try:
+                    user_obj = User.objects.get(email=identifier)
+                    user = authenticate(request, username=user_obj.username, password=password)
+                except User.DoesNotExist:
+                    user = None
+            
+            if user is not None:
+                login(request, user)
+                messages.success(request, f'Welcome back, {user.first_name or user.username}!')
+                
+                # Ensure user has a cart
+                Cart.objects.get_or_create(user=user)
+                
+                next_url = request.GET.get('next')
+                if next_url:
+                    return redirect(next_url)
+                return redirect('home')
+            else:
+                messages.error(request, 'Invalid credentials. Please try again.')
+    else:
+        form = CustomAuthenticationForm()
+    
+    return render(request, 'shop/login.html', {'form': form})
+
+
+def register_view(request):
+    """Registration view"""
+    if request.user.is_authenticated:
+        return redirect('home')
+    
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Account created successfully! Welcome to MALICE.')
+            return redirect('home')
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, error)
+    else:
+        form = CustomUserCreationForm()
+    
+    return render(request, 'shop/register.html', {'form': form})
+
+
+@login_required
+def logout_view(request):
+    """Logout view"""
+    logout(request)
+    messages.success(request, 'You have been logged out successfully.')
+    return redirect('home')
+
+
+# ==================== CART VIEWS ====================
+
+@login_required
+def cart_view(request):
+    """Cart page view"""
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    cart_items = cart.items.select_related('variant__product').all()
+    
+    # Get recommended products
+    recommended_products = Product.objects.filter(
+        is_active=True
+    ).exclude(
+        id__in=[item.variant.product.id for item in cart_items]
+    ).prefetch_related('variants')[:4]
+    
+    context = {
         'cart_items': cart_items,
-        'total': total,
-        'initial_data': initial_data,
-    })
+        'cart_subtotal': cart.get_subtotal(),
+        'cart_total': cart.get_total(),
+        'recommended_products': recommended_products,
+    }
+    return render(request, 'shop/cart.html', context)
 
-def order_confirmation(request, order_id):
-    order = get_object_or_404(Order, id=order_id)
-    return render(request, 'shop/order_confirmation.html', {'order': order})
-
-def check_order_status(request, order_id):
-    """AJAX endpoint to check if order is confirmed"""
-    order = get_object_or_404(Order, id=order_id)
-    return JsonResponse({
-        'status': order.status,
-        'confirmed': order.status == 'confirmed',
-        'shipped': order.status == 'shipped',
-    })
 
 @login_required
 def cart_api(request):
-    """Cart API - requires login"""
-    cart_items = CartItem.objects.filter(user=request.user).select_related('product', 'variant')
+    """API endpoint to get cart data"""
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    items = cart.items.select_related('variant__product').all()
     
     items_data = []
-    subtotal = 0
-    
-    for item in cart_items:
-        item_total = item.total_price()
-        subtotal += item_total
+    for item in items:
         items_data.append({
             'id': item.id,
-            'name': item.product.name,
-            'size': item.variant.size if item.variant else 'N/A',
-            'price': str(item.product.price),
+            'name': item.variant.product.name,
+            'price': str(item.variant.product.price),
+            'size': item.variant.size,
             'quantity': item.quantity,
-            'total': str(item_total),
-            'image': item.product.image.url if item.product.image else None,
+            'image': item.variant.product.image.url if item.variant.product.image else None,
+            'total': str(item.get_total()),
         })
     
-    total = subtotal
+    data = {
+        'success': True,
+        'count': cart.get_total_items(),
+        'items': items_data,
+        'subtotal': str(cart.get_subtotal()),
+        'total': str(cart.get_total()),
+    }
+    return JsonResponse(data)
+
+
+@login_required
+@require_POST
+def add_to_cart(request, product_id):
+    """Add product to cart - FIXED: Now properly decreases stock"""
+    try:
+        product = Product.objects.prefetch_related('variants').get(
+            id=product_id, is_active=True
+        )
+        
+        # Get variant from request
+        variant_id = request.POST.get('variant_id')
+        size = request.POST.get('size')
+        quantity = int(request.POST.get('quantity', 1))
+        
+        # Find variant
+        if variant_id:
+            variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+        elif size:
+            variant = get_object_or_404(ProductVariant, size=size, product=product)
+        else:
+            # Use first available variant
+            variant = product.variants.filter(stock__gt=0).first()
+            if not variant:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Product is out of stock'
+                }, status=400)
+        
+        # Check stock
+        if variant.stock < quantity:
+            return JsonResponse({
+                'success': False,
+                'error': f'Only {variant.stock} items available'
+            }, status=400)
+        
+        # Get or create cart
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        # Get or create cart item
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            variant=variant,
+            defaults={'quantity': quantity}
+        )
+        
+        if not created:
+            # Update quantity
+            new_quantity = cart_item.quantity + quantity
+            if new_quantity > variant.stock:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Only {variant.stock} items available'
+                }, status=400)
+            cart_item.quantity = new_quantity
+            cart_item.save()
+        
+        # FIX: Decrease stock when adding to cart
+        variant.stock -= quantity
+        variant.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Item added to cart',
+            'cart_count': cart.get_total_items()
+        })
+        
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Product not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def quick_add_to_cart(request):
+    """Quick add product to cart - FIXED: Now properly decreases stock"""
+    try:
+        # Handle both JSON and form data
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+        else:
+            data = request.POST
+        
+        product_id = data.get('product_id')
+        variant_id = data.get('variant_id')
+        size = data.get('size')
+        quantity = int(data.get('quantity', 1))
+        
+        product = Product.objects.prefetch_related('variants').get(
+            id=product_id, is_active=True
+        )
+        
+        # Find variant
+        if variant_id:
+            variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
+        elif size:
+            variant = get_object_or_404(ProductVariant, size=size, product=product)
+        else:
+            variant = product.variants.filter(stock__gt=0).first()
+            if not variant:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'Product is out of stock'
+                }, status=400)
+        
+        # Check stock
+        if variant.stock < quantity:
+            return JsonResponse({
+                'success': False,
+                'error': f'Only {variant.stock} items available'
+            }, status=400)
+        
+        # Get or create cart
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        # Get or create cart item
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            variant=variant,
+            defaults={'quantity': quantity}
+        )
+        
+        if not created:
+            new_quantity = cart_item.quantity + quantity
+            if new_quantity > variant.stock:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Only {variant.stock} items available'
+                }, status=400)
+            cart_item.quantity = new_quantity
+            cart_item.save()
+        
+        # FIX: Decrease stock when adding to cart
+        variant.stock -= quantity
+        variant.save()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Item added to cart',
+            'cart_count': cart.get_total_items()
+        })
+        
+    except Product.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Product not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def update_cart_item(request, item_id):
+    """Update cart item quantity - FIXED: Properly manages stock adjustments"""
+    try:
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        quantity = int(request.POST.get('quantity', 1))
+        variant = cart_item.variant
+        
+        if quantity <= 0:
+            # Restore stock and delete item
+            variant.stock += cart_item.quantity
+            variant.save()
+            cart_item.delete()
+            return JsonResponse({
+                'success': True,
+                'message': 'Item removed from cart',
+                'cart_count': cart_item.cart.get_total_items()
+            })
+        
+        # Calculate difference between new and current quantity
+        quantity_diff = quantity - cart_item.quantity
+        
+        # If increasing quantity, check if enough stock
+        if quantity_diff > 0 and variant.stock < quantity_diff:
+            return JsonResponse({
+                'success': False,
+                'error': f'Only {variant.stock} more items available'
+            }, status=400)
+        
+        # FIX: Adjust stock based on quantity change
+        # If quantity_diff is positive (increasing), stock decreases
+        # If quantity_diff is negative (decreasing), stock increases
+        variant.stock -= quantity_diff
+        variant.save()
+        
+        cart_item.quantity = quantity
+        cart_item.save()
+        
+        cart = cart_item.cart
+        return JsonResponse({
+            'success': True,
+            'message': 'Cart updated',
+            'cart_count': cart.get_total_items(),
+            'item_total': str(cart_item.get_total()),
+            'cart_subtotal': str(cart.get_subtotal()),
+            'cart_total': str(cart.get_total())
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+@require_POST
+def remove_from_cart(request, item_id):
+    """Remove item from cart - FIXED: Properly restores stock before deleting"""
+    try:
+        cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+        variant = cart_item.variant
+        cart = cart_item.cart
+        
+        # FIX: Restore stock before deleting item
+        variant.stock += cart_item.quantity
+        variant.save()
+        
+        cart_item.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Item removed from cart',
+            'cart_count': cart.get_total_items(),
+            'cart_subtotal': str(cart.get_subtotal()),
+            'cart_total': str(cart.get_total())
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+# ==================== WISHLIST VIEWS ====================
+
+@login_required
+def wishlist_view(request):
+    """Wishlist page view"""
+    wishlist_items = Wishlist.objects.filter(
+        user=request.user
+    ).select_related('product').prefetch_related('product__variants')
+    
+    context = {
+        'wishlist_items': wishlist_items,
+    }
+    return render(request, 'shop/wishlist.html', context)
+
+
+@login_required
+@require_POST
+def toggle_wishlist(request, product_id):
+    """Toggle product in wishlist"""
+    try:
+        product = get_object_or_404(Product, id=product_id, is_active=True)
+        
+        wishlist_item = Wishlist.objects.filter(
+            user=request.user,
+            product=product
+        ).first()
+        
+        if wishlist_item:
+            wishlist_item.delete()
+            in_wishlist = False
+            message = 'Removed from wishlist'
+        else:
+            Wishlist.objects.create(user=request.user, product=product)
+            in_wishlist = True
+            message = 'Added to wishlist'
+        
+        # Get updated wishlist count
+        wishlist_count = Wishlist.objects.filter(user=request.user).count()
+        
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'in_wishlist': in_wishlist,
+            'wishlist_count': wishlist_count
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+@login_required
+def wishlist_api(request):
+    """API endpoint to get wishlist data"""
+    wishlist_items = Wishlist.objects.filter(
+        user=request.user
+    ).select_related('product')
+    
+    items_data = []
+    for item in wishlist_items:
+        items_data.append({
+            'id': item.id,
+            'product_id': item.product.id,
+            'name': item.product.name,
+            'price': str(item.product.price),
+            'image': item.product.image.url if item.product.image else None,
+            'slug': item.product.slug,
+        })
     
     return JsonResponse({
-        'items': items_data,
-        'subtotal': str(subtotal),
-        'total': str(total),
-        'count': sum(item['quantity'] for item in items_data)
+        'success': True,
+        'count': len(items_data),
+        'items': items_data
     })
 
-def check_variant_stock(request, variant_id):
-    """Check if variant has stock"""
-    variant = get_object_or_404(ProductVariant, id=variant_id)
-    return JsonResponse({
-        'stock': variant.stock,
-        'available': variant.stock > 0
-    })
+
+@login_required
+def move_to_cart(request, wishlist_id):
+    """Move item from wishlist to cart - FIXED: Properly manages stock"""
+    try:
+        wishlist_item = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
+        product = wishlist_item.product
+        
+        # Get first available variant
+        variant = product.variants.filter(stock__gt=0).first()
+        
+        if not variant:
+            messages.error(request, 'This product is currently out of stock.')
+            return redirect('wishlist')
+        
+        # Get or create cart
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        
+        # Check if already in cart
+        cart_item, created = CartItem.objects.get_or_create(
+            cart=cart,
+            variant=variant,
+            defaults={'quantity': 1}
+        )
+        
+        if not created:
+            # Already in cart, check if we can add more
+            if cart_item.quantity < variant.stock:
+                cart_item.quantity += 1
+                cart_item.save()
+                # Decrease stock for the additional item
+                variant.stock -= 1
+                variant.save()
+            else:
+                messages.warning(request, 'Maximum available quantity already in cart.')
+                return redirect('wishlist')
+        else:
+            # New item in cart, decrease stock
+            variant.stock -= 1
+            variant.save()
+        
+        # Remove from wishlist
+        wishlist_item.delete()
+        
+        messages.success(request, f'{product.name} moved to cart.')
+        return redirect('wishlist')
+        
+    except Exception as e:
+        messages.error(request, str(e))
+        return redirect('wishlist')
+
+
+# ==================== CHECKOUT & ORDER VIEWS ====================
+
+@login_required
+def checkout_view(request):
+    """Checkout page view"""
+    cart, created = Cart.objects.get_or_create(user=request.user)
+    cart_items = cart.items.select_related('variant__product').all()
+    
+    if not cart_items:
+        messages.warning(request, 'Your cart is empty.')
+        return redirect('cart')
+    
+    # Pre-fill form with user data
+    initial_data = {
+        'email': request.user.email,
+        'first_name': request.user.first_name,
+        'last_name': request.user.last_name,
+    }
+    
+    # Try to get profile data
+    try:
+        profile = request.user.profile
+        initial_data.update({
+            'phone': profile.phone,
+            'address': profile.address,
+            'city': profile.city,
+            'postal_code': profile.postal_code,
+            'country': profile.country,
+        })
+    except UserProfile.DoesNotExist:
+        pass
+    
+    if request.method == 'POST':
+        form = CheckoutForm(request.POST)
+        if form.is_valid():
+            # Create order
+            order = Order.objects.create(
+                user=request.user,
+                email=form.cleaned_data['email'],
+                phone=form.cleaned_data['phone'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                address=form.cleaned_data['address'],
+                apartment=form.cleaned_data.get('apartment', ''),
+                city=form.cleaned_data['city'],
+                postal_code=form.cleaned_data['postal_code'],
+                country=form.cleaned_data['country'],
+                payment_method=form.cleaned_data['payment_method'],
+                shipping_method=form.cleaned_data['shipping_method'],
+                shipping_cost=0 if cart.get_subtotal() >= 3000 else (150 if form.cleaned_data['shipping_method'] == 'standard' else 350),
+                subtotal=cart.get_subtotal(),
+                total=cart.get_total()
+            )
+            
+            # Create order items
+            for cart_item in cart_items:
+                OrderItem.objects.create(
+                    order=order,
+                    product=cart_item.variant.product,
+                    variant=cart_item.variant,
+                    product_name=cart_item.variant.product.name,
+                    variant_size=cart_item.variant.size,
+                    price=cart_item.variant.product.price,
+                    quantity=cart_item.quantity
+                )
+            
+            # Clear cart (stock already decreased when added to cart)
+            cart.items.all().delete()
+            
+            messages.success(request, 'Order placed successfully!')
+            return redirect('order_confirmation', order_number=order.order_number)
+    else:
+        form = CheckoutForm(initial=initial_data)
+    
+    context = {
+        'form': form,
+        'cart_items': cart_items,
+        'cart_subtotal': cart.get_subtotal(),
+        'cart_total': cart.get_total(),
+    }
+    return render(request, 'shop/checkout.html', context)
+
+
+@login_required
+def order_confirmation_view(request, order_number):
+    """Order confirmation page"""
+    order = get_object_or_404(Order, order_number=order_number, user=request.user)
+    
+    context = {
+        'order': order,
+    }
+    return render(request, 'shop/order_confirmation.html', context)
+
+
+@login_required
+def order_detail_view(request, order_number):
+    """Order detail page"""
+    order = get_object_or_404(
+        Order.objects.prefetch_related('items'),
+        order_number=order_number,
+        user=request.user
+    )
+    
+    context = {
+        'order': order,
+    }
+    return render(request, 'shop/order_detail.html', context)
+
+
+@login_required
+@require_POST
+def cancel_order(request, order_number):
+    """Cancel order - FIXED: Restores stock when cancelling"""
+    try:
+        order = get_object_or_404(Order, order_number=order_number, user=request.user)
+        
+        if order.can_cancel():
+            # Restore stock for all items
+            for item in order.items.all():
+                if item.variant:
+                    item.variant.stock += item.quantity
+                    item.variant.save()
+            
+            order.status = 'cancelled'
+            order.cancelled_at = timezone.now()
+            order.save()
+            
+            messages.success(request, 'Order cancelled successfully.')
+        else:
+            messages.error(request, 'This order cannot be cancelled.')
+        
+        return redirect('profile')
+        
+    except Exception as e:
+        messages.error(request, str(e))
+        return redirect('profile')
+
+
+# ==================== PROFILE VIEWS ====================
+
+@login_required
+def profile_view(request):
+    """User profile page"""
+    orders = Order.objects.filter(
+        user=request.user
+    ).prefetch_related('items').order_by('-created_at')
+    
+    # Get or create profile
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    
+    if request.method == 'POST':
+        form_type = request.POST.get('form_type')
+        
+        if form_type == 'profile':
+            form = UserProfileForm(request.POST, instance=profile)
+            if form.is_valid():
+                form.save()
+                messages.success(request, 'Profile updated successfully.')
+        
+        elif form_type == 'password':
+            password_form = PasswordChangeForm(request.POST)
+            if password_form.is_valid():
+                current_password = password_form.cleaned_data['current_password']
+                new_password = password_form.cleaned_data['new_password']
+                
+                if request.user.check_password(current_password):
+                    request.user.set_password(new_password)
+                    request.user.save()
+                    messages.success(request, 'Password changed successfully. Please log in again.')
+                    return redirect('login')
+                else:
+                    messages.error(request, 'Current password is incorrect.')
+    
+    profile_form = UserProfileForm(instance=profile)
+    password_form = PasswordChangeForm()
+    
+    context = {
+        'orders': orders,
+        'profile_form': profile_form,
+        'password_form': password_form,
+        'profile': profile,
+    }
+    return render(request, 'shop/profile.html', context)
+
+
+# ==================== UTILITY VIEWS ====================
+
+def get_cart_count(request):
+    """Get cart item count for navbar"""
+    if request.user.is_authenticated:
+        cart, created = Cart.objects.get_or_create(user=request.user)
+        return cart.get_total_items()
+    return 0
+
+
+def get_wishlist_count(request):
+    """Get wishlist item count for navbar"""
+    if request.user.is_authenticated:
+        return Wishlist.objects.filter(user=request.user).count()
+    return 0
+
+
+# Import User model at the end to avoid circular import
+from django.contrib.auth.models import User
