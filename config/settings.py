@@ -151,24 +151,28 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 # ============================================
 # EMAIL CONFIGURATION - PLUNK API (for Render)
 # ============================================
+# ============================================
+# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
+# ============================================
 if DEBUG:
     # Development - print emails to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    print("📧 Using console email backend for development")
 else:
-    # Production - Plunk API (more reliable than SMTP)
-    import requests
-    
-    # Custom email backend using Plunk API
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # We'll customize this
-    
-    # Better: Use SMTP with correct settings
+    # Production - Plunk SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = 'smtp.useplunk.com'
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = 'plunk'
     EMAIL_HOST_PASSWORD = config('PLUNK_SMTP_PASSWORD')
-    DEFAULT_FROM_EMAIL = 'noreply@useplunk.com'  # Changed to Plunk's domain
+    
+    # Get from email with fallback
+    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@useplunk.com')
+    
+    # Print config for debugging (remove after fixing)
+    print(f"📧 Email configured with FROM: {DEFAULT_FROM_EMAIL}")
+    print(f"📧 SMTP Host: {EMAIL_HOST}")
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP

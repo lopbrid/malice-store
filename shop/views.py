@@ -20,20 +20,44 @@ from django.http import HttpResponse
 from django.conf import settings
 
 def test_email_render(request):
+    from django.conf import settings
+    import os
+    
+    # Collect debug info
+    debug_info = {
+        'DEFAULT_FROM_EMAIL': settings.DEFAULT_FROM_EMAIL,
+        'EMAIL_HOST': settings.EMAIL_HOST,
+        'EMAIL_PORT': settings.EMAIL_PORT,
+        'EMAIL_USE_TLS': settings.EMAIL_USE_TLS,
+        'EMAIL_HOST_USER': settings.EMAIL_HOST_USER,
+        'PLUNK_SMTP_PASSWORD set': 'PLUNK_SMTP_PASSWORD' in os.environ,
+        'DEFAULT_FROM_EMAIL env': os.environ.get('DEFAULT_FROM_EMAIL', 'NOT SET'),
+    }
+    
     try:
         sent = send_mail(
             'Test from Render',
-            'This is a test from your Render deployment.',
+            f'This is a test from your Render deployment.\n\nDebug info:\n{debug_info}',
             settings.DEFAULT_FROM_EMAIL,
-            ['namosgi519@gmail.com'],  # Your email
+            ['namosgi519@gmail.com'],
             fail_silently=False,
         )
         if sent:
-            return HttpResponse(f"✅ Email sent! From: {settings.DEFAULT_FROM_EMAIL}")
+            return HttpResponse(f"""
+                <h1>✅ Email Sent!</h1>
+                <p>From: {settings.DEFAULT_FROM_EMAIL}</p>
+                <h2>Debug Info:</h2>
+                <pre>{debug_info}</pre>
+            """)
         else:
             return HttpResponse("❌ Email failed to send")
     except Exception as e:
-        return HttpResponse(f"❌ Error: {str(e)}")
+        return HttpResponse(f"""
+            <h1>❌ Error</h1>
+            <p>{str(e)}</p>
+            <h2>Debug Info:</h2>
+            <pre>{debug_info}</pre>
+        """)
 
 from .models import (
     Product, Category, ProductVariant, Cart, CartItem,
