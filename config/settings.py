@@ -348,3 +348,9 @@ UNFOLD = {
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# At the VERY BOTTOM of settings.py
+import sys
+if not DEBUG:
+    print("⚠️ WARNING: Production mode would have 500 error!")
+    print("Check logs for the real error.")
