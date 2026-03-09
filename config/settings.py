@@ -152,13 +152,13 @@ if DEBUG:
     # Development - print emails to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 else:
-    # Production - use SendGrid
+    # Production - Plunk SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.sendgrid.net'
-    EMAIL_PORT = 587
+    EMAIL_HOST = 'next-smtp.useplunk.com'
+    EMAIL_PORT = 2587  # STARTTLS port
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'apikey'  # This is literally the string 'apikey'
-    EMAIL_HOST_PASSWORD = config('SENDGRID_API_KEY', default='')
+    EMAIL_HOST_USER = 'plunk'  # Username is always 'plunk'
+    EMAIL_HOST_PASSWORD = config('PLUNK_SMTP_PASSWORD')
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@malice.com')
 
 # ============================================
