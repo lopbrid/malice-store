@@ -13,6 +13,8 @@ urlpatterns = [
     # Authentication
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
+    path('verify-account/', views.verify_account_view, name='verify_account'),
+    path('resend-otp/', views.resend_otp_view, name='resend_otp'),
     path('logout/', views.logout_view, name='logout'),
     
     # Cart
@@ -31,6 +33,18 @@ urlpatterns = [
     
     # Checkout & Orders
     path('checkout/', views.checkout_view, name='checkout'),
+    path('api/shipping/calculate/', views.calculate_shipping_api, name='calculate_shipping'),
+    
+    # Payment
+    path('payment/process/<str:order_number>/', views.payment_process_view, name='payment_process'),
+    path('api/payment/process/<str:order_number>/', views.process_payment_api, name='process_payment_api'),
+    
+    # Payment Webhooks
+    path('webhooks/stripe/', views.stripe_webhook, name='stripe_webhook'),
+    path('webhooks/gcash/', views.gcash_webhook, name='gcash_webhook'),
+    path('webhooks/maya/', views.maya_webhook, name='maya_webhook'),
+    
+    # Order Confirmation & Details
     path('order/confirmation/<str:order_number>/', views.order_confirmation_view, name='order_confirmation'),
     path('order/<str:order_number>/', views.order_detail_view, name='order_detail'),
     path('order/cancel/<str:order_number>/', views.cancel_order, name='cancel_order'),

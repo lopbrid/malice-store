@@ -541,5 +541,724 @@ select.form-control {
             </div>
         </form>
     </div>
+</div>{% extends 'shop/base.html' %}
+
+{% block title %}Checkout - MALICE{% endblock %}
+
+{% block extra_css %}
+<style>
+.checkout-page {
+    min-height: 100vh;
+    padding: 120px 2rem 4rem;
+    background: var(--bg);
+}
+
+.checkout-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.checkout-header {
+    margin-bottom: 2rem;
+}
+
+.checkout-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.5rem;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.checkout-header p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.checkout-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 2rem;
+}
+
+.checkout-form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.form-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.form-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.form-section h2 span {
+    width: 28px;
+    height: 28px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: #ffffff !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    outline: none;
+}
+
+.form-control::placeholder {
+    color: var(--text-dim);
+    opacity: 0.7;
+}
+
+.form-control:focus {
+    border-color: var(--text-muted);
+    background: var(--bg-elevated);
+    color: #ffffff !important;
+}
+
+.form-control:-webkit-autofill,
+.form-control:-webkit-autofill:hover,
+.form-control:-webkit-autofill:focus,
+.form-control:-webkit-autofill:active {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0 1000px var(--bg) inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
+}
+
+.radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.radio-option {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.radio-option:hover {
+    border-color: var(--text-muted);
+}
+
+.radio-option input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--text);
+    cursor: pointer;
+}
+
+.radio-option-content {
+    flex: 1;
+}
+
+.radio-option-content span {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.radio-option-content small {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-top: 0.25rem;
+}
+
+.radio-option-price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.radio-option-price.free {
+    color: var(--success);
+    font-weight: 600;
+}
+
+.promo-section {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.promo-section .form-control {
+    flex: 1;
+}
+
+.promo-btn {
+    padding: 0.875rem 1.5rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.promo-btn:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+}
+
+.order-summary {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    height: fit-content;
+    position: sticky;
+    top: 100px;
+}
+
+.order-summary h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+
+.order-items {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.order-item {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.order-item:last-child {
+    margin-bottom: 0;
+}
+
+.order-item-image {
+    width: 60px;
+    height: 80px;
+    background: var(--bg-elevated);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.order-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.order-item-info {
+    flex: 1;
+}
+
+.order-item-info h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.order-item-info p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    margin-bottom: 0.25rem;
+}
+
+.order-item-price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.summary-row span:first-child {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.summary-row span:last-child {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text);
+}
+
+.summary-row.discount span:last-child {
+    color: var(--success);
+}
+
+.summary-row.total {
+    border-top: 2px solid var(--border);
+    margin-top: 0.5rem;
+    padding-top: 1rem;
+}
+
+.summary-row.total span:first-child {
+    font-weight: 500;
+    color: var(--text);
+}
+
+.summary-row.total span:last-child {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.place-order-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    margin-top: 1.5rem;
+}
+
+.place-order-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
+}
+
+.place-order-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.secure-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+.free-shipping-banner {
+    background: rgba(34, 197, 94, 0.1);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.free-shipping-banner svg {
+    width: 24px;
+    height: 24px;
+    color: var(--success);
+}
+
+.free-shipping-banner p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--success);
+    margin: 0;
+}
+
+.verified-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+@media (max-width: 1024px) {
+    .checkout-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .order-summary {
+        position: static;
+    }
+}
+
+@media (max-width: 640px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .promo-section {
+        flex-direction: column;
+    }
+    
+    .promo-btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+    <div class="checkout-container">
+        <div class="checkout-header reveal">
+            <h1>Checkout</h1>
+            <p>Complete your order</p>
+        </div>
+        
+        {% if is_first_order and is_verified %}
+        <div class="free-shipping-banner reveal">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+            <p>Congratulations! You get FREE shipping on your first order as a verified member!</p>
+        </div>
+        {% endif %}
+        
+        <form method="post" action="{% url 'checkout' %}">
+            {% csrf_token %}
+            
+            <div class="checkout-content">
+                <div class="checkout-form-section">
+                    <!-- Contact Information -->
+                    <div class="form-section reveal">
+                        <h2><span>1</span> Contact Information</h2>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="id_email">Email Address</label>
+                                <input type="email" name="email" id="id_email" class="form-control" 
+                                       value="{{ form.email.value|default:'' }}" required
+                                       placeholder="your@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_phone">Phone Number</label>
+                                <input type="tel" name="phone" id="id_phone" class="form-control" 
+                                       value="{{ form.phone.value|default:'' }}" required
+                                       placeholder="+63 912 345 6789">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Address -->
+                    <div class="form-section reveal stagger-1">
+                        <h2><span>2</span> Shipping Address</h2>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="id_first_name">First Name</label>
+                                <input type="text" name="first_name" id="id_first_name" class="form-control" 
+                                       value="{{ form.first_name.value|default:'' }}" required
+                                       placeholder="John">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_last_name">Last Name</label>
+                                <input type="text" name="last_name" id="id_last_name" class="form-control" 
+                                       value="{{ form.last_name.value|default:'' }}" required
+                                       placeholder="Doe">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_address">Street Address</label>
+                            <input type="text" name="address" id="id_address" class="form-control" 
+                                   value="{{ form.address.value|default:'' }}" required
+                                   placeholder="123 Main Street">
+                        </div>
+                        <div class="form-group">
+                            <label for="id_apartment">Apartment, Suite, etc. (Optional)</label>
+                            <input type="text" name="apartment" id="id_apartment" class="form-control" 
+                                   value="{{ form.apartment.value|default:'' }}"
+                                   placeholder="Apt 4B">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="id_city">City</label>
+                                <input type="text" name="city" id="id_city" class="form-control" 
+                                       value="{{ form.city.value|default:'' }}" required
+                                       placeholder="Manila">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_region">State/Province</label>
+                                <input type="text" name="region" id="id_region" class="form-control" 
+                                       value="{{ form.region.value|default:'' }}"
+                                       placeholder="Metro Manila">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="id_postal_code">Postal Code</label>
+                                <input type="text" name="postal_code" id="id_postal_code" class="form-control" 
+                                       value="{{ form.postal_code.value|default:'' }}" required
+                                       placeholder="1000">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_country">Country</label>
+                                <select name="country" id="id_country" class="form-control" required>
+                                    <option value="PH" {% if form.country.value == 'PH' %}selected{% endif %}>Philippines</option>
+                                    <option value="US" {% if form.country.value == 'US' %}selected{% endif %}>United States</option>
+                                    <option value="SG" {% if form.country.value == 'SG' %}selected{% endif %}>Singapore</option>
+                                    <option value="JP" {% if form.country.value == 'JP' %}selected{% endif %}>Japan</option>
+                                    <option value="OTHER" {% if form.country.value == 'OTHER' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Shipping Method -->
+                    <div class="form-section reveal stagger-2">
+                        <h2><span>3</span> Shipping Method</h2>
+                        <div class="radio-group" id="shipping-methods">
+                            {% for option in shipping_options %}
+                            <label class="radio-option">
+                                <input type="radio" name="shipping_method" value="{{ option.method.method_type }}" 
+                                       {% if forloop.first %}checked{% endif %}
+                                       data-cost="{{ option.cost }}"
+                                       onchange="updateShippingCost(this)">
+                                <div class="radio-option-content">
+                                    <span>{{ option.method.name }}</span>
+                                    <small>{{ option.method.get_estimated_delivery }}</small>
+                                </div>
+                                <span class="radio-option-price {% if option.free_shipping %}free{% endif %}">
+                                    {% if option.free_shipping %}FREE{% else %}₱{{ option.cost|floatformat:2 }}{% endif %}
+                                </span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Method -->
+                    <div class="form-section reveal stagger-3">
+                        <h2><span>4</span> Payment Method</h2>
+                        <div class="radio-group">
+                            <label class="radio-option">
+                                <input type="radio" name="payment_method" value="cod"
+                                       {% if form.payment_method.value == 'cod' or not form.payment_method.value %}checked{% endif %}>
+                                <div class="radio-option-content">
+                                    <span>Cash on Delivery</span>
+                                    <small>Pay when you receive your order</small>
+                                </div>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="payment_method" value="gcash"
+                                       {% if form.payment_method.value == 'gcash' %}checked{% endif %}>
+                                <div class="radio-option-content">
+                                    <span>GCash</span>
+                                    <small>Pay with your GCash wallet</small>
+                                </div>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="payment_method" value="maya"
+                                       {% if form.payment_method.value == 'maya' %}checked{% endif %}>
+                                <div class="radio-option-content">
+                                    <span>Maya/PayMaya</span>
+                                    <small>Pay with your Maya wallet</small>
+                                </div>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="payment_method" value="card"
+                                       {% if form.payment_method.value == 'card' %}checked{% endif %}>
+                                <div class="radio-option-content">
+                                    <span>Credit/Debit Card</span>
+                                    <small>Secure payment with your card</small>
+                                </div>
+                            </label>
+                            <label class="radio-option">
+                                <input type="radio" name="payment_method" value="paypal"
+                                       {% if form.payment_method.value == 'paypal' %}checked{% endif %}>
+                                <div class="radio-option-content">
+                                    <span>PayPal</span>
+                                    <small>Pay with your PayPal account</small>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Promo Code -->
+                    <div class="form-section reveal stagger-3">
+                        <h2><span>5</span> Promo Code</h2>
+                        <div class="promo-section">
+                            <input type="text" name="promotion_code" id="id_promotion_code" class="form-control" 
+                                   placeholder="Enter promo code (optional)">
+                            <button type="button" class="promo-btn" onclick="applyPromoCode()">Apply</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="order-summary reveal stagger-2">
+                    <h2>Order Summary</h2>
+                    
+                    <div class="order-items">
+                        {% for item in cart_items %}
+                        <div class="order-item">
+                            <div class="order-item-image">
+                                {% if item.variant.product.image %}
+                                <img src="{{ item.variant.product.image.url }}" alt="{{ item.variant.product.name }}">
+                                {% endif %}
+                            </div>
+                            <div class="order-item-info">
+                                <h4>{{ item.variant.product.name }}</h4>
+                                <p>Size: {{ item.variant.size }} | Qty: {{ item.quantity }}</p>
+                                <span class="order-item-price">₱{{ item.get_total|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="summary-row">
+                        <span>Subtotal</span>
+                        <span id="subtotal">₱{{ cart_subtotal|floatformat:2 }}</span>
+                    </div>
+                    <div class="summary-row" id="discount-row" style="display: none;">
+                        <span>Discount</span>
+                        <span id="discount-amount">-₱0.00</span>
+                    </div>
+                    <div class="summary-row">
+                        <span>Shipping</span>
+                        <span id="shipping-cost">₱150.00</span>
+                    </div>
+                    <div class="summary-row total">
+                        <span>Total</span>
+                        <span id="total-amount">₱{{ cart_total|floatformat:2 }}</span>
+                    </div>
+                    
+                    <button type="submit" class="place-order-btn">Place Order</button>
+                    
+                    <div class="secure-badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                        Secure checkout - SSL Encrypted
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
+
+<script>
+let currentShippingCost = 150;
+let currentDiscount = 0;
+const subtotal = parseFloat('{{ cart_subtotal }}');
+
+function updateShippingCost(radio) {
+    const cost = parseFloat(radio.dataset.cost);
+    currentShippingCost = cost;
+    updateTotals();
+    
+    // Update shipping display
+    const shippingDisplay = document.getElementById('shipping-cost');
+    if (cost === 0) {
+        shippingDisplay.textContent = 'FREE';
+        shippingDisplay.style.color = 'var(--success)';
+    } else {
+        shippingDisplay.textContent = '₱' + cost.toFixed(2);
+        shippingDisplay.style.color = 'var(--text)';
+    }
+}
+
+function updateTotals() {
+    const total = subtotal + currentShippingCost - currentDiscount;
+    document.getElementById('total-amount').textContent = '₱' + total.toFixed(2);
+}
+
+function applyPromoCode() {
+    const code = document.getElementById('id_promotion_code').value;
+    if (!code) {
+        showToast('Please enter a promo code', 'warning');
+        return;
+    }
+    
+    // For now, just show a message - actual validation happens server-side
+    showToast('Promo code will be validated at checkout', 'info');
+}
+
+// Initialize totals on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const selectedShipping = document.querySelector('input[name="shipping_method"]:checked');
+    if (selectedShipping) {
+        updateShippingCost(selectedShipping);
+    }
+});
+</script>
+{% endblock %}
+
 {% endblock %}

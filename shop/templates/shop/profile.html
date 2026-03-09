@@ -26,23 +26,16 @@
     margin-bottom: 0.5rem;
 }
 
-.profile-header p {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    color: var(--text-muted);
-}
-
 .profile-content {
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 280px 1fr;
     gap: 2rem;
 }
 
-/* Sidebar */
 .profile-sidebar {
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1rem;
 }
 
 .profile-card {
@@ -50,296 +43,114 @@
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.5rem;
-}
-
-.profile-card h3 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    margin-bottom: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.profile-info-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    margin-bottom: 1rem;
-}
-
-.profile-info-item:last-child {
-    margin-bottom: 0;
-}
-
-.profile-info-item label {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.profile-info-item span {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.9rem;
-    color: var(--text);
-}
-
-/* Tabs */
-.profile-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.tab-btn {
-    padding: 1rem 1.5rem;
-    background: none;
-    border: none;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-}
-
-.tab-btn:hover {
-    color: var(--text);
-}
-
-.tab-btn.active {
-    color: var(--text);
-}
-
-.tab-btn.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: var(--text);
-}
-
-.tab-content {
-    display: none;
-}
-
-.tab-content.active {
-    display: block;
-}
-
-/* Orders */
-.orders-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.order-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.order-card:hover {
-    border-color: var(--border-light);
-}
-
-.order-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1rem;
-    padding-bottom: 1rem;
-    border-bottom: 1px solid var(--border);
-}
-
-.order-info h4 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-    margin-bottom: 0.25rem;
-}
-
-.order-info p {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.8rem;
-    color: var(--text-dim);
-}
-
-.order-status {
-    display: inline-block;
-    padding: 0.4rem 0.875rem;
-    border-radius: 20px;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-
-.order-status.pending {
-    background: rgba(251, 191, 36, 0.15);
-    color: #fbbf24;
-}
-
-.order-status.confirmed {
-    background: rgba(96, 165, 250, 0.15);
-    color: #60a5fa;
-}
-
-.order-status.shipped {
-    background: rgba(192, 132, 252, 0.15);
-    color: #c084fc;
-}
-
-.order-status.delivered {
-    background: rgba(34, 197, 94, 0.15);
-    color: #22c55e;
-}
-
-.order-status.cancelled {
-    background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
-}
-
-.order-items {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    margin-bottom: 1rem;
-}
-
-.order-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-}
-
-.order-item span:first-child {
-    font-family: 'Inter', sans-serif;
-    font-size: 0.85rem;
-    color: var(--text);
-}
-
-.order-item span:last-child {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-
-.order-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-}
-
-.order-total {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.order-actions {
-    display: flex;
-    gap: 0.75rem;
-}
-
-.order-btn {
-    padding: 0.5rem 1rem;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-transform: uppercase;
-    text-decoration: none;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-}
-
-.order-btn.primary {
-    background: var(--text);
-    color: var(--bg);
-}
-
-.order-btn.primary:hover {
-    transform: translateY(-1px);
-}
-
-.order-btn.secondary {
-    background: transparent;
-    color: var(--text-muted);
-    border: 1px solid var(--border);
-}
-
-.order-btn.secondary:hover {
-    border-color: var(--text-muted);
-    color: var(--text);
-}
-
-.order-btn.danger {
-    background: transparent;
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-}
-
-.order-btn.danger:hover {
-    background: rgba(239, 68, 68, 0.1);
-}
-
-/* Empty State */
-.empty-state {
     text-align: center;
-    padding: 4rem 2rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
 }
 
-.empty-state-icon {
+.profile-avatar {
     width: 80px;
     height: 80px;
-    margin: 0 auto 1.5rem;
-    border: 2px solid var(--border);
+    background: var(--bg-elevated);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin: 0 auto 1rem;
+    border: 2px solid var(--border);
+}
+
+.profile-avatar svg {
+    width: 40px;
+    height: 40px;
     color: var(--text-dim);
 }
 
-.empty-state h3 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+.profile-card h3 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
 }
 
-.empty-state p {
+.profile-card p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.verification-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.verification-status.verified {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.verification-status.pending {
+    background: rgba(251, 191, 36, 0.15);
+    color: #fbbf24;
+}
+
+.profile-nav {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.profile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    color: var(--text-muted);
+    text-decoration: none;
     font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
-    color: var(--text-muted);
-    margin-bottom: 1.5rem;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid var(--border);
 }
 
-/* Forms */
-.form-section {
+.profile-nav-item:last-child {
+    border-bottom: none;
+}
+
+.profile-nav-item:hover,
+.profile-nav-item.active {
+    background: var(--bg-elevated);
+    color: var(--text);
+}
+
+.profile-nav-item svg {
+    width: 20px;
+    height: 20px;
+}
+
+.profile-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.profile-section {
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
 }
 
-.form-section h3 {
+.profile-section h2 {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.1rem;
-    margin-bottom: 1.25rem;
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-row {
@@ -357,7 +168,7 @@
 
 .form-group label {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--text-dim);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -386,17 +197,8 @@
     -webkit-box-shadow: 0 0 0 1000px var(--bg) inset !important;
 }
 
-select.form-control {
-    cursor: pointer;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 1rem center;
-    padding-right: 2.5rem;
-}
-
-.submit-btn {
-    padding: 0.875rem 1.5rem;
+.save-btn {
+    padding: 0.875rem 2rem;
     background: var(--text);
     color: var(--bg);
     border: none;
@@ -405,48 +207,83 @@ select.form-control {
     font-weight: 600;
     text-transform: uppercase;
     cursor: pointer;
-    border-radius: 8px;
+    border-radius: 10px;
     transition: all 0.3s ease;
 }
 
-.submit-btn:hover {
+.save-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.15);
 }
 
-@media (max-width: 1024px) {
+.orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+}
+
+.order-item:hover {
+    border-color: var(--text-muted);
+}
+
+.order-info h4 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.order-info p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    color: var(--text-dim);
+}
+
+.order-status {
+    padding: 0.375rem 0.75rem;
+    border-radius: 20px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.order-status.pending { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+.order-status.confirmed { background: rgba(96, 165, 250, 0.15); color: #60a5fa; }
+.order-status.shipped { background: rgba(192, 132, 252, 0.15); color: #c084fc; }
+.order-status.delivered { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.order-status.cancelled { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+
+.empty-orders {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.empty-orders p {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
     .profile-content {
         grid-template-columns: 1fr;
     }
     
-    .profile-sidebar {
-        order: 2;
-    }
-}
-
-@media (max-width: 640px) {
     .form-row {
         grid-template-columns: 1fr;
-    }
-    
-    .order-header {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .order-footer {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: flex-start;
-    }
-    
-    .profile-tabs {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-    
-    .tab-btn {
-        white-space: nowrap;
     }
 }
 </style>
@@ -457,202 +294,184 @@ select.form-control {
     <div class="profile-container">
         <div class="profile-header reveal">
             <h1>My Account</h1>
-            <p>Manage your profile, orders, and preferences</p>
+            <p>Manage your profile and orders</p>
         </div>
         
         <div class="profile-content">
-            <!-- Sidebar -->
-            <div class="profile-sidebar reveal stagger-1">
+            <div class="profile-sidebar reveal">
                 <div class="profile-card">
-                    <h3>Profile Info</h3>
-                    <div class="profile-info-item">
-                        <label>Name</label>
-                        <span>{{ user.first_name }} {{ user.last_name }}</span>
+                    <div class="profile-avatar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
                     </div>
-                    <div class="profile-info-item">
-                        <label>Email</label>
-                        <span>{{ user.email }}</span>
-                    </div>
-                    <div class="profile-info-item">
-                        <label>Username</label>
-                        <span>{{ user.username }}</span>
-                    </div>
-                    <div class="profile-info-item">
-                        <label>Member Since</label>
-                        <span>{{ user.date_joined|date:"F Y" }}</span>
-                    </div>
+                    <h3>{{ user.first_name|default:user.username }}</h3>
+                    <p>{{ user.email }}</p>
+                    {% if profile.is_fully_verified %}
+                    <span class="verification-status verified">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        Verified
+                    </span>
+                    {% else %}
+                    <span class="verification-status pending">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        Verification Required
+                    </span>
+                    {% endif %}
                 </div>
                 
-                <div class="profile-card">
-                    <h3>Order Summary</h3>
-                    <div class="profile-info-item">
-                        <label>Total Orders</label>
-                        <span>{{ orders|length }}</span>
-                    </div>
-                    <div class="profile-info-item">
-                        <label>Pending</label>
-                        <span>{{ orders|dictsortreversed:"status"|length }}</span>
-                    </div>
+                <div class="profile-nav">
+                    <a href="#profile" class="profile-nav-item active">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                        Profile
+                    </a>
+                    <a href="{% url 'wishlist' %}" class="profile-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                        </svg>
+                        Wishlist
+                    </a>
+                    <a href="{% url 'cart' %}" class="profile-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                            <line x1="3" y1="6" x2="21" y2="6"></line>
+                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                        </svg>
+                        Cart
+                    </a>
+                    <a href="{% url 'logout' %}" class="profile-nav-item">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                        Logout
+                    </a>
                 </div>
             </div>
             
-            <!-- Main Content -->
-            <div class="reveal stagger-2">
-                <div class="profile-tabs">
-                    <button class="tab-btn active" onclick="showTab('orders')">My Orders</button>
-                    <button class="tab-btn" onclick="showTab('profile')">Edit Profile</button>
-                    <button class="tab-btn" onclick="showTab('password')">Change Password</button>
+            <div class="profile-main">
+                <!-- Profile Information -->
+                <div class="profile-section reveal stagger-1">
+                    <h2>Profile Information</h2>
+                    <form method="post" action="{% url 'profile' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="form_type" value="profile">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="id_phone">Phone Number</label>
+                                <input type="tel" name="phone" id="id_phone" class="form-control" 
+                                       value="{{ profile_form.phone.value|default:'' }}"
+                                       placeholder="+63 912 345 6789">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_city">City</label>
+                                <input type="text" name="city" id="id_city" class="form-control" 
+                                       value="{{ profile_form.city.value|default:'' }}"
+                                       placeholder="Manila">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_address">Address</label>
+                            <textarea name="address" id="id_address" class="form-control" rows="3"
+                                      placeholder="Enter your address">{{ profile_form.address.value|default:'' }}</textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="id_region">State/Province</label>
+                                <input type="text" name="region" id="id_region" class="form-control" 
+                                       value="{{ profile_form.region.value|default:'' }}"
+                                       placeholder="Metro Manila">
+                            </div>
+                            <div class="form-group">
+                                <label for="id_postal_code">Postal Code</label>
+                                <input type="text" name="postal_code" id="id_postal_code" class="form-control" 
+                                       value="{{ profile_form.postal_code.value|default:'' }}"
+                                       placeholder="1000">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="id_country">Country</label>
+                            <select name="country" id="id_country" class="form-control">
+                                <option value="PH" {% if profile_form.country.value == 'PH' %}selected{% endif %}>Philippines</option>
+                                <option value="US" {% if profile_form.country.value == 'US' %}selected{% endif %}>United States</option>
+                                <option value="SG" {% if profile_form.country.value == 'SG' %}selected{% endif %}>Singapore</option>
+                                <option value="JP" {% if profile_form.country.value == 'JP' %}selected{% endif %}>Japan</option>
+                                <option value="OTHER" {% if profile_form.country.value == 'OTHER' %}selected{% endif %}>Other</option>
+                            </select>
+                        </div>
+                        <div class="form-check" style="margin-bottom: 1rem;">
+                            <input type="checkbox" name="newsletter_subscribed" id="id_newsletter_subscribed" class="form-check-input"
+                                   {% if profile_form.newsletter_subscribed.value %}checked{% endif %}>
+                            <label for="id_newsletter_subscribed" class="form-check-label">Subscribe to newsletter</label>
+                        </div>
+                        <button type="submit" class="save-btn">Save Changes</button>
+                    </form>
                 </div>
                 
-                <!-- Orders Tab -->
-                <div id="orders-tab" class="tab-content active">
+                <!-- Order History -->
+                <div class="profile-section reveal stagger-2">
+                    <h2>Order History</h2>
                     {% if orders %}
                     <div class="orders-list">
                         {% for order in orders %}
-                        <div class="order-card">
-                            <div class="order-header">
-                                <div class="order-info">
-                                    <h4>Order #{{ order.order_number }}</h4>
-                                    <p>{{ order.created_at|date:"F j, Y" }} &bull; {{ order.items.count }} item{{ order.items.count|pluralize }}</p>
-                                </div>
+                        <a href="{{ order.get_absolute_url }}" class="order-item">
+                            <div class="order-info">
+                                <h4>Order #{{ order.order_number }}</h4>
+                                <p>{{ order.created_at|date:"F d, Y" }} • {{ order.items.count }} item{% if order.items.count > 1 %}s{% endif %}</p>
+                            </div>
+                            <div style="text-align: right;">
                                 <span class="order-status {{ order.status }}">{{ order.get_status_display }}</span>
+                                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; margin-top: 0.25rem;">₱{{ order.total|floatformat:2 }}</p>
                             </div>
-                            
-                            <div class="order-items">
-                                {% for item in order.items.all|slice:":3" %}
-                                <div class="order-item">
-                                    <span>{{ item.product_name }} ({{ item.variant_size }}) x{{ item.quantity }}</span>
-                                    <span>₱{{ item.get_total|floatformat:2 }}</span>
-                                </div>
-                                {% endfor %}
-                                {% if order.items.count > 3 %}
-                                <div class="order-item">
-                                    <span style="color:var(--text-dim);">+ {{ order.items.count|add:"-3" }} more item{{ order.items.count|add:"-3"|pluralize }}</span>
-                                </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="order-footer">
-                                <span class="order-total">Total: ₱{{ order.total|floatformat:2 }}</span>
-                                <div class="order-actions">
-                                    <a href="{% url 'order_detail' order.order_number %}" class="order-btn primary">View Details</a>
-                                    {% if order.can_cancel %}
-                                    <form method="post" action="{% url 'cancel_order' order.order_number %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to cancel this order?');">
-                                        {% csrf_token %}
-                                        <button type="submit" class="order-btn danger">Cancel</button>
-                                    </form>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+                        </a>
                         {% endfor %}
                     </div>
                     {% else %}
-                    <div class="empty-state">
-                        <div class="empty-state-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-                                <path d="M3 6h18"></path>
-                                <path d="M16 10a4 4 0 0 1-8 0"></path>
-                            </svg>
-                        </div>
-                        <h3>No orders yet</h3>
-                        <p>Start shopping to see your orders here</p>
-                        <a href="{% url 'product_list' %}" class="order-btn primary" style="display:inline-block;margin-top:1rem;">Shop Now</a>
+                    <div class="empty-orders">
+                        <p>No orders yet. Start shopping to see your orders here.</p>
                     </div>
                     {% endif %}
                 </div>
                 
-                <!-- Profile Tab -->
-                <div id="profile-tab" class="tab-content">
-                    <form method="post" class="form-section">
-                        {% csrf_token %}
-                        <input type="hidden" name="form_type" value="profile">
-                        <h3>Edit Profile</h3>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Phone Number</label>
-                                <input type="tel" name="phone" class="form-control" value="{{ profile_form.phone.value|default:'' }}" placeholder="+63 912 345 6789">
-                            </div>
-                            <div class="form-group">
-                                <label>City</label>
-                                <input type="text" name="city" class="form-control" value="{{ profile_form.city.value|default:'' }}" placeholder="Manila">
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label>Address</label>
-                            <textarea name="address" class="form-control" rows="3" placeholder="Enter your full address">{{ profile_form.address.value|default:'' }}</textarea>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label>Postal Code</label>
-                                <input type="text" name="postal_code" class="form-control" value="{{ profile_form.postal_code.value|default:'' }}" placeholder="1000">
-                            </div>
-                            <div class="form-group">
-                                <label>Country</label>
-                                <select name="country" class="form-control">
-                                    <option value="PH" {% if profile_form.country.value == 'PH' %}selected{% endif %}>Philippines</option>
-                                    <option value="US" {% if profile_form.country.value == 'US' %}selected{% endif %}>United States</option>
-                                    <option value="SG" {% if profile_form.country.value == 'SG' %}selected{% endif %}>Singapore</option>
-                                    <option value="JP" {% if profile_form.country.value == 'JP' %}selected{% endif %}>Japan</option>
-                                    <option value="OTHER" {% if profile_form.country.value == 'OTHER' %}selected{% endif %}>Other</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                        <button type="submit" class="submit-btn">Save Changes</button>
-                    </form>
-                </div>
-                
-                <!-- Password Tab -->
-                <div id="password-tab" class="tab-content">
-                    <form method="post" class="form-section">
+                <!-- Change Password -->
+                <div class="profile-section reveal stagger-3">
+                    <h2>Change Password</h2>
+                    <form method="post" action="{% url 'profile' %}">
                         {% csrf_token %}
                         <input type="hidden" name="form_type" value="password">
-                        <h3>Change Password</h3>
-                        
                         <div class="form-group">
-                            <label>Current Password</label>
-                            <input type="password" name="current_password" class="form-control" placeholder="Enter current password" required>
+                            <label for="id_current_password">Current Password</label>
+                            <input type="password" name="current_password" id="id_current_password" class="form-control" 
+                                   placeholder="Enter current password" required>
                         </div>
-                        
                         <div class="form-row">
                             <div class="form-group">
-                                <label>New Password</label>
-                                <input type="password" name="new_password" class="form-control" placeholder="Enter new password" required>
+                                <label for="id_new_password">New Password</label>
+                                <input type="password" name="new_password" id="id_new_password" class="form-control" 
+                                       placeholder="Enter new password" required>
                             </div>
                             <div class="form-group">
-                                <label>Confirm New Password</label>
-                                <input type="password" name="confirm_password" class="form-control" placeholder="Confirm new password" required>
+                                <label for="id_confirm_password">Confirm Password</label>
+                                <input type="password" name="confirm_password" id="id_confirm_password" class="form-control" 
+                                       placeholder="Confirm new password" required>
                             </div>
                         </div>
-                        
-                        <button type="submit" class="submit-btn">Update Password</button>
+                        <button type="submit" class="save-btn">Update Password</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-<script>
-function showTab(tabName) {
-    // Update tab buttons
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.textContent.toLowerCase().includes(tabName)) {
-            btn.classList.add('active');
-        }
-    });
-    
-    // Update tab content
-    document.querySelectorAll('.tab-content').forEach(content => {
-        content.classList.remove('active');
-    });
-    document.getElementById(tabName + '-tab').classList.add('active');
-}
-</script>
 {% endblock %}

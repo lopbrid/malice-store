@@ -3,20 +3,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>{% block title %}MALICE{% endblock %}</title>
     
-    <!-- Fonts -->
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
-    <!-- CSRF Token for AJAX -->
+    <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token }}">
     
     <style>
         /* ============================================
-           CSS VARIABLES - 2026 DARK MODE AESTHETIC
+           CSS VARIABLES - DARK MODE AESTHETIC
            ============================================ */
         :root {
             --bg: #0a0a0a;
@@ -47,15 +47,18 @@
         
         html {
             scroll-behavior: smooth;
+            -webkit-text-size-adjust: 100%;
         }
         
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg);
             color: var(--text);
             line-height: 1.6;
             overflow-x: hidden;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
         /* Grain Overlay */
@@ -79,9 +82,9 @@
                     rgba(255, 255, 255, 0.05) 0%, transparent 60%),
                 radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
         }
-                
+        
         /* ============================================
-           NAVIGATION
+           NAVIGATION - MOBILE RESPONSIVE
            ============================================ */
         .navbar {
             position: fixed;
@@ -89,7 +92,7 @@
             left: 0;
             right: 0;
             z-index: 1000;
-            padding: 1rem 2rem;
+            padding: 1rem;
             transition: all 0.4s var(--ease-out-expo);
             background: transparent;
         }
@@ -98,10 +101,6 @@
             background: rgba(10, 10, 10, 0.95);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border);
-        }
-        
-        .navbar.hidden {
-            transform: translateY(-100%);
         }
         
         .nav-container {
@@ -119,6 +118,7 @@
             color: var(--text);
             cursor: pointer;
             padding: 0.5rem;
+            z-index: 1001;
         }
         
         .logo {
@@ -213,79 +213,6 @@
             padding: 0 4px;
         }
         
-        /* User Dropdown */
-        #userMenuContainer {
-            position: relative;
-        }
-        
-        #userDropdown {
-            position: absolute;
-            top: calc(100% + 0.5rem);
-            right: 0;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            min-width: 200px;
-            opacity: 0;
-            visibility: hidden;
-            transform: translateY(-10px) scale(0.95);
-            transition: all 0.3s var(--ease-out-expo);
-            z-index: 1001;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-        }
-        
-        #userDropdown.active {
-            opacity: 1;
-            visibility: visible;
-            transform: translateY(0) scale(1);
-        }
-        
-        .user-dropdown-header {
-            padding: 1rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .user-dropdown-header p {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.9rem;
-            color: var(--text);
-            margin: 0;
-            font-weight: 600;
-        }
-        
-        .user-dropdown-header span {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            display: block;
-            margin-top: 0.25rem;
-        }
-        
-        .user-dropdown-item {
-            display: block;
-            padding: 0.875rem 1rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.85rem;
-            transition: all 0.2s ease;
-        }
-        
-        .user-dropdown-item:hover {
-            background: var(--bg-hover);
-            color: var(--text);
-        }
-        
-        .user-dropdown-item.logout {
-            color: var(--error);
-            border-top: 1px solid var(--border);
-        }
-        
-        .user-dropdown-item.logout:hover {
-            background: rgba(239, 68, 68, 0.1);
-        }
-        
         /* Mobile Menu */
         .mobile-menu {
             position: fixed;
@@ -334,406 +261,35 @@
             border-bottom: 1px solid var(--border);
         }
         
-        /* Search Overlay */
-        .search-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(20px);
-            z-index: 2000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s var(--ease-smooth);
-        }
-        
-        .search-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .search-close {
-            position: absolute;
-            top: 2rem;
-            right: 2rem;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 2rem;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-        
-        .search-close:hover {
-            color: var(--text);
-        }
-        
-        .search-container {
-            width: 100%;
-            max-width: 600px;
-            padding: 2rem;
-        }
-        
-        .search-label {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-            display: block;
-            margin-bottom: 1rem;
-        }
-        
-        .search-input-wrapper {
-            position: relative;
-        }
-        
-        .search-input {
-            width: 100%;
-            background: none;
-            border: none;
-            border-bottom: 2px solid var(--border);
-            padding: 1rem 0;
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 3rem;
-            color: var(--text);
-            outline: none;
-            transition: border-color 0.3s ease;
-        }
-        
-        .search-input:focus {
-            border-color: var(--text);
-        }
-        
-        .search-input::placeholder {
-            color: var(--text-dim);
-        }
-        
-        .search-hint {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-top: 1rem;
-        }
-        
-        /* Cart Sidebar */
-        .cart-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            z-index: 1500;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s var(--ease-smooth);
-        }
-        
-        .cart-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .cart-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 100%;
-            max-width: 450px;
-            height: 100vh;
-            background: var(--bg-card);
-            border-left: 1px solid var(--border);
-            z-index: 1501;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.4s var(--ease-out-expo);
-        }
-        
-        .cart-sidebar.active {
-            transform: translateX(0);
-        }
-        
-        .cart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .cart-header h2 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.25rem;
-            letter-spacing: 0.02em;
-            font-weight: 400;
-        }
-        
-        .close-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 0.5rem;
-            transition: color 0.3s ease;
-        }
-        
-        .close-btn:hover {
-            color: var(--text);
-        }
-        
-        .cart-items {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-        
-        .empty-cart {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: var(--text-dim);
-            text-align: center;
-        }
-        
-        .empty-cart-icon {
-            width: 80px;
-            height: 80px;
-            border: 1px solid var(--border);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1rem;
-        }
-        
-        .cart-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
-            background: var(--bg-elevated);
-            border-radius: 12px;
-            margin-bottom: 0.75rem;
-        }
-        
-        .cart-item-img {
-            width: 70px;
-            height: 90px;
-            background: var(--bg);
-            border-radius: 8px;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        
-        .cart-item-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .cart-item-info {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-        
-        .cart-item-name {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: var(--text);
-        }
-        
-        .cart-item-variant {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            margin-top: 0.25rem;
-        }
-        
-        .cart-item-price {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-        }
-        
-        .cart-item-remove {
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-family: 'Inter', sans-serif;
-            font-size: 0.75rem;
-            cursor: pointer;
-            padding: 0;
-            text-decoration: underline;
-            transition: color 0.2s ease;
-            align-self: flex-start;
-        }
-        
-        .cart-item-remove:hover {
-            color: var(--error);
-        }
-        
-        .cart-footer {
-            padding: 1.5rem;
-            border-top: 1px solid var(--border);
-            background: var(--bg-elevated);
-        }
-        
-        .cart-subtotal,
-        .cart-total {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-        }
-        
-        .cart-subtotal span:first-child,
-        .cart-total span:first-child {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
-            color: var(--text-muted);
-        }
-        
-        .cart-subtotal span:last-child {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.9rem;
-            color: var(--text);
-        }
-        
-        .cart-total {
-            margin-top: 0.75rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid var(--border);
-        }
-        
-        .cart-total span:first-child {
-            font-weight: 500;
-            color: var(--text);
-        }
-        
-        .cart-total span:last-child {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--text);
-        }
-        
-        .checkout-btn {
-            display: block;
-            width: 100%;
-            padding: 1rem;
-            background: var(--text);
-            color: var(--bg);
-            text-align: center;
-            text-decoration: none;
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.02em;
-            border-radius: 10px;
-            margin-top: 1rem;
-            transition: all 0.3s ease;
-        }
-        
-        .checkout-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(255, 255, 255, 0.15);
-        }
-        
-        .checkout-btn.secondary {
-            background: transparent;
-            color: var(--text);
-            border: 1px solid var(--border);
-        }
-        
-        .checkout-btn.secondary:hover {
-            border-color: var(--text-muted);
-            background: var(--bg-hover);
-        }
-        
-        /* Wishlist Sidebar */
-        .wishlist-sidebar {
-            position: fixed;
-            top: 0;
-            right: 0;
-            width: 100%;
-            max-width: 400px;
-            height: 100vh;
-            background: var(--bg-card);
-            border-left: 1px solid var(--border);
-            z-index: 1502;
-            display: flex;
-            flex-direction: column;
-            transform: translateX(100%);
-            transition: transform 0.4s var(--ease-out-expo);
-        }
-        
-        .wishlist-sidebar.active {
-            transform: translateX(0);
-        }
-        
-        .wishlist-items {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-        }
-        
-        .wishlist-item {
-            display: flex;
-            gap: 1rem;
-            padding: 1rem;
-            background: var(--bg-elevated);
-            border-radius: 12px;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .wishlist-item:hover {
-            background: var(--bg-hover);
-        }
-        
-        .wishlist-item-img {
-            width: 60px;
-            height: 80px;
-            background: var(--bg);
-            border-radius: 8px;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-        
-        .wishlist-item-img img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .wishlist-item-info {
-            flex: 1;
-        }
-        
-        .wishlist-item-name {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.85rem;
-            font-weight: 500;
-            color: var(--text);
-        }
-        
-        .wishlist-item-price {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
+        /* ============================================
+           MOBILE RESPONSIVE NAVIGATION
+           ============================================ */
+        @media (max-width: 768px) {
+            .menu-toggle {
+                display: flex;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+            
+            .logo {
+                font-size: 1.5rem;
+            }
+            
+            .icon-btn {
+                width: 36px;
+                height: 36px;
+            }
+            
+            .icon-btn svg {
+                width: 20px;
+                height: 20px;
+            }
         }
         
         /* ============================================
-           FOOTER
+           FOOTER - MOBILE RESPONSIVE
            ============================================ */
         .footer {
             padding: 4rem 2rem 2rem;
@@ -748,6 +304,13 @@
             grid-template-columns: 2fr repeat(3, 1fr);
             gap: 3rem;
             margin-bottom: 3rem;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
         }
         
         .footer-brand h3 {
@@ -800,6 +363,13 @@
             gap: 1rem;
         }
         
+        @media (max-width: 768px) {
+            .footer-bottom {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
         .footer-bottom p {
             font-family: 'Inter', sans-serif;
             font-size: 0.8rem;
@@ -813,6 +383,12 @@
             text-decoration: none;
             margin-left: 1.5rem;
             transition: color 0.2s ease;
+        }
+        
+        @media (max-width: 768px) {
+            .footer-bottom a {
+                margin: 0 0.75rem;
+            }
         }
         
         .footer-bottom a:hover {
@@ -832,10 +408,18 @@
             flex-direction: column;
             gap: 0.5rem;
             pointer-events: none;
+            width: 90%;
+            max-width: 400px;
+        }
+        
+        @media (max-width: 768px) {
+            #toastContainer {
+                top: 80px;
+            }
         }
         
         .toast {
-            padding: 1rem 2rem;
+            padding: 1rem 1.5rem;
             border-radius: 10px;
             font-family: 'Space Grotesk', sans-serif;
             font-size: 0.9rem;
@@ -863,85 +447,16 @@
             color: #f87171;
         }
         
+        .toast-warning {
+            background: rgba(251, 191, 36, 0.15);
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            color: #fbbf24;
+        }
+        
         .toast-info {
             background: rgba(59, 130, 246, 0.15);
             border: 1px solid rgba(59, 130, 246, 0.3);
             color: #60a5fa;
-        }
-        
-        /* ============================================
-           MODAL STYLES
-           ============================================ */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(8px);
-            z-index: 5000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.4s var(--ease-smooth);
-            padding: 1rem;
-        }
-        
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .modal {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            max-width: 500px;
-            width: 100%;
-            max-height: 90vh;
-            overflow: hidden;
-            transform: scale(0.9) translateY(20px);
-            transition: all 0.4s var(--ease-out-expo);
-        }
-        
-        .modal-overlay.active .modal {
-            transform: scale(1) translateY(0);
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-        }
-        
-        .modal-header h3 {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.25rem;
-            letter-spacing: 0.02em;
-            font-weight: 400;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            padding: 0.5rem;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-        }
-        
-        .modal-close:hover {
-            color: var(--text);
-            background: var(--bg-hover);
-        }
-        
-        .modal-content {
-            padding: 1.5rem;
-            overflow-y: auto;
-            max-height: calc(90vh - 80px);
         }
         
         /* ============================================
@@ -950,11 +465,6 @@
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(-20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
         }
         
         .reveal {
@@ -968,111 +478,30 @@
             transform: translateY(0);
         }
         
-        .reveal-left {
-            opacity: 0;
-            transform: translateX(-50px);
-            transition: all 0.8s var(--ease-out-expo);
+        /* Reduced motion preference */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
         }
         
-        .reveal-left.active {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        
-        .reveal-right {
-            opacity: 0;
-            transform: translateX(50px);
-            transition: all 0.8s var(--ease-out-expo);
-        }
-        
-        .reveal-right.active {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        
-        .reveal-scale {
-            opacity: 0;
-            transform: scale(0.9);
-            transition: all 0.8s var(--ease-out-expo);
-        }
-        
-        .reveal-scale.active {
-            opacity: 1;
-            transform: scale(1);
-        }
-        
-        /* Stagger delays */
-        .stagger-1 { transition-delay: 0.1s; }
-        .stagger-2 { transition-delay: 0.2s; }
-        .stagger-3 { transition-delay: 0.3s; }
-        .stagger-4 { transition-delay: 0.4s; }
-        .stagger-5 { transition-delay: 0.5s; }
-        .stagger-6 { transition-delay: 0.6s; }
-        
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
-        @media (max-width: 1024px) {
-            .nav-links {
-                display: none;
+        /* Touch-friendly improvements */
+        @media (pointer: coarse) {
+            .icon-btn,
+            .btn-primary,
+            .place-order-btn,
+            .verify-btn {
+                min-height: 44px;
             }
             
-            .menu-toggle {
-                display: block;
+            .radio-option,
+            .form-control {
+                min-height: 44px;
             }
-            
-            .footer-content {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .navbar {
-                padding: 1rem;
-            }
-            
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
-            
-            .footer-bottom {
-                flex-direction: column;
-                text-align: center;
-            }
-            
-            .footer-bottom a {
-                margin: 0 0.75rem;
-            }
-            
-            .search-input {
-                font-size: 2rem;
-            }
-            
-            .cart-sidebar,
-            .wishlist-sidebar {
-                max-width: 100%;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .logo {
-                font-size: 1.5rem;
-            }
-        }
-        
-        /* Loading Spinner */
-        .spinner {
-            width: 20px;
-            height: 20px;
-            border: 2px solid var(--border);
-            border-top-color: var(--text);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
     </style>
     
@@ -1083,13 +512,16 @@
     <div class="grain"></div>
     
     <!-- Spotlight Effect -->
-    <div class="spotlight" id="spotlight"></div>
+    <div class="spotlight"></div>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
     
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Menu">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="3" y1="12" x2="21" y2="12"></line>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -1099,67 +531,43 @@
             <a href="{% url 'home' %}" class="logo">MALICE</a>
             
             <div class="nav-links">
+                <a href="{% url 'home' %}">Home</a>
                 <a href="{% url 'product_list' %}">Shop</a>
-                <a href="{% url 'product_list' %}?category=new">New</a>
-                <a href="{% url 'product_list' %}?category=best">Collections</a>
-                <a href="#footer">About</a>
+                <a href="{% url 'product_list' %}?category=new">New Arrivals</a>
+                <a href="{% url 'product_list' %}?category=best">Best Sellers</a>
             </div>
             
             <div class="nav-right">
-                <!-- Search Button -->
-                <button class="icon-btn" onclick="toggleSearch()" aria-label="Search">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                </button>
-                
-                <!-- Cart Button -->
-                <button class="icon-btn" onclick="toggleCart()" aria-label="Cart">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-                        <path d="M3 6h18"></path>
-                        <path d="M16 10a4 4 0 0 1-8 0"></path>
-                    </svg>
-                    <span class="cart-badge" id="cart-count" style="display: none;">0</span>
-                </button>
-                
-                <!-- Wishlist Button -->
-                <button class="icon-btn" onclick="window.location.href='{% url 'wishlist' %}'" aria-label="Wishlist">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                {% if user.is_authenticated %}
+                <a href="{% url 'wishlist' %}" class="icon-btn" aria-label="Wishlist">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
-                    <span class="cart-badge" id="wishlist-count" style="display: none;">0</span>
-                </button>
-                
-                <!-- User Account -->
-                {% if user.is_authenticated %}
-                    <div id="userMenuContainer">
-                        <button class="icon-btn" onclick="toggleUserMenu()" aria-label="Account">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                        </button>
-                        
-                        <div id="userDropdown">
-                            <div class="user-dropdown-header">
-                                <p>{{ user.first_name|default:user.username }}</p>
-                                <span>{{ user.email }}</span>
-                            </div>
-                            <a href="{% url 'profile' %}" class="user-dropdown-item">My Orders</a>
-                            <a href="{% url 'wishlist' %}" class="user-dropdown-item">Wishlist</a>
-                            <a href="{% url 'logout' %}" class="user-dropdown-item logout">Sign Out</a>
-                        </div>
-                    </div>
+                </a>
+                <a href="{% url 'cart' %}" class="icon-btn" aria-label="Cart">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                    {% if cart_count > 0 %}
+                    <span class="cart-badge">{{ cart_count }}</span>
+                    {% endif %}
+                </a>
+                <a href="{% url 'profile' %}" class="icon-btn" aria-label="Profile">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </a>
                 {% else %}
-                    <a href="{% url 'login' %}" class="icon-btn" aria-label="Sign In" style="text-decoration: none;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                            <polyline points="10,17 15,12 10,7"></polyline>
-                            <line x1="15" y1="12" x2="3" y2="12"></line>
-                        </svg>
-                    </a>
+                <a href="{% url 'login' %}" class="icon-btn" aria-label="Login">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                        <polyline points="10 17 15 12 10 7"></polyline>
+                        <line x1="15" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                </a>
                 {% endif %}
             </div>
         </div>
@@ -1168,94 +576,30 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <div class="mobile-menu-header">
-            <span class="logo">MALICE</span>
-            <button class="mobile-menu-close" onclick="toggleMobileMenu()">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <a href="{% url 'home' %}" class="logo">MALICE</a>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()" aria-label="Close menu">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
-        
         <div class="mobile-menu-links">
             <a href="{% url 'home' %}" onclick="toggleMobileMenu()">Home</a>
-            <a href="{% url 'product_list' %}" onclick="toggleMobileMenu()">Shop All</a>
+            <a href="{% url 'product_list' %}" onclick="toggleMobileMenu()">Shop</a>
             <a href="{% url 'product_list' %}?category=new" onclick="toggleMobileMenu()">New Arrivals</a>
-            <a href="{% url 'product_list' %}?category=best" onclick="toggleMobileMenu()">Collections</a>
-            <a href="#footer" onclick="toggleMobileMenu()">About</a>
-            
+            <a href="{% url 'product_list' %}?category=best" onclick="toggleMobileMenu()">Best Sellers</a>
             {% if user.is_authenticated %}
-                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                    <a href="{% url 'profile' %}" onclick="toggleMobileMenu()">My Orders</a>
-                    <a href="{% url 'wishlist' %}" onclick="toggleMobileMenu()">Wishlist</a>
-                    <a href="{% url 'logout' %}" onclick="toggleMobileMenu()" style="color: var(--error);">Sign Out</a>
-                </div>
+            <a href="{% url 'profile' %}" onclick="toggleMobileMenu()">My Account</a>
+            <a href="{% url 'wishlist' %}" onclick="toggleMobileMenu()">Wishlist</a>
+            <a href="{% url 'cart' %}" onclick="toggleMobileMenu()">Cart</a>
+            <a href="{% url 'logout' %}" onclick="toggleMobileMenu()">Logout</a>
             {% else %}
-                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-                    <a href="{% url 'login' %}" onclick="toggleMobileMenu()">Sign In / Register</a>
-                </div>
+            <a href="{% url 'login' %}" onclick="toggleMobileMenu()">Login</a>
+            <a href="{% url 'register' %}" onclick="toggleMobileMenu()">Register</a>
             {% endif %}
         </div>
     </div>
-    
-    <!-- Search Overlay -->
-    <div class="search-overlay" id="searchOverlay">
-        <button class="search-close" onclick="toggleSearch()">&times;</button>
-        <div class="search-container">
-            <span class="search-label">Search the collection</span>
-            <div class="search-input-wrapper">
-                <form action="{% url 'product_list' %}" method="get">
-                    <input type="text" name="q" class="search-input" placeholder="TYPE TO SEARCH..." autofocus autocomplete="off">
-                </form>
-            </div>
-            <p class="search-hint">Press ESC to close</p>
-        </div>
-    </div>
-    
-    <!-- Cart Sidebar -->
-    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
-    <div class="cart-sidebar" id="cartSidebar">
-        <div class="cart-header">
-            <h2>YOUR CART (<span id="sidebar-cart-count">0</span>)</h2>
-            <button class="close-btn" onclick="toggleCart()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
-        <div class="cart-items" id="cartItems">
-            <div class="empty-cart">
-                <div class="empty-cart-icon">
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-                        <path d="M3 6h18"></path>
-                        <path d="M16 10a4 4 0 0 1-8 0"></path>
-                    </svg>
-                </div>
-                <p>Your cart is empty</p>
-                <span style="font-size: 0.8rem; color: var(--text-dim); display: block; margin-top: 0.5rem;">Add items to begin</span>
-            </div>
-        </div>
-        <div class="cart-footer">
-            <div class="cart-subtotal">
-                <span>Subtotal</span>
-                <span id="cartSubtotal">₱0.00</span>
-            </div>
-            <div class="cart-total">
-                <span>Total</span>
-                <span id="cartTotal">₱0.00</span>
-            </div>
-            {% if user.is_authenticated %}
-                <a href="{% url 'checkout' %}" class="checkout-btn" onclick="toggleCart()">Proceed to Checkout</a>
-            {% else %}
-                <a href="{% url 'login' %}?next={% url 'checkout' %}" class="checkout-btn secondary" onclick="toggleCart()">Sign In to Checkout</a>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Toast Container -->
-    <div id="toastContainer"></div>
     
     <!-- Main Content -->
     <main>
@@ -1263,11 +607,11 @@
     </main>
     
     <!-- Footer -->
-    <footer class="footer" id="footer">
+    <footer class="footer">
         <div class="footer-content">
             <div class="footer-brand">
                 <h3>MALICE</h3>
-                <p>Minimalist streetwear crafted for the modern individual. Designed with intention, made to transcend trends.</p>
+                <p>Premium streetwear for the bold. Quality craftsmanship meets urban style.</p>
             </div>
             <div class="footer-section">
                 <h4>Shop</h4>
@@ -1276,17 +620,18 @@
                 <a href="{% url 'product_list' %}?category=best">Best Sellers</a>
             </div>
             <div class="footer-section">
-                <h4>Help</h4>
-                <a href="#">Shipping & Returns</a>
+                <h4>Support</h4>
+                <a href="#">Contact Us</a>
+                <a href="#">Shipping Info</a>
+                <a href="#">Returns</a>
                 <a href="#">Size Guide</a>
-                <a href="#">FAQ</a>
-                <a href="#">Contact</a>
             </div>
             <div class="footer-section">
-                <h4>Connect</h4>
-                <a href="#">Instagram</a>
-                <a href="#">Twitter</a>
-                <a href="#">Newsletter</a>
+                <h4>Company</h4>
+                <a href="#">About Us</a>
+                <a href="#">Careers</a>
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
             </div>
         </div>
         <div class="footer-bottom">
@@ -1294,141 +639,42 @@
             <div>
                 <a href="#">Privacy</a>
                 <a href="#">Terms</a>
+                <a href="#">Cookies</a>
             </div>
         </div>
     </footer>
     
-    <!-- Quick Add Modal -->
-    {% include 'shop/quick_add_modal.html' %}
-    
     <script>
-        // ============================================
-        // GLOBAL VARIABLES
-        // ============================================
-        const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        // CSRF Token for AJAX requests
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        // ============================================
-        // SPOTLIGHT EFFECT
-        // ============================================
-       const spotlight = document.getElementById('spotlight');
-        let mouseX = 50, mouseY = 50, currentX = 50, currentY = 50;
-
-        document.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX / window.innerWidth) * 100;
-            mouseY = (e.clientY / window.innerHeight) * 100;
-        });
-
-        (function update() {
-            currentX += (mouseX - currentX) * 0.06;  // Lower = smoother
-            currentY += (mouseY - currentY) * 0.06;
-            spotlight.style.setProperty('--mouse-x', currentX + '%');
-            spotlight.style.setProperty('--mouse-y', currentY + '%');
-            requestAnimationFrame(update);
-        })();
-        
-        function updateSpotlight() {
-            currentX += (mouseX - currentX) * 0.1;
-            currentY += (mouseY - currentY) * 0.1;
-            spotlight.style.setProperty('--mouse-x', currentX + '%');
-            spotlight.style.setProperty('--mouse-y', currentY + '%');
-            requestAnimationFrame(updateSpotlight);
+        // Mobile Menu Toggle
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('active');
+            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
         }
-        updateSpotlight();
         
-        // ============================================
-        // NAVBAR SCROLL BEHAVIOR
-        // ============================================
-        let lastScroll = 0;
-        const navbar = document.getElementById('navbar');
-        
-        window.addEventListener('scroll', () => {
-            const currentScroll = window.pageYOffset;
-            
-            if (currentScroll > 50) {
+        // Navbar scroll effect
+        window.addEventListener('scroll', function() {
+            const navbar = document.getElementById('navbar');
+            if (window.scrollY > 50) {
                 navbar.classList.add('scrolled');
             } else {
                 navbar.classList.remove('scrolled');
             }
-            
-            if (currentScroll > lastScroll && currentScroll > 100) {
-                navbar.classList.add('hidden');
-            } else {
-                navbar.classList.remove('hidden');
-            }
-            
-            lastScroll = currentScroll;
-        }, { passive: true });
-        
-        // ============================================
-        // TOGGLE FUNCTIONS
-        // ============================================
-        function toggleCart() {
-            const sidebar = document.getElementById('cartSidebar');
-            const overlay = document.getElementById('cartOverlay');
-            const isActive = sidebar.classList.contains('active');
-            
-            sidebar.classList.toggle('active');
-            overlay.classList.toggle('active');
-            document.body.style.overflow = isActive ? '' : 'hidden';
-            
-            if (!isActive) {
-                loadCart();
-            }
-        }
-        
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobileMenu');
-            menu.classList.toggle('active');
-            document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
-        }
-        
-        function toggleSearch() {
-            const overlay = document.getElementById('searchOverlay');
-            overlay.classList.toggle('active');
-            if (overlay.classList.contains('active')) {
-                setTimeout(() => overlay.querySelector('input').focus(), 100);
-            }
-        }
-        
-        function toggleUserMenu() {
-            const dropdown = document.getElementById('userDropdown');
-            dropdown.classList.toggle('active');
-        }
-        
-        // Close user menu when clicking outside
-        document.addEventListener('click', (e) => {
-            const container = document.getElementById('userMenuContainer');
-            const dropdown = document.getElementById('userDropdown');
-            if (container && !container.contains(e.target) && dropdown) {
-                dropdown.classList.remove('active');
-            }
         });
         
-        // ============================================
-        // KEYBOARD SHORTCUTS
-        // ============================================
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                document.getElementById('searchOverlay').classList.remove('active');
-                document.getElementById('cartSidebar').classList.remove('active');
-                document.getElementById('cartOverlay').classList.remove('active');
-                document.getElementById('mobileMenu').classList.remove('active');
-                document.getElementById('quickAddModal')?.classList.remove('active');
-                document.body.style.overflow = '';
-                
-                const dropdown = document.getElementById('userDropdown');
-                if (dropdown) dropdown.classList.remove('active');
-            }
-            
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                toggleSearch();
-            }
+        // Spotlight effect
+        document.addEventListener('mousemove', function(e) {
+            const spotlight = document.querySelector('.spotlight');
+            const x = (e.clientX / window.innerWidth) * 100;
+            const y = (e.clientY / window.innerHeight) * 100;
+            spotlight.style.setProperty('--mouse-x', x + '%');
+            spotlight.style.setProperty('--mouse-y', y + '%');
         });
         
-        // ============================================
-        // TOAST NOTIFICATIONS
-        // ============================================
+        // Toast notifications
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -1436,283 +682,43 @@
             toast.textContent = message;
             container.appendChild(toast);
             
+            // Trigger animation
             setTimeout(() => toast.classList.add('show'), 10);
+            
+            // Remove after delay
             setTimeout(() => {
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 400);
             }, 4000);
         }
         
-        // ============================================
-        // CART FUNCTIONALITY
-        // ============================================
-        async function loadCart() {
-            try {
-                const response = await fetch('/cart/api/');
-                const data = await response.json();
-                updateCartUI(data);
-            } catch (error) {
-                console.error('Error loading cart:', error);
-            }
-        }
-        
-        function formatPeso(amount) {
-            return '₱' + parseFloat(amount).toLocaleString('en-PH', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-            });
-        }
-        
-        function updateCartUI(data) {
-            const count = data.count || 0;
-            const countBadge = document.getElementById('cart-count');
-            const sidebarCount = document.getElementById('sidebar-cart-count');
-            const cartItems = document.getElementById('cartItems');
-            const cartSubtotal = document.getElementById('cartSubtotal');
-            const cartTotal = document.getElementById('cartTotal');
-            
-            if (countBadge) {
-                countBadge.textContent = count;
-                countBadge.style.display = count > 0 ? 'flex' : 'none';
-            }
-            if (sidebarCount) sidebarCount.textContent = count;
-            
-            if (!cartItems) return;
-            
-            if (count === 0) {
-                cartItems.innerHTML = `
-                    <div class="empty-cart">
-                        <div class="empty-cart-icon">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
-                                <path d="M3 6h18"></path>
-                                <path d="M16 10a4 4 0 0 1-8 0"></path>
-                            </svg>
-                        </div>
-                        <p>Your cart is empty</p>
-                        <span style="font-size: 0.8rem; color: var(--text-dim); display: block; margin-top: 0.5rem;">Add items to begin</span>
-                    </div>`;
-                if (cartSubtotal) cartSubtotal.textContent = formatPeso(0);
-                if (cartTotal) cartTotal.textContent = formatPeso(0);
-                return;
-            }
-            
-            cartItems.innerHTML = data.items.map(item => `
-                <div class="cart-item">
-                    <div class="cart-item-img">
-                        ${item.image ? `<img src="${item.image}" alt="${item.name}">` : ''}
-                    </div>
-                    <div class="cart-item-info">
-                        <div>
-                            <div class="cart-item-name">${item.name}</div>
-                            <div class="cart-item-variant">Size: ${item.size} | Qty: ${item.quantity}</div>
-                            <div class="cart-item-price">${formatPeso(item.price)} each</div>
-                        </div>
-                        <button class="cart-item-remove" onclick="removeFromCart(${item.id})">Remove</button>
-                    </div>
-                </div>
-            `).join('');
-            
-            if (cartSubtotal) cartSubtotal.textContent = formatPeso(data.subtotal);
-            if (cartTotal) cartTotal.textContent = formatPeso(data.total);
-        }
-        
-        async function addToCart(productId, variantId = null, size = null, quantity = 1) {
-            try {
-                const formData = new FormData();
-                formData.append('product_id', productId);
-                formData.append('quantity', quantity);
-                if (variantId) formData.append('variant_id', variantId);
-                if (size) formData.append('size', size);
+        // Scroll reveal animation
+        function revealOnScroll() {
+            const reveals = document.querySelectorAll('.reveal');
+            reveals.forEach((element, index) => {
+                const windowHeight = window.innerHeight;
+                const elementTop = element.getBoundingClientRect().top;
+                const elementVisible = 100;
                 
-                const response = await fetch(`/cart/add/${productId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': CSRF_TOKEN,
-                    },
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    await loadCart();
-                    showToast(data.message || 'Added to cart', 'success');
-                    return true;
-                } else {
-                    showToast(data.error || 'Failed to add item', 'error');
-                    return false;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to add item', 'error');
-                return false;
-            }
-        }
-        
-        async function removeFromCart(itemId) {
-            try {
-                const response = await fetch(`/cart/remove/${itemId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': CSRF_TOKEN,
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    updateCartUI({
-                        count: data.cart_count,
-                        items: [], // Will be reloaded
-                        subtotal: data.cart_subtotal,
-                        total: data.cart_total
-                    });
-                    await loadCart();
-                    showToast('Item removed', 'info');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to remove item', 'error');
-            }
-        }
-        
-        // ============================================
-        // QUICK ADD FUNCTIONALITY
-        // ============================================
-        async function quickAddToCart(productId, size, event) {
-            if (event) event.stopPropagation();
-            
-            // Check if productId is valid
-            if (!productId || productId === undefined) {
-                console.error('Invalid product ID:', productId);
-                showToast('Invalid product', 'error');
-                return;
-            }
-            
-            try {
-                const response = await fetch(`/api/product/${productId}/`);
-                const data = await response.json();
-                
-                if (!data.success) {
-                    showToast('Product not found', 'error');
-                    return;
-                }
-                
-                // If product has multiple variants, show modal
-                if (data.variants && data.variants.length > 1) {
-                    openQuickAddModal(
-                        data.id,
-                        data.name,
-                        data.price,
-                        data.image,
-                        data.variants,
-                        data.in_wishlist
-                    );
-                } else if (data.variants && data.variants.length === 1) {
-                    // Single variant, add directly
-                    const variant = data.variants[0];
-                    if (variant.stock > 0) {
-                        await addToCart(productId, variant.id, variant.size, 1);
-                    } else {
-                        showToast('Product is out of stock', 'error');
-                    }
-                } else {
-                    showToast('No variants available', 'error');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to load product', 'error');
-            }
-        }
-        
-        // ============================================
-        // WISHLIST FUNCTIONALITY
-        // ============================================
-        async function toggleWishlist(productId, button = null) {
-            try {
-                const response = await fetch(`/wishlist/toggle/${productId}/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': CSRF_TOKEN,
-                    }
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    // Update button state if provided
-                    if (button) {
-                        button.classList.toggle('active', data.in_wishlist);
-                    }
-                    
-                    // Update wishlist count
-                    const wishlistCount = document.getElementById('wishlist-count');
-                    if (wishlistCount) {
-                        wishlistCount.textContent = data.wishlist_count;
-                        wishlistCount.style.display = data.wishlist_count > 0 ? 'flex' : 'none';
-                    }
-                    
-                    showToast(data.message, 'success');
-                    return data.in_wishlist;
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to update wishlist', 'error');
-            }
-            return false;
-        }
-        
-        async function loadWishlistCount() {
-            try {
-                const response = await fetch('/wishlist/api/');
-                const data = await response.json();
-                
-                const wishlistCount = document.getElementById('wishlist-count');
-                if (wishlistCount) {
-                    wishlistCount.textContent = data.count;
-                    wishlistCount.style.display = data.count > 0 ? 'flex' : 'none';
-                }
-            } catch (error) {
-                console.error('Error loading wishlist count:', error);
-            }
-        }
-        
-        // ============================================
-        // SCROLL REVEAL ANIMATION
-        // ============================================
-        const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
-        
-        const revealObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                    revealObserver.unobserve(entry.target);
+                if (elementTop < windowHeight - elementVisible) {
+                    setTimeout(() => {
+                        element.classList.add('active');
+                    }, index * 100);
                 }
             });
-        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        }
         
-        revealElements.forEach(el => revealObserver.observe(el));
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
         
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        document.addEventListener('DOMContentLoaded', () => {
-            loadCart();
-            loadWishlistCount();
-            
-            // Display Django messages as toasts
-            {% if messages %}
-                {% for message in messages %}
-                    showToast('{{ message|escapejs }}', '{{ message.tags }}');
-                {% endfor %}
-            {% endif %}
+        // Django messages to toast
+        {% if messages %}
+        document.addEventListener('DOMContentLoaded', function() {
+            {% for message in messages %}
+            showToast('{{ message|escapejs }}', '{{ message.tags }}');
+            {% endfor %}
         });
-        
-        // Prefers reduced motion
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            document.documentElement.style.setProperty('--ease-out-expo', 'ease');
-        }
+        {% endif %}
     </script>
     
     {% block extra_js %}{% endblock %}

@@ -3,16 +3,13 @@ from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
 from .models import (
-    Category,
-    Product,
-    ProductVariant,
-    Cart,
-    CartItem,
-    Order,
-    OrderItem,
-    Wishlist,
-    UserProfile
+    Category, Product, ProductVariant, Cart, CartItem,
+    Order, OrderItem, Wishlist, UserProfile,
+    ShippingMethod, ShippingRate, ShippingRegion,
+    VerificationCode, Payment, PaymentWebhookLog,
+    Promotion, UserPromotionUse
 )
+
 
 @admin.register(CartItem)
 class CartItemAdmin(admin.ModelAdmin):
@@ -48,7 +45,7 @@ class ProductVariantInline(admin.TabularInline):
 class ProductAdmin(admin.ModelAdmin):
     list_display = [
         'thumbnail', 'name', 'price_display', 'category',
-        'total_stock', 'is_active', 'is_featured', 'is_new', 'created_at'
+        'total_stock', 'weight_kg', 'is_active', 'is_featured', 'is_new', 'created_at'
     ]
     list_filter = [
         'is_active', 'is_featured', 'is_new', 'is_best_seller',
@@ -56,7 +53,7 @@ class ProductAdmin(admin.ModelAdmin):
     ]
     search_fields = ['name', 'description', 'variants__sku']
     prepopulated_fields = {'slug': ('name',)}
-    list_editable = ['is_active', 'is_featured', 'is_new']
+    list_editable = ['is_active', 'is_featured', 'is_new', 'weight_kg']
     inlines = [ProductVariantInline]
     date_hierarchy = 'created_at'
     actions = ['make_active', 'make_inactive', 'make_featured', 'make_new']
@@ -65,8 +62,8 @@ class ProductAdmin(admin.ModelAdmin):
         ('Basic Information', {
             'fields': ('name', 'slug', 'description', 'category', 'image')
         }),
-        ('Pricing', {
-            'fields': ('price',),
+        ('Pricing & Weight', {
+            'fields': ('price', 'weight_kg'),
         }),
         ('Status & Flags', {
             'fields': ('is_active', 'is_featured', 'is_new', 'is_best_seller'),
@@ -90,7 +87,6 @@ class ProductAdmin(admin.ModelAdmin):
             return format_html("₱{}", f"{obj.price:,.2f}")
         return "-"
     price_display.short_description = "Price"
-
     
     def total_stock(self, obj):
         stock = obj.get_total_stock()
@@ -153,7 +149,7 @@ class CartAdmin(admin.ModelAdmin):
     def subtotal_display(self, obj):
         try:
             subtotal = obj.get_subtotal()
-            if hasattr(subtotal, 'replace'):  # Check if it's a string-like object
+            if hasattr(subtotal, 'replace'):
                 subtotal_value = float(str(subtotal).replace('₱', '').replace(',', ''))
             else:
                 subtotal_value = float(subtotal)
@@ -171,6 +167,78 @@ class WishlistAdmin(admin.ModelAdmin):
     date_hierarchy = 'created_at'
 
 
+# ============================================
+# SHIPPING ADMIN
+# ============================================
+
+@admin.register(ShippingRegion)
+class ShippingRegionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'country', 'is_active']
+    list_filter = ['country', 'is_active']
+    search_fields = ['name', 'code']
+    list_editable = ['is_active']
+
+
+@admin.register(ShippingMethod)
+class ShippingMethodAdmin(admin.ModelAdmin):
+    list_display = ['name', 'method_type', 'estimated_delivery', 'is_active', 'sort_order']
+    list_filter = ['method_type', 'is_active']
+    list_editable = ['is_active', 'sort_order']
+    search_fields = ['name', 'description']
+    
+    def estimated_delivery(self, obj):
+        return obj.get_estimated_delivery()
+    estimated_delivery.short_description = 'Estimated Delivery'
+
+
+@admin.register(ShippingRate)
+class ShippingRateAdmin(admin.ModelAdmin):
+    list_display = ['shipping_method', 'region', 'weight_range', 'base_cost', 'cost_per_kg', 'is_active']
+    list_filter = ['shipping_method', 'region', 'is_active']
+    list_editable = ['base_cost', 'cost_per_kg', 'is_active']
+    search_fields = ['shipping_method__name', 'region__name']
+    
+    def weight_range(self, obj):
+        return f"{obj.weight_min} - {obj.weight_max} kg"
+    weight_range.short_description = 'Weight Range'
+
+
+# ============================================
+# USER PROFILE & VERIFICATION ADMIN
+# ============================================
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = ['user', 'phone', 'phone_verified', 'email_verified', 'is_fully_verified', 
+                    'city', 'country', 'first_order_completed', 'newsletter_subscribed']
+    list_filter = ['phone_verified', 'email_verified', 'is_fully_verified', 
+                   'first_order_completed', 'newsletter_subscribed', 'country']
+    search_fields = ['user__username', 'user__email', 'phone', 'city']
+    list_editable = ['phone_verified', 'email_verified', 'newsletter_subscribed']
+
+
+@admin.register(VerificationCode)
+class VerificationCodeAdmin(admin.ModelAdmin):
+    list_display = ['user', 'verification_type', 'code_masked', 'is_used', 'is_valid', 'created_at', 'expires_at']
+    list_filter = ['verification_type', 'is_used', 'created_at']
+    search_fields = ['user__username', 'email', 'phone']
+    readonly_fields = ['code', 'created_at', 'used_at']
+    date_hierarchy = 'created_at'
+    
+    def code_masked(self, obj):
+        return f"****{obj.code[-2:]}" if obj.code else "-"
+    code_masked.short_description = 'Code'
+    
+    def is_valid(self, obj):
+        return obj.is_valid()
+    is_valid.boolean = True
+    is_valid.short_description = 'Valid'
+
+
+# ============================================
+# ORDER ADMIN
+# ============================================
+
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
@@ -181,9 +249,8 @@ class OrderItemInline(admin.TabularInline):
         return False
     
     def total_display(self, obj):
-        # Convert to float explicitly to ensure it's a number, not a SafeString
         try:
-            total_value = float(obj.total)
+            total_value = float(obj.get_total())
             return format_html('₱{:,.2f}', total_value)
         except (TypeError, ValueError):
             return format_html('₱0.00')
@@ -193,10 +260,11 @@ class OrderItemInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     list_display = [
         'order_number', 'user', 'status_badge', 'payment_method',
-        'total_display', 'created_at', 'actions_buttons'
+        'total_display', 'free_shipping_applied', 'created_at', 'actions_buttons'
     ]
     list_filter = [
         'status', 'payment_method', 'shipping_method',
+        'free_shipping_applied', 'welcome_discount_applied',
         'created_at', 'country'
     ]
     search_fields = [
@@ -221,36 +289,39 @@ class OrderAdmin(admin.ModelAdmin):
         ('Shipping Address', {
             'fields': (
                 'first_name', 'last_name', 'address',
-                'apartment', 'city', 'postal_code', 'country'
+                'apartment', 'city', 'region', 'postal_code', 'country'
             )
         }),
         ('Order Details', {
-            'fields': ('payment_method', 'shipping_method', 'shipping_cost', 'subtotal', 'total')
+            'fields': ('payment_method', 'shipping_method', 'shipping_cost', 'subtotal', 'discount_amount', 'total')
+        }),
+        ('Promotions', {
+            'fields': ('free_shipping_applied', 'welcome_discount_applied'),
+            'classes': ('collapse',)
         }),
         ('Tracking', {
             'fields': ('tracking_number', 'notes'),
             'classes': ('collapse',)
         }),
         ('Timestamps', {
-            'fields': ('shipped_at', 'delivered_at', 'cancelled_at'),
+            'fields': ('shipped_at', 'delivered_at', 'cancelled_at', 'paid_at'),
             'classes': ('collapse',)
         }),
     )
     
     def status_badge(self, obj):
         colors = {
-            'pending': '#fbbf24',
-            'confirmed': '#60a5fa',
-            'shipped': '#c084fc',
-            'delivered': '#22c55e',
-            'cancelled': '#ef4444',
+            'pending': '#fbbf24', 'awaiting_payment': '#f97316', 'payment_failed': '#ef4444',
+            'confirmed': '#60a5fa', 'processing': '#a78bfa',
+            'shipped': '#c084fc', 'delivered': '#22c55e',
+            'cancelled': '#ef4444', 'refunded': '#6b7280',
         }
         bg_colors = {
-            'pending': 'rgba(251, 191, 36, 0.2)',
-            'confirmed': 'rgba(96, 165, 250, 0.2)',
-            'shipped': 'rgba(192, 132, 252, 0.2)',
-            'delivered': 'rgba(34, 197, 94, 0.2)',
-            'cancelled': 'rgba(239, 68, 68, 0.2)',
+            'pending': 'rgba(251, 191, 36, 0.2)', 'awaiting_payment': 'rgba(249, 115, 22, 0.2)',
+            'payment_failed': 'rgba(239, 68, 68, 0.2)', 'confirmed': 'rgba(96, 165, 250, 0.2)',
+            'processing': 'rgba(167, 139, 250, 0.2)', 'shipped': 'rgba(192, 132, 252, 0.2)',
+            'delivered': 'rgba(34, 197, 94, 0.2)', 'cancelled': 'rgba(239, 68, 68, 0.2)',
+            'refunded': 'rgba(107, 114, 128, 0.2)',
         }
         return format_html(
             '<span style="background: {}; color: {}; padding: 4px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase;">{}</span>',
@@ -261,10 +332,8 @@ class OrderAdmin(admin.ModelAdmin):
     status_badge.short_description = 'Status'
     
     def total_display(self, obj):
-        # Convert to float explicitly to ensure it's a number, not a SafeString
         try:
-            # Try to convert to float if it's a string or other type
-            if hasattr(obj.total, 'replace'):  # Check if it's a string-like object
+            if hasattr(obj.total, 'replace'):
                 total_value = float(str(obj.total).replace('₱', '').replace(',', ''))
             else:
                 total_value = float(obj.total)
@@ -280,7 +349,7 @@ class OrderAdmin(admin.ModelAdmin):
                 format_html('<a href="{}" class="button" style="background: #60a5fa; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; margin-right: 4px; font-size: 11px;">Confirm</a>', 
                 reverse('admin:shop_order_change', args=[obj.id]))
             )
-        if obj.status in ['pending', 'confirmed']:
+        if obj.status in ['pending', 'confirmed', 'awaiting_payment']:
             buttons.append(
                 format_html('<a href="{}" class="button" style="background: #c084fc; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; margin-right: 4px; font-size: 11px;">Ship</a>',
                 reverse('admin:shop_order_change', args=[obj.id]))
@@ -294,26 +363,23 @@ class OrderAdmin(admin.ModelAdmin):
     actions_buttons.short_description = 'Quick Actions'
     
     def mark_confirmed(self, request, queryset):
-        queryset.filter(status='pending').update(status='confirmed')
+        queryset.filter(status__in=['pending', 'awaiting_payment', 'payment_failed']).update(status='confirmed')
     mark_confirmed.short_description = 'Mark selected orders as confirmed'
     
     def mark_shipped(self, request, queryset):
-        from django.utils import timezone
-        queryset.filter(status__in=['pending', 'confirmed']).update(
+        queryset.filter(status__in=['pending', 'confirmed', 'awaiting_payment']).update(
             status='shipped', shipped_at=timezone.now()
         )
     mark_shipped.short_description = 'Mark selected orders as shipped'
     
     def mark_delivered(self, request, queryset):
-        from django.utils import timezone
         queryset.filter(status='shipped').update(
             status='delivered', delivered_at=timezone.now()
         )
     mark_delivered.short_description = 'Mark selected orders as delivered'
     
     def mark_cancelled(self, request, queryset):
-        from django.utils import timezone
-        for order in queryset.filter(status__in=['pending', 'confirmed']):
+        for order in queryset.filter(status__in=['pending', 'confirmed', 'awaiting_payment', 'payment_failed']):
             order.cancel()
     mark_cancelled.short_description = 'Mark selected orders as cancelled'
     
@@ -327,7 +393,7 @@ class OrderAdmin(admin.ModelAdmin):
         writer = csv.writer(response)
         writer.writerow([
             'Order Number', 'Date', 'Customer', 'Email', 'Status',
-            'Payment', 'Shipping', 'Subtotal', 'Shipping Cost', 'Total'
+            'Payment', 'Shipping', 'Subtotal', 'Shipping Cost', 'Discount', 'Total'
         ])
         
         for order in queryset:
@@ -341,6 +407,7 @@ class OrderAdmin(admin.ModelAdmin):
                 order.get_shipping_method_display(),
                 order.subtotal,
                 order.shipping_cost,
+                order.discount_amount,
                 order.total
             ])
         
@@ -348,11 +415,85 @@ class OrderAdmin(admin.ModelAdmin):
     export_orders.short_description = 'Export selected orders to CSV'
 
 
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'phone', 'city', 'country', 'newsletter_subscribed']
-    search_fields = ['user__username', 'user__email', 'phone', 'city']
-    list_filter = ['newsletter_subscribed', 'country']
+# ============================================
+# PAYMENT ADMIN
+# ============================================
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'order', 'gateway', 'status_badge', 'amount_display', 'created_at', 'completed_at']
+    list_filter = ['gateway', 'status', 'created_at']
+    search_fields = ['order__order_number', 'gateway_transaction_id', 'gateway_reference']
+    readonly_fields = ['created_at', 'updated_at', 'completed_at']
+    date_hierarchy = 'created_at'
+    
+    def status_badge(self, obj):
+        colors = {
+            'pending': '#fbbf24', 'processing': '#60a5fa',
+            'completed': '#22c55e', 'failed': '#ef4444',
+            'refunded': '#6b7280', 'cancelled': '#9ca3af',
+        }
+        return format_html(
+            '<span style="color: {}; font-weight: 600;">{}</span>',
+            colors.get(obj.status, '#666'),
+            obj.get_status_display()
+        )
+    status_badge.short_description = 'Status'
+    
+    def amount_display(self, obj):
+        return format_html('₱{:,.2f}', float(obj.amount))
+    amount_display.short_description = 'Amount'
+
+
+@admin.register(PaymentWebhookLog)
+class PaymentWebhookLogAdmin(admin.ModelAdmin):
+    list_display = ['gateway', 'event_type', 'processed', 'created_at']
+    list_filter = ['gateway', 'processed', 'created_at']
+    search_fields = ['event_type', 'payload']
+    readonly_fields = ['created_at']
+    date_hierarchy = 'created_at'
+
+
+# ============================================
+# PROMOTION ADMIN
+# ============================================
+
+class UserPromotionUseInline(admin.TabularInline):
+    model = UserPromotionUse
+    extra = 0
+    readonly_fields = ['user', 'order', 'discount_amount', 'used_at']
+    can_delete = False
+    
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Promotion)
+class PromotionAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'promotion_type', 'value_display', 'is_active', 
+                    'total_uses', 'start_date', 'end_date']
+    list_filter = ['promotion_type', 'is_active', 'for_new_users_only', 'for_verified_users_only']
+    search_fields = ['name', 'code', 'description']
+    list_editable = ['is_active']
+    inlines = [UserPromotionUseInline]
+    
+    def value_display(self, obj):
+        if obj.promotion_type == 'free_shipping':
+            return 'Free Shipping'
+        elif obj.promotion_type == 'percentage' and obj.percentage_value:
+            return f"{obj.percentage_value}%"
+        elif obj.promotion_type == 'fixed' and obj.fixed_value:
+            return f"₱{obj.fixed_value:,.2f}"
+        return '-'
+    value_display.short_description = 'Value'
+
+
+@admin.register(UserPromotionUse)
+class UserPromotionUseAdmin(admin.ModelAdmin):
+    list_display = ['user', 'promotion', 'order', 'discount_amount', 'used_at']
+    list_filter = ['used_at']
+    search_fields = ['user__username', 'promotion__name', 'order__order_number']
+    date_hierarchy = 'used_at'
 
 
 # Customize admin site
@@ -362,3 +503,5 @@ def customize_admin_site():
     admin.site.index_title = 'Dashboard'
 
 customize_admin_site()
+
+from django.utils import timezone

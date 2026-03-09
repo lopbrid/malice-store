@@ -2,22 +2,43 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Q, Sum
 from django.core.paginator import Paginator
 from django.views.decorators.http import require_POST, require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.conf import settings
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 import json
+import requests
+import stripe
 
 from .models import (
     Product, Category, ProductVariant, Cart, CartItem,
-    Wishlist, Order, OrderItem, UserProfile
+    Wishlist, Order, OrderItem, UserProfile, VerificationCode,
+    ShippingMethod, ShippingRate, ShippingRegion, Payment,
+    PaymentWebhookLog, Promotion, UserPromotionUse
 )
 from .forms import (
     CustomAuthenticationForm, CustomUserCreationForm,
-    CheckoutForm, UserProfileForm, PasswordChangeForm
+    CheckoutForm, UserProfileForm, PasswordChangeForm,
+    OTPVerificationForm, ResendOTPForm, CardPaymentForm,
+    GCashPaymentForm, MayaPaymentForm, ForgotPasswordForm,
+    ResetPasswordForm
+)
+from .utils import (
+    send_sms_otp, send_email_otp, calculate_shipping_cost,
+    process_stripe_payment, process_gcash_payment, process_maya_payment,
+    process_paypal_payment, create_payment_intent, verify_webhook_signature
 )
 
+
+# ============================================
+# HOME & PRODUCT VIEWS
+# ============================================
 
 def home(request):
     """Home page view"""
@@ -45,12 +66,10 @@ def product_list(request):
     """Product list view with filtering and sorting"""
     products = Product.objects.filter(is_active=True).prefetch_related('variants')
     
-    # Get query parameters
     category_slug = request.GET.get('category')
     search_query = request.GET.get('q')
     sort_by = request.GET.get('sort', 'newest')
     
-    # Filter by category
     if category_slug:
         if category_slug == 'new':
             products = products.filter(is_new=True)
@@ -59,7 +78,6 @@ def product_list(request):
         else:
             products = products.filter(category__slug=category_slug)
     
-    # Search
     if search_query:
         products = products.filter(
             Q(name__icontains=search_query) |
@@ -67,17 +85,15 @@ def product_list(request):
             Q(category__name__icontains=search_query)
         )
     
-    # Sorting
     if sort_by == 'price-low':
         products = products.order_by('price')
     elif sort_by == 'price-high':
         products = products.order_by('-price')
     elif sort_by == 'name':
         products = products.order_by('name')
-    else:  # newest
+    else:
         products = products.order_by('-created_at')
     
-    # Pagination
     paginator = Paginator(products, 12)
     page_number = request.GET.get('page')
     products = paginator.get_page(page_number)
@@ -98,12 +114,10 @@ def product_detail(request, slug):
         slug=slug, is_active=True
     )
     
-    # Get related products
     related_products = Product.objects.filter(
         category=product.category, is_active=True
     ).exclude(id=product.id).prefetch_related('variants')[:4]
     
-    # Check if product is in user's wishlist
     in_wishlist = False
     if request.user.is_authenticated:
         in_wishlist = Wishlist.objects.filter(
@@ -153,7 +167,9 @@ def product_data_api(request, product_id):
         return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
 
 
-# ==================== AUTHENTICATION VIEWS ====================
+# ============================================
+# AUTHENTICATION VIEWS WITH VERIFICATION
+# ============================================
 
 def login_view(request):
     """Login view"""
@@ -166,10 +182,8 @@ def login_view(request):
             identifier = form.cleaned_data['identifier']
             password = form.cleaned_data['password']
             
-            # Try to authenticate with username first
             user = authenticate(request, username=identifier, password=password)
             
-            # If that fails, try with email
             if user is None:
                 try:
                     user_obj = User.objects.get(email=identifier)
@@ -181,7 +195,6 @@ def login_view(request):
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
                 
-                # Ensure user has a cart
                 Cart.objects.get_or_create(user=user)
                 
                 next_url = request.GET.get('next')
@@ -197,17 +210,35 @@ def login_view(request):
 
 
 def register_view(request):
-    """Registration view"""
+    """Registration view with phone number - sends to verification"""
     if request.user.is_authenticated:
         return redirect('home')
     
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, 'Account created successfully! Welcome to MALICE.')
-            return redirect('home')
+            # Create user but don't activate yet
+            user = form.save(commit=False)
+            user.is_active = False  # Inactive until verified
+            user.save()
+            
+            # Create profile with phone
+            phone = form.cleaned_data.get('phone')
+            profile = UserProfile.objects.create(user=user, phone=phone)
+            
+            # Create cart
+            Cart.objects.create(user=user)
+            
+            # Send verification codes
+            email_sent = send_email_otp(user, user.email)
+            
+            # Store user ID in session for verification
+            request.session['verification_user_id'] = user.id
+            request.session['verification_email'] = user.email
+            request.session['verification_phone'] = phone
+            
+            messages.info(request, 'Please verify your account. Check your email for the verification code.')
+            return redirect('verify_account')
         else:
             for field, errors in form.errors.items():
                 for error in errors:
@@ -218,6 +249,98 @@ def register_view(request):
     return render(request, 'shop/register.html', {'form': form})
 
 
+def verify_account_view(request):
+    """Account verification view with OTP"""
+    user_id = request.session.get('verification_user_id')
+    if not user_id:
+        messages.error(request, 'Session expired. Please register again.')
+        return redirect('register')
+    
+    user = get_object_or_404(User, id=user_id)
+    profile = user.profile
+    
+    if request.method == 'POST':
+        form = OTPVerificationForm(request.POST)
+        if form.is_valid():
+            otp_code = form.cleaned_data['otp_code']
+            
+            # Check email verification
+            email_verification = VerificationCode.objects.filter(
+                user=user,
+                verification_type='email',
+                is_used=False,
+                expires_at__gt=timezone.now()
+            ).first()
+            
+            if email_verification:
+                valid, message = email_verification.verify(otp_code)
+                if valid:
+                    profile.email_verified = True
+                    profile.save()
+                    
+                    # Activate user
+                    user.is_active = True
+                    user.save()
+                    
+                    # Log in user
+                    login(request, user)
+                    
+                    # Clear session
+                    del request.session['verification_user_id']
+                    del request.session['verification_email']
+                    if 'verification_phone' in request.session:
+                        del request.session['verification_phone']
+                    
+                    messages.success(request, 'Account verified successfully! Welcome to MALICE.')
+                    return redirect('home')
+                else:
+                    messages.error(request, message)
+            else:
+                messages.error(request, 'Verification code expired. Please request a new one.')
+    else:
+        form = OTPVerificationForm()
+    
+    context = {
+        'form': form,
+        'email': request.session.get('verification_email'),
+        'phone': request.session.get('verification_phone'),
+    }
+    return render(request, 'shop/verify_account.html', context)
+
+
+@require_POST
+def resend_otp_view(request):
+    """Resend OTP code"""
+    user_id = request.session.get('verification_user_id')
+    if not user_id:
+        return JsonResponse({'success': False, 'error': 'Session expired'})
+    
+    user = get_object_or_404(User, id=user_id)
+    verification_type = request.POST.get('type', 'email')
+    
+    # Check resend limit
+    recent_codes = VerificationCode.objects.filter(
+        user=user,
+        verification_type=verification_type,
+        created_at__gte=timezone.now() - timezone.timedelta(hours=1)
+    ).count()
+    
+    if recent_codes >= 3:
+        return JsonResponse({'success': False, 'error': 'Too many attempts. Please try again later.'})
+    
+    if verification_type == 'email':
+        send_email_otp(user, user.email)
+        return JsonResponse({'success': True, 'message': 'Code sent to your email'})
+    elif verification_type == 'phone':
+        phone = user.profile.phone
+        if phone:
+            send_sms_otp(user, phone)
+            return JsonResponse({'success': True, 'message': 'Code sent to your phone'})
+        return JsonResponse({'success': False, 'error': 'No phone number on file'})
+    
+    return JsonResponse({'success': False, 'error': 'Invalid verification type'})
+
+
 @login_required
 def logout_view(request):
     """Logout view"""
@@ -226,7 +349,9 @@ def logout_view(request):
     return redirect('home')
 
 
-# ==================== CART VIEWS ====================
+# ============================================
+# CART VIEWS
+# ============================================
 
 @login_required
 def cart_view(request):
@@ -234,7 +359,6 @@ def cart_view(request):
     cart, created = Cart.objects.get_or_create(user=request.user)
     cart_items = cart.items.select_related('variant__product').all()
     
-    # Get recommended products
     recommended_products = Product.objects.filter(
         is_active=True
     ).exclude(
@@ -281,42 +405,33 @@ def cart_api(request):
 @login_required
 @require_POST
 def add_to_cart(request, product_id):
-    """Add product to cart - FIXED: Now properly decreases stock"""
+    """Add product to cart"""
     try:
         product = Product.objects.prefetch_related('variants').get(
             id=product_id, is_active=True
         )
         
-        # Get variant from request
         variant_id = request.POST.get('variant_id')
         size = request.POST.get('size')
         quantity = int(request.POST.get('quantity', 1))
         
-        # Find variant
         if variant_id:
             variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
         elif size:
             variant = get_object_or_404(ProductVariant, size=size, product=product)
         else:
-            # Use first available variant
             variant = product.variants.filter(stock__gt=0).first()
             if not variant:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Product is out of stock'
-                }, status=400)
+                return JsonResponse({'success': False, 'error': 'Product is out of stock'}, status=400)
         
-        # Check stock
         if variant.stock < quantity:
             return JsonResponse({
                 'success': False,
                 'error': f'Only {variant.stock} items available'
             }, status=400)
         
-        # Get or create cart
         cart, created = Cart.objects.get_or_create(user=request.user)
         
-        # Get or create cart item
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             variant=variant,
@@ -324,7 +439,6 @@ def add_to_cart(request, product_id):
         )
         
         if not created:
-            # Update quantity
             new_quantity = cart_item.quantity + quantity
             if new_quantity > variant.stock:
                 return JsonResponse({
@@ -334,7 +448,6 @@ def add_to_cart(request, product_id):
             cart_item.quantity = new_quantity
             cart_item.save()
         
-        # FIX: Decrease stock when adding to cart
         variant.stock -= quantity
         variant.save()
         
@@ -345,23 +458,16 @@ def add_to_cart(request, product_id):
         })
         
     except Product.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Product not found'
-        }, status=404)
+        return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required
 @require_POST
 def quick_add_to_cart(request):
-    """Quick add product to cart - FIXED: Now properly decreases stock"""
+    """Quick add product to cart"""
     try:
-        # Handle both JSON and form data
         if request.content_type == 'application/json':
             data = json.loads(request.body)
         else:
@@ -376,7 +482,6 @@ def quick_add_to_cart(request):
             id=product_id, is_active=True
         )
         
-        # Find variant
         if variant_id:
             variant = get_object_or_404(ProductVariant, id=variant_id, product=product)
         elif size:
@@ -384,22 +489,16 @@ def quick_add_to_cart(request):
         else:
             variant = product.variants.filter(stock__gt=0).first()
             if not variant:
-                return JsonResponse({
-                    'success': False,
-                    'error': 'Product is out of stock'
-                }, status=400)
+                return JsonResponse({'success': False, 'error': 'Product is out of stock'}, status=400)
         
-        # Check stock
         if variant.stock < quantity:
             return JsonResponse({
                 'success': False,
                 'error': f'Only {variant.stock} items available'
             }, status=400)
         
-        # Get or create cart
         cart, created = Cart.objects.get_or_create(user=request.user)
         
-        # Get or create cart item
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             variant=variant,
@@ -416,7 +515,6 @@ def quick_add_to_cart(request):
             cart_item.quantity = new_quantity
             cart_item.save()
         
-        # FIX: Decrease stock when adding to cart
         variant.stock -= quantity
         variant.save()
         
@@ -427,28 +525,21 @@ def quick_add_to_cart(request):
         })
         
     except Product.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Product not found'
-        }, status=404)
+        return JsonResponse({'success': False, 'error': 'Product not found'}, status=404)
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required
 @require_POST
 def update_cart_item(request, item_id):
-    """Update cart item quantity - FIXED: Properly manages stock adjustments"""
+    """Update cart item quantity"""
     try:
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
         quantity = int(request.POST.get('quantity', 1))
         variant = cart_item.variant
         
         if quantity <= 0:
-            # Restore stock and delete item
             variant.stock += cart_item.quantity
             variant.save()
             cart_item.delete()
@@ -458,19 +549,14 @@ def update_cart_item(request, item_id):
                 'cart_count': cart_item.cart.get_total_items()
             })
         
-        # Calculate difference between new and current quantity
         quantity_diff = quantity - cart_item.quantity
         
-        # If increasing quantity, check if enough stock
         if quantity_diff > 0 and variant.stock < quantity_diff:
             return JsonResponse({
                 'success': False,
                 'error': f'Only {variant.stock} more items available'
             }, status=400)
         
-        # FIX: Adjust stock based on quantity change
-        # If quantity_diff is positive (increasing), stock decreases
-        # If quantity_diff is negative (decreasing), stock increases
         variant.stock -= quantity_diff
         variant.save()
         
@@ -488,22 +574,18 @@ def update_cart_item(request, item_id):
         })
         
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required
 @require_POST
 def remove_from_cart(request, item_id):
-    """Remove item from cart - FIXED: Properly restores stock before deleting"""
+    """Remove item from cart"""
     try:
         cart_item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
         variant = cart_item.variant
         cart = cart_item.cart
         
-        # FIX: Restore stock before deleting item
         variant.stock += cart_item.quantity
         variant.save()
         
@@ -518,13 +600,12 @@ def remove_from_cart(request, item_id):
         })
         
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
-# ==================== WISHLIST VIEWS ====================
+# ============================================
+# WISHLIST VIEWS
+# ============================================
 
 @login_required
 def wishlist_view(request):
@@ -533,9 +614,7 @@ def wishlist_view(request):
         user=request.user
     ).select_related('product').prefetch_related('product__variants')
     
-    context = {
-        'wishlist_items': wishlist_items,
-    }
+    context = {'wishlist_items': wishlist_items}
     return render(request, 'shop/wishlist.html', context)
 
 
@@ -560,7 +639,6 @@ def toggle_wishlist(request, product_id):
             in_wishlist = True
             message = 'Added to wishlist'
         
-        # Get updated wishlist count
         wishlist_count = Wishlist.objects.filter(user=request.user).count()
         
         return JsonResponse({
@@ -571,18 +649,13 @@ def toggle_wishlist(request, product_id):
         })
         
     except Exception as e:
-        return JsonResponse({
-            'success': False,
-            'error': str(e)
-        }, status=500)
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 
 @login_required
 def wishlist_api(request):
     """API endpoint to get wishlist data"""
-    wishlist_items = Wishlist.objects.filter(
-        user=request.user
-    ).select_related('product')
+    wishlist_items = Wishlist.objects.filter(user=request.user).select_related('product')
     
     items_data = []
     for item in wishlist_items:
@@ -595,31 +668,24 @@ def wishlist_api(request):
             'slug': item.product.slug,
         })
     
-    return JsonResponse({
-        'success': True,
-        'count': len(items_data),
-        'items': items_data
-    })
+    return JsonResponse({'success': True, 'count': len(items_data), 'items': items_data})
 
 
 @login_required
 def move_to_cart(request, wishlist_id):
-    """Move item from wishlist to cart - FIXED: Properly manages stock"""
+    """Move item from wishlist to cart"""
     try:
         wishlist_item = get_object_or_404(Wishlist, id=wishlist_id, user=request.user)
         product = wishlist_item.product
         
-        # Get first available variant
         variant = product.variants.filter(stock__gt=0).first()
         
         if not variant:
             messages.error(request, 'This product is currently out of stock.')
             return redirect('wishlist')
         
-        # Get or create cart
         cart, created = Cart.objects.get_or_create(user=request.user)
         
-        # Check if already in cart
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             variant=variant,
@@ -627,22 +693,18 @@ def move_to_cart(request, wishlist_id):
         )
         
         if not created:
-            # Already in cart, check if we can add more
             if cart_item.quantity < variant.stock:
                 cart_item.quantity += 1
                 cart_item.save()
-                # Decrease stock for the additional item
                 variant.stock -= 1
                 variant.save()
             else:
                 messages.warning(request, 'Maximum available quantity already in cart.')
                 return redirect('wishlist')
         else:
-            # New item in cart, decrease stock
             variant.stock -= 1
             variant.save()
         
-        # Remove from wishlist
         wishlist_item.delete()
         
         messages.success(request, f'{product.name} moved to cart.')
@@ -653,11 +715,13 @@ def move_to_cart(request, wishlist_id):
         return redirect('wishlist')
 
 
-# ==================== CHECKOUT & ORDER VIEWS ====================
+# ============================================
+# CHECKOUT & ORDER VIEWS
+# ============================================
 
 @login_required
 def checkout_view(request):
-    """Checkout page view"""
+    """Enhanced checkout view with shipping calculation"""
     cart, created = Cart.objects.get_or_create(user=request.user)
     cart_items = cart.items.select_related('variant__product').all()
     
@@ -665,29 +729,80 @@ def checkout_view(request):
         messages.warning(request, 'Your cart is empty.')
         return redirect('cart')
     
-    # Pre-fill form with user data
+    profile = request.user.profile
+    
+    # Check if user is verified
+    if not profile.is_fully_verified:
+        messages.warning(request, 'Please verify your account to complete checkout.')
+        return redirect('profile')
+    
+    # Pre-fill form
     initial_data = {
         'email': request.user.email,
         'first_name': request.user.first_name,
         'last_name': request.user.last_name,
+        'phone': profile.phone,
+        'address': profile.address,
+        'city': profile.city,
+        'region': profile.region,
+        'postal_code': profile.postal_code,
+        'country': profile.country,
     }
     
-    # Try to get profile data
-    try:
-        profile = request.user.profile
-        initial_data.update({
-            'phone': profile.phone,
-            'address': profile.address,
-            'city': profile.city,
-            'postal_code': profile.postal_code,
-            'country': profile.country,
+    # Get shipping methods
+    shipping_methods = ShippingMethod.objects.filter(is_active=True)
+    
+    # Calculate shipping options
+    cart_weight = cart.get_total_weight()
+    cart_subtotal = cart.get_subtotal()
+    
+    shipping_options = []
+    for method in shipping_methods:
+        cost = calculate_shipping_cost(
+            method=method,
+            weight_kg=cart_weight,
+            subtotal=cart_subtotal,
+            region=profile.region,
+            user=request.user
+        )
+        shipping_options.append({
+            'method': method,
+            'cost': cost,
+            'free_shipping': cost == 0
         })
-    except UserProfile.DoesNotExist:
-        pass
     
     if request.method == 'POST':
         form = CheckoutForm(request.POST)
         if form.is_valid():
+            # Get selected shipping method
+            shipping_method_type = form.cleaned_data['shipping_method']
+            shipping_method = ShippingMethod.objects.get(method_type=shipping_method_type)
+            
+            # Calculate shipping cost
+            shipping_cost = calculate_shipping_cost(
+                method=shipping_method,
+                weight_kg=cart_weight,
+                subtotal=cart_subtotal,
+                region=form.cleaned_data.get('region'),
+                user=request.user
+            )
+            
+            # Check for promotion code
+            promotion_code = form.cleaned_data.get('promotion_code', '')
+            discount_amount = 0
+            promotion = None
+            
+            if promotion_code:
+                try:
+                    promotion = Promotion.objects.get(code=promotion_code.upper(), is_active=True)
+                    valid, message = promotion.is_valid(request.user, cart_subtotal)
+                    if valid:
+                        discount_amount = promotion.calculate_discount(cart_subtotal)
+                    else:
+                        messages.warning(request, message)
+                except Promotion.DoesNotExist:
+                    messages.warning(request, 'Invalid promotion code.')
+            
             # Create order
             order = Order.objects.create(
                 user=request.user,
@@ -698,13 +813,17 @@ def checkout_view(request):
                 address=form.cleaned_data['address'],
                 apartment=form.cleaned_data.get('apartment', ''),
                 city=form.cleaned_data['city'],
+                region=form.cleaned_data.get('region', ''),
                 postal_code=form.cleaned_data['postal_code'],
                 country=form.cleaned_data['country'],
                 payment_method=form.cleaned_data['payment_method'],
-                shipping_method=form.cleaned_data['shipping_method'],
-                shipping_cost=0 if cart.get_subtotal() >= 3000 else (150 if form.cleaned_data['shipping_method'] == 'standard' else 350),
-                subtotal=cart.get_subtotal(),
-                total=cart.get_total()
+                shipping_method=shipping_method_type,
+                shipping_cost=shipping_cost,
+                subtotal=cart_subtotal,
+                discount_amount=discount_amount,
+                total=cart_subtotal + shipping_cost - discount_amount,
+                free_shipping_applied=shipping_cost == 0 and cart_subtotal < 3000,
+                welcome_discount_applied=discount_amount > 0 and not profile.first_order_completed
             )
             
             # Create order items
@@ -719,8 +838,23 @@ def checkout_view(request):
                     quantity=cart_item.quantity
                 )
             
-            # Clear cart (stock already decreased when added to cart)
+            # Track promotion use
+            if promotion and discount_amount > 0:
+                UserPromotionUse.objects.create(
+                    user=request.user,
+                    promotion=promotion,
+                    order=order,
+                    discount_amount=discount_amount
+                )
+                promotion.total_uses += 1
+                promotion.save()
+            
+            # Clear cart
             cart.items.all().delete()
+            
+            # Redirect to payment if not COD
+            if order.payment_method != 'cod':
+                return redirect('payment_process', order_number=order.order_number)
             
             messages.success(request, 'Order placed successfully!')
             return redirect('order_confirmation', order_number=order.order_number)
@@ -730,20 +864,239 @@ def checkout_view(request):
     context = {
         'form': form,
         'cart_items': cart_items,
-        'cart_subtotal': cart.get_subtotal(),
+        'cart_subtotal': cart_subtotal,
         'cart_total': cart.get_total(),
+        'shipping_options': shipping_options,
+        'is_first_order': not profile.first_order_completed,
+        'is_verified': profile.is_fully_verified,
     }
     return render(request, 'shop/checkout.html', context)
 
+
+@login_required
+def calculate_shipping_api(request):
+    """API to calculate shipping cost dynamically"""
+    try:
+        method_type = request.GET.get('method', 'standard')
+        region = request.GET.get('region', '')
+        
+        cart = request.user.cart
+        weight = cart.get_total_weight()
+        subtotal = cart.get_subtotal()
+        
+        method = get_object_or_404(ShippingMethod, method_type=method_type, is_active=True)
+        cost = calculate_shipping_cost(method, weight, subtotal, region, request.user)
+        
+        return JsonResponse({
+            'success': True,
+            'shipping_cost': float(cost),
+            'subtotal': float(subtotal),
+            'total': float(subtotal + cost),
+            'free_shipping': cost == 0
+        })
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+# ============================================
+# PAYMENT VIEWS
+# ============================================
+
+@login_required
+def payment_process_view(request, order_number):
+    """Process payment for order"""
+    order = get_object_or_404(Order, order_number=order_number, user=request.user)
+    
+    if not order.can_pay():
+        messages.error(request, 'This order cannot be paid for.')
+        return redirect('order_detail', order_number=order.order_number)
+    
+    payment_method = order.payment_method
+    
+    # Create payment record
+    payment, created = Payment.objects.get_or_create(
+        order=order,
+        defaults={
+            'gateway': payment_method,
+            'amount': order.total,
+            'status': 'pending'
+        }
+    )
+    
+    context = {
+        'order': order,
+        'payment': payment,
+        'stripe_public_key': settings.STRIPE_PUBLIC_KEY,
+    }
+    
+    if payment_method == 'card':
+        # Initialize Stripe
+        try:
+            intent = create_payment_intent(order)
+            context['client_secret'] = intent.client_secret
+        except Exception as e:
+            messages.error(request, f'Payment initialization failed: {str(e)}')
+            return redirect('checkout')
+        return render(request, 'shop/payment/stripe.html', context)
+    
+    elif payment_method == 'gcash':
+        return render(request, 'shop/payment/gcash.html', context)
+    
+    elif payment_method == 'maya':
+        return render(request, 'shop/payment/maya.html', context)
+    
+    elif payment_method == 'paypal':
+        return render(request, 'shop/payment/paypal.html', context)
+    
+    return redirect('order_confirmation', order_number=order.order_number)
+
+
+@login_required
+@require_POST
+def process_payment_api(request, order_number):
+    """API to process payment"""
+    order = get_object_or_404(Order, order_number=order_number, user=request.user)
+    payment = order.payment
+    
+    try:
+        data = json.loads(request.body)
+        payment_method = order.payment_method
+        
+        if payment_method == 'card':
+            # Stripe payment
+            payment_intent_id = data.get('payment_intent_id')
+            result = process_stripe_payment(payment, payment_intent_id)
+        
+        elif payment_method == 'gcash':
+            # GCash payment via Xendit/PayMongo
+            result = process_gcash_payment(payment, data)
+        
+        elif payment_method == 'maya':
+            # Maya payment
+            result = process_maya_payment(payment, data)
+        
+        elif payment_method == 'paypal':
+            # PayPal payment
+            result = process_paypal_payment(payment, data)
+        
+        else:
+            return JsonResponse({'success': False, 'error': 'Invalid payment method'})
+        
+        if result['success']:
+            return JsonResponse({
+                'success': True,
+                'redirect_url': reverse('order_confirmation', kwargs={'order_number': order.order_number})
+            })
+        else:
+            return JsonResponse({'success': False, 'error': result.get('error', 'Payment failed')})
+    
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@csrf_exempt
+def stripe_webhook(request):
+    """Stripe webhook handler"""
+    payload = request.body
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE')
+    
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+        )
+        
+        # Log webhook
+        PaymentWebhookLog.objects.create(
+            gateway='stripe',
+            event_type=event['type'],
+            payload=event
+        )
+        
+        if event['type'] == 'payment_intent.succeeded':
+            payment_intent = event['data']['object']
+            # Update payment status
+            payment = Payment.objects.filter(gateway_transaction_id=payment_intent['id']).first()
+            if payment:
+                payment.mark_completed(payment_intent['id'])
+        
+        elif event['type'] == 'payment_intent.payment_failed':
+            payment_intent = event['data']['object']
+            payment = Payment.objects.filter(gateway_transaction_id=payment_intent['id']).first()
+            if payment:
+                error_message = payment_intent.get('last_payment_error', {}).get('message', 'Payment failed')
+                payment.mark_failed(error_message)
+        
+        return HttpResponse(status=200)
+    
+    except Exception as e:
+        return HttpResponse(status=400)
+
+
+@csrf_exempt
+def gcash_webhook(request):
+    """GCash/Xendit webhook handler"""
+    try:
+        payload = json.loads(request.body)
+        
+        PaymentWebhookLog.objects.create(
+            gateway='gcash',
+            event_type=payload.get('status', 'unknown'),
+            payload=payload
+        )
+        
+        # Process based on status
+        reference = payload.get('reference_id')
+        if reference:
+            payment = Payment.objects.filter(gateway_reference=reference).first()
+            if payment:
+                if payload.get('status') == 'SUCCESS':
+                    payment.mark_completed(payload.get('id'))
+                elif payload.get('status') in ['FAILED', 'EXPIRED']:
+                    payment.mark_failed(payload.get('failure_code', 'Payment failed'))
+        
+        return HttpResponse(status=200)
+    
+    except Exception as e:
+        return HttpResponse(status=400)
+
+
+@csrf_exempt
+def maya_webhook(request):
+    """Maya webhook handler"""
+    try:
+        payload = json.loads(request.body)
+        
+        PaymentWebhookLog.objects.create(
+            gateway='maya',
+            event_type=payload.get('status', 'unknown'),
+            payload=payload
+        )
+        
+        reference = payload.get('requestReferenceNumber')
+        if reference:
+            payment = Payment.objects.filter(gateway_reference=reference).first()
+            if payment:
+                if payload.get('status') == 'PAYMENT_SUCCESS':
+                    payment.mark_completed(payload.get('paymentTokenId'))
+                elif payload.get('status') == 'PAYMENT_FAILED':
+                    payment.mark_failed(payload.get('error', 'Payment failed'))
+        
+        return HttpResponse(status=200)
+    
+    except Exception as e:
+        return HttpResponse(status=400)
+
+
+# ============================================
+# ORDER VIEWS
+# ============================================
 
 @login_required
 def order_confirmation_view(request, order_number):
     """Order confirmation page"""
     order = get_object_or_404(Order, order_number=order_number, user=request.user)
     
-    context = {
-        'order': order,
-    }
+    context = {'order': order}
     return render(request, 'shop/order_confirmation.html', context)
 
 
@@ -756,30 +1109,24 @@ def order_detail_view(request, order_number):
         user=request.user
     )
     
-    context = {
-        'order': order,
-    }
+    context = {'order': order}
     return render(request, 'shop/order_detail.html', context)
 
 
 @login_required
 @require_POST
 def cancel_order(request, order_number):
-    """Cancel order - FIXED: Restores stock when cancelling"""
+    """Cancel order"""
     try:
         order = get_object_or_404(Order, order_number=order_number, user=request.user)
         
         if order.can_cancel():
-            # Restore stock for all items
             for item in order.items.all():
                 if item.variant:
                     item.variant.stock += item.quantity
                     item.variant.save()
             
-            order.status = 'cancelled'
-            order.cancelled_at = timezone.now()
-            order.save()
-            
+            order.cancel()
             messages.success(request, 'Order cancelled successfully.')
         else:
             messages.error(request, 'This order cannot be cancelled.')
@@ -791,7 +1138,9 @@ def cancel_order(request, order_number):
         return redirect('profile')
 
 
-# ==================== PROFILE VIEWS ====================
+# ============================================
+# PROFILE VIEWS
+# ============================================
 
 @login_required
 def profile_view(request):
@@ -800,7 +1149,6 @@ def profile_view(request):
         user=request.user
     ).prefetch_related('items').order_by('-created_at')
     
-    # Get or create profile
     profile, created = UserProfile.objects.get_or_create(user=request.user)
     
     if request.method == 'POST':
@@ -838,7 +1186,9 @@ def profile_view(request):
     return render(request, 'shop/profile.html', context)
 
 
-# ==================== UTILITY VIEWS ====================
+# ============================================
+# UTILITY VIEWS
+# ============================================
 
 def get_cart_count(request):
     """Get cart item count for navbar"""
@@ -857,3 +1207,4 @@ def get_wishlist_count(request):
 
 # Import User model at the end to avoid circular import
 from django.contrib.auth.models import User
+from django.urls import reverse
