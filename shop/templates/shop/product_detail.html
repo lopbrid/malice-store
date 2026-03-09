@@ -434,17 +434,26 @@
             <div class="product-grid">
                 {% for related in related_products %}
                 <div class="product-card">
-                    <a href="{{ related.get_absolute_url }}">
-                        <div class="product-image">
+                    <div class="product-image">
+                        <a href="{{ related.get_absolute_url }}">
                             {% if related.image %}
                             <img src="{{ related.image.url }}" alt="{{ related.name }}" loading="lazy">
                             {% endif %}
-                        </div>
-                        <div class="product-info-card">
-                            <h3>{{ related.name }}</h3>
-                            <p class="price">₱{{ related.price|floatformat:2 }}</p>
-                        </div>
-                    </a>
+                        </a>
+                        <!-- Wishlist Heart Icon -->
+                        <button class="wishlist-heart {% if related.in_wishlist %}active{% endif %}" 
+                                data-product-id="{{ related.id }}"
+                                onclick="toggleWishlistFromCard(this)"
+                                aria-label="Add to wishlist">
+                            <svg viewBox="0 0 24 24" fill="{% if related.in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="product-info-card">
+                        <h3><a href="{{ related.get_absolute_url }}">{{ related.name }}</a></h3>
+                        <p class="price">₱{{ related.price|floatformat:2 }}</p>
+                    </div>
                 </div>
                 {% endfor %}
             </div>

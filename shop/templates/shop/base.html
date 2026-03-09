@@ -61,26 +61,65 @@
             -moz-osx-font-smoothing: grayscale;
         }
         
-        /* Grain Overlay */
+        /* Grain Overlay - Enhanced for lovable look */
         .grain {
             position: fixed;
             inset: 0;
             pointer-events: none;
             z-index: 9998;
-            opacity: 0.03;
+            opacity: 0.04; /* Increased for better visibility */
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'%3E%3Canimate attributeName='baseFrequency' values='0.8;0.85;0.8' dur='10s' repeatCount='indefinite'/%3E%3C/feTurbulence%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
         }
         
-        /* Spotlight Effect */
-        .spotlight {
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            z-index: 0;
-            background: 
-                radial-gradient(circle 500px at var(--mouse-x, 50%) var(--mouse-y, 50%), 
-                    rgba(255, 255, 255, 0.05) 0%, transparent 60%),
-                radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+        /* ============================================
+           WISHLIST HEART ICON - GLOBAL STYLES
+           ============================================ */
+        .wishlist-heart {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 36px;
+            height: 36px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            color: var(--text);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 10;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        .wishlist-heart:hover {
+            transform: scale(1.1);
+            border-color: var(--text-muted);
+        }
+        
+        .wishlist-heart.active {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #ef4444;
+        }
+        
+        .wishlist-heart svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* Touch-friendly tap target */
+        @media (pointer: coarse) {
+            .wishlist-heart {
+                width: 44px;
+                height: 44px;
+            }
+            .wishlist-heart svg {
+                width: 22px;
+                height: 22px;
+            }
         }
         
         /* ============================================
@@ -508,11 +547,8 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Grain Overlay -->
+    <!-- Grain Overlay (only) -->
     <div class="grain"></div>
-    
-    <!-- Spotlight Effect -->
-    <div class="spotlight"></div>
     
     <!-- Toast Container -->
     <div id="toastContainer"></div>
@@ -665,15 +701,6 @@
             }
         });
         
-        // Spotlight effect
-        document.addEventListener('mousemove', function(e) {
-            const spotlight = document.querySelector('.spotlight');
-            const x = (e.clientX / window.innerWidth) * 100;
-            const y = (e.clientY / window.innerHeight) * 100;
-            spotlight.style.setProperty('--mouse-x', x + '%');
-            spotlight.style.setProperty('--mouse-y', y + '%');
-        });
-        
         // Toast notifications
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
@@ -710,6 +737,47 @@
         
         window.addEventListener('scroll', revealOnScroll);
         window.addEventListener('load', revealOnScroll);
+        
+        // Wishlist toggle from product cards
+        function toggleWishlistFromCard(button) {
+            const productId = button.dataset.productId;
+            const wasActive = button.classList.contains('active');
+            
+            // Disable button to prevent double clicks
+            button.disabled = true;
+            
+            fetch(`/wishlist/toggle/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Toggle active class and SVG fill
+                    button.classList.toggle('active', data.in_wishlist);
+                    const svg = button.querySelector('svg');
+                    if (svg) {
+                        svg.setAttribute('fill', data.in_wishlist ? 'currentColor' : 'none');
+                    }
+                    showToast(data.message, 'success');
+                } else {
+                    // If not authenticated, show error and maybe redirect to login
+                    showToast(data.error || 'Please log in to manage wishlist', 'error');
+                    if (data.redirect) {
+                        setTimeout(() => window.location.href = data.redirect, 1500);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Wishlist error:', error);
+                showToast('Failed to update wishlist', 'error');
+            })
+            .finally(() => {
+                button.disabled = false;
+            });
+        }
         
         // Django messages to toast
         {% if messages %}

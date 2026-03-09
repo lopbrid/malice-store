@@ -23,7 +23,7 @@
 .hero h1 {
     font-family: 'Bebas Neue', sans-serif;
     font-size: clamp(4rem, 15vw, 12rem);
-    font-weight: 700;
+    font-weight: 500;
     letter-spacing: 0.05em;
     margin-bottom: 1rem;
     line-height: 1;
@@ -218,8 +218,8 @@
     <div class="product-grid">
         {% for product in featured %}
         <div class="product-card reveal">
-            <a href="{{ product.get_absolute_url }}">
-                <div class="product-image">
+            <div class="product-image">
+                <a href="{{ product.get_absolute_url }}">
                     {% if product.image %}
                     <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
                     {% else %}
@@ -231,12 +231,21 @@
                         </svg>
                     </div>
                     {% endif %}
-                </div>
-                <div class="product-info">
-                    <h3>{{ product.name }}</h3>
-                    <p class="price">₱{{ product.price|floatformat:2 }}</p>
-                </div>
-            </a>
+                </a>
+                <!-- Wishlist Heart Icon -->
+                <button class="wishlist-heart {% if product.in_wishlist %}active{% endif %}" 
+                        data-product-id="{{ product.id }}"
+                        onclick="toggleWishlistFromCard(this)"
+                        aria-label="Add to wishlist">
+                    <svg viewBox="0 0 24 24" fill="{% if product.in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="product-info">
+                <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                <p class="price">₱{{ product.price|floatformat:2 }}</p>
+            </div>
         </div>
         {% empty %}
         <p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No featured products available.</p>
@@ -254,8 +263,8 @@
     <div class="product-grid">
         {% for product in new_arrivals %}
         <div class="product-card reveal">
-            <a href="{{ product.get_absolute_url }}">
-                <div class="product-image">
+            <div class="product-image">
+                <a href="{{ product.get_absolute_url }}">
                     {% if product.image %}
                     <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
                     {% else %}
@@ -267,12 +276,21 @@
                         </svg>
                     </div>
                     {% endif %}
-                </div>
-                <div class="product-info">
-                    <h3>{{ product.name }}</h3>
-                    <p class="price">₱{{ product.price|floatformat:2 }}</p>
-                </div>
-            </a>
+                </a>
+                <!-- Wishlist Heart Icon -->
+                <button class="wishlist-heart {% if product.in_wishlist %}active{% endif %}" 
+                        data-product-id="{{ product.id }}"
+                        onclick="toggleWishlistFromCard(this)"
+                        aria-label="Add to wishlist">
+                    <svg viewBox="0 0 24 24" fill="{% if product.in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="product-info">
+                <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                <p class="price">₱{{ product.price|floatformat:2 }}</p>
+            </div>
         </div>
         {% empty %}
         <p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No new arrivals available.</p>
@@ -290,8 +308,8 @@
     <div class="product-grid">
         {% for product in best_sellers %}
         <div class="product-card reveal">
-            <a href="{{ product.get_absolute_url }}">
-                <div class="product-image">
+            <div class="product-image">
+                <a href="{{ product.get_absolute_url }}">
                     {% if product.image %}
                     <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
                     {% else %}
@@ -303,12 +321,21 @@
                         </svg>
                     </div>
                     {% endif %}
-                </div>
-                <div class="product-info">
-                    <h3>{{ product.name }}</h3>
-                    <p class="price">₱{{ product.price|floatformat:2 }}</p>
-                </div>
-            </a>
+                </a>
+                <!-- Wishlist Heart Icon -->
+                <button class="wishlist-heart {% if product.in_wishlist %}active{% endif %}" 
+                        data-product-id="{{ product.id }}"
+                        onclick="toggleWishlistFromCard(this)"
+                        aria-label="Add to wishlist">
+                    <svg viewBox="0 0 24 24" fill="{% if product.in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="product-info">
+                <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
+                <p class="price">₱{{ product.price|floatformat:2 }}</p>
+            </div>
         </div>
         {% empty %}
         <p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;">No best sellers available.</p>
