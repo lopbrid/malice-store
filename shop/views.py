@@ -18,6 +18,18 @@ import stripe
 from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.conf import settings
+import os
+
+print("="*50)
+print("DJANGO SETTINGS DEBUG INFO:")
+print(f"DEBUG mode: {settings.DEBUG}")
+print(f"EMAIL_BACKEND: {settings.EMAIL_BACKEND}")
+print(f"EMAIL_HOST: {settings.EMAIL_HOST}")
+print(f"EMAIL_PORT: {settings.EMAIL_PORT}")
+print(f"EMAIL_USE_TLS: {settings.EMAIL_USE_TLS}")
+print(f"DEFAULT_FROM_EMAIL: {settings.DEFAULT_FROM_EMAIL}")
+print(f"PLUNK_PASSWORD SET: {'PLUNK_SMTP_PASSWORD' in os.environ}")
+print("="*50)
 
 def test_email_render(request):
     from django.conf import settings

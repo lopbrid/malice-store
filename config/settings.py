@@ -166,13 +166,12 @@ else:
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = 'plunk'
     EMAIL_HOST_PASSWORD = config('PLUNK_SMTP_PASSWORD')
+    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@malice.com')
     
-    # Get from email with fallback
-    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@useplunk.com')
-    
-    # Print config for debugging (remove after fixing)
-    print(f"📧 Email configured with FROM: {DEFAULT_FROM_EMAIL}")
-    print(f"📧 SMTP Host: {EMAIL_HOST}")
+    # Print to confirm (remove after fixing)
+    print(f"📧 PRODUCTION EMAIL CONFIG LOADED!")
+    print(f"📧 FROM: {DEFAULT_FROM_EMAIL}")
+    print(f"📧 HOST: {EMAIL_HOST}")
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
