@@ -15,6 +15,25 @@ from django.utils.html import strip_tags
 import json
 import requests
 import stripe
+from django.core.mail import send_mail
+from django.http import HttpResponse
+from django.conf import settings
+
+def test_email_render(request):
+    try:
+        sent = send_mail(
+            'Test from Render',
+            'This is a test from your Render deployment.',
+            settings.DEFAULT_FROM_EMAIL,
+            ['namosgi519@gmail.com'],  # Your email
+            fail_silently=False,
+        )
+        if sent:
+            return HttpResponse(f"✅ Email sent! From: {settings.DEFAULT_FROM_EMAIL}")
+        else:
+            return HttpResponse("❌ Email failed to send")
+    except Exception as e:
+        return HttpResponse(f"❌ Error: {str(e)}")
 
 from .models import (
     Product, Category, ProductVariant, Cart, CartItem,

@@ -51,4 +51,5 @@ urlpatterns = [
     
     # Profile
     path('profile/', views.profile_view, name='profile'),
+    path('test-email/', views.test_email_render, name='test_email'),
 ]
