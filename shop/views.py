@@ -222,12 +222,15 @@ def register_view(request):
             user.is_active = False  # Inactive until verified
             user.save()
             
-            # Create profile with phone
+            # Get the phone number from form
             phone = form.cleaned_data.get('phone')
-            profile = UserProfile.objects.create(user=user, phone=phone)
             
-            # Create cart
-            Cart.objects.create(user=user)
+            # The signal already created a profile, so just update it
+            profile = user.profile
+            profile.phone = phone
+            profile.save()
+            
+            # Cart is already created by signal
             
             # Send verification codes
             email_sent = send_email_otp(user, user.email)
