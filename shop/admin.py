@@ -217,6 +217,8 @@ class UserProfileAdmin(admin.ModelAdmin):
     list_editable = ['phone_verified', 'email_verified', 'newsletter_subscribed']
 
 
+# In shop/admin.py - add this if not already present
+
 @admin.register(VerificationCode)
 class VerificationCodeAdmin(admin.ModelAdmin):
     list_display = ['user', 'verification_type', 'code_masked', 'is_used', 'is_valid', 'created_at', 'expires_at']

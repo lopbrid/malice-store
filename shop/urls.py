@@ -13,8 +13,8 @@ urlpatterns = [
     # Authentication
     path('login/', views.login_view, name='login'),
     path('register/', views.register_view, name='register'),
-    path('verify-account/', views.verify_account_view, name='verify_account'),
-    path('resend-otp/', views.resend_otp_view, name='resend_otp'),
+    path('verify-account/', views.verify_account_view, name='verify_account'),  # This should exist
+    path('resend-otp/', views.resend_otp_view, name='resend_otp'),  # This should exist
     path('logout/', views.logout_view, name='logout'),
     
     # Cart

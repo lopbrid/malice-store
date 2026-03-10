@@ -247,6 +247,16 @@ def login_view(request):
                     user = None
             
             if user is not None:
+                # Check if user is verified
+                if not user.is_active:
+                    # User exists but not verified - redirect to verification
+                    request.session['verification_user_id'] = user.id
+                    request.session['verification_email'] = user.email
+                    request.session['verification_phone'] = user.profile.phone if hasattr(user, 'profile') else None
+                    
+                    messages.warning(request, 'Please verify your account before logging in.')
+                    return redirect('verify_account')
+                
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name or user.username}!')
                 
@@ -280,15 +290,14 @@ def register_view(request):
             # Get the phone number from form
             phone = form.cleaned_data.get('phone')
             
-            # The signal already created a profile, so just update it
+            # Update profile with phone
             profile = user.profile
             profile.phone = phone
             profile.save()
             
-            # Cart is already created by signal
-            
-            # Send verification codes
-            email_sent = send_email_otp(user, user.email)
+            # Send verification email
+            from .utils import send_email_otp
+            send_email_otp(user, user.email)
             
             # Store user ID in session for verification
             request.session['verification_user_id'] = user.id
@@ -322,18 +331,26 @@ def verify_account_view(request):
         if form.is_valid():
             otp_code = form.cleaned_data['otp_code']
             
-            # Check email verification
+            # Get the latest email verification
+            from .models import VerificationCode
             email_verification = VerificationCode.objects.filter(
                 user=user,
                 verification_type='email',
-                is_used=False,
-                expires_at__gt=timezone.now()
-            ).first()
+                is_used=False
+            ).order_by('-created_at').first()
             
-            if email_verification:
+            if email_verification and email_verification.is_valid():
                 valid, message = email_verification.verify(otp_code)
                 if valid:
                     profile.email_verified = True
+                    
+                    # Check if phone is also verified (if needed)
+                    if profile.phone and profile.phone_verified:
+                        profile.is_fully_verified = True
+                    elif not profile.phone:
+                        # No phone required, consider fully verified with just email
+                        profile.is_fully_verified = True
+                    
                     profile.save()
                     
                     # Activate user
@@ -344,12 +361,16 @@ def verify_account_view(request):
                     login(request, user)
                     
                     # Clear session
-                    del request.session['verification_user_id']
-                    del request.session['verification_email']
-                    if 'verification_phone' in request.session:
-                        del request.session['verification_phone']
+                    for key in ['verification_user_id', 'verification_email', 'verification_phone']:
+                        if key in request.session:
+                            del request.session[key]
                     
                     messages.success(request, 'Account verified successfully! Welcome to MALICE.')
+                    
+                    # Check for welcome discount
+                    if settings.WELCOME_DISCOUNT_PERCENT:
+                        messages.info(request, f'🎉 As a welcome gift, you get {settings.WELCOME_DISCOUNT_PERCENT}% off your first order!')
+                    
                     return redirect('home')
                 else:
                     messages.error(request, message)
@@ -362,6 +383,7 @@ def verify_account_view(request):
         'form': form,
         'email': request.session.get('verification_email'),
         'phone': request.session.get('verification_phone'),
+        'expiry_minutes': settings.OTP_EXPIRY_MINUTES,
     }
     return render(request, 'shop/verify_account.html', context)
 
@@ -376,28 +398,61 @@ def resend_otp_view(request):
     user = get_object_or_404(User, id=user_id)
     verification_type = request.POST.get('type', 'email')
     
-    # Check resend limit
+    from .utils import send_email_otp, send_sms_otp
+    from .models import VerificationCode
+    
+    # Check rate limiting (max 3 per hour)
     recent_codes = VerificationCode.objects.filter(
         user=user,
         verification_type=verification_type,
         created_at__gte=timezone.now() - timezone.timedelta(hours=1)
     ).count()
     
-    if recent_codes >= 3:
-        return JsonResponse({'success': False, 'error': 'Too many attempts. Please try again later.'})
+    if recent_codes >= settings.MAX_OTP_RESEND:
+        return JsonResponse({
+            'success': False, 
+            'error': f'Maximum {settings.MAX_OTP_RESEND} attempts per hour. Please try again later.'
+        })
     
     if verification_type == 'email':
-        send_email_otp(user, user.email)
-        return JsonResponse({'success': True, 'message': 'Code sent to your email'})
+        # Invalidate old unused codes
+        VerificationCode.objects.filter(
+            user=user,
+            verification_type='email',
+            is_used=False
+        ).update(is_used=True)
+        
+        success = send_email_otp(user, user.email)
+        if success:
+            return JsonResponse({'success': True, 'message': '✅ New code sent to your email'})
+        else:
+            return JsonResponse({'success': False, 'error': '❌ Failed to send code. Please try again.'})
+    
     elif verification_type == 'phone':
         phone = user.profile.phone
         if phone:
-            send_sms_otp(user, phone)
-            return JsonResponse({'success': True, 'message': 'Code sent to your phone'})
-        return JsonResponse({'success': False, 'error': 'No phone number on file'})
+            # Invalidate old unused codes
+            VerificationCode.objects.filter(
+                user=user,
+                verification_type='phone',
+                is_used=False
+            ).update(is_used=True)
+            
+            success = send_sms_otp(user, phone)
+            if success:
+                return JsonResponse({'success': True, 'message': '✅ New code sent to your phone'})
+            else:
+                # Check if Twilio is configured
+                if not hasattr(settings, 'TWILIO_ACCOUNT_SID') or not settings.TWILIO_ACCOUNT_SID:
+                    return JsonResponse({
+                        'success': False, 
+                        'error': '📱 SMS service not configured. Please use email verification.'
+                    })
+                else:
+                    return JsonResponse({'success': False, 'error': '❌ Failed to send SMS. Please try again.'})
+        return JsonResponse({'success': False, 'error': '❌ No phone number on file'})
     
     return JsonResponse({'success': False, 'error': 'Invalid verification type'})
-
 
 @login_required
 def logout_view(request):

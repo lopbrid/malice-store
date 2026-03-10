@@ -148,12 +148,6 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 # ============================================
 # EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
 # ============================================
-# ============================================
-# EMAIL CONFIGURATION - PLUNK API (for Render)
-# ============================================
-# ============================================
-# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
-# ============================================
 if DEBUG:
     # Development - print emails to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -167,11 +161,6 @@ else:
     EMAIL_HOST_USER = 'plunk'
     EMAIL_HOST_PASSWORD = config('PLUNK_SMTP_PASSWORD')
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@malice.com')
-    
-    # Print to confirm (remove after fixing)
-    print(f"📧 PRODUCTION EMAIL CONFIG LOADED!")
-    print(f"📧 FROM: {DEFAULT_FROM_EMAIL}")
-    print(f"📧 HOST: {EMAIL_HOST}")
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
@@ -179,7 +168,6 @@ else:
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
 TWILIO_PHONE_NUMBER = config('TWILIO_PHONE_NUMBER', default='')
-TWILIO_WHATSAPP_NUMBER = config('TWILIO_WHATSAPP_NUMBER', default='')
 
 # ============================================
 # PAYMENT GATEWAY CONFIGURATIONS
@@ -213,11 +201,30 @@ MAYA_WEBHOOK_SECRET = config('MAYA_WEBHOOK_SECRET', default='')
 # ============================================
 # REDIS & CELERY CONFIGURATION - FIXED
 # ============================================
+# ============================================
+# REDIS & CELERY CONFIGURATION - FIXED FOR LOCAL
+# ============================================
+# ============================================
+# REDIS & CELERY CONFIGURATION - FIXED FOR RENDER
+# ============================================
 REDIS_URL = config('REDIS_URL', default=None)
 
-# Use Redis only if REDIS_URL is provided, otherwise use database cache
-if REDIS_URL:
-    # Use Redis cache
+if DEBUG:
+    # Development - use local memory cache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+    CELERY_BROKER_URL = None
+    CELERY_RESULT_BACKEND = None
+    print("📦 Using local memory cache for development")
+    
+elif REDIS_URL:
+    # Production with Redis
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
@@ -227,19 +234,20 @@ if REDIS_URL:
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
     CELERY_TASK_ALWAYS_EAGER = False
+    print("📦 Using Redis cache for production")
+    
 else:
-    # No Redis - use database cache (works on Render without Redis)
+    # Production fallback to database cache (no Redis needed)
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
             'LOCATION': 'django_cache_table',
         }
     }
-    # Run Celery tasks synchronously without Redis
     CELERY_TASK_ALWAYS_EAGER = True
-    CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = None
     CELERY_RESULT_BACKEND = None
+    print("📦 Using database cache (no Redis)")
 
 # Celery settings
 CELERY_ACCEPT_CONTENT = ['json']

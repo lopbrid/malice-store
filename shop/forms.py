@@ -534,3 +534,29 @@ class ResetPasswordForm(forms.Form):
             raise forms.ValidationError('Passwords do not match.')
 
         return cleaned_data
+
+# In shop/forms.py - add this class
+
+class OTPVerificationForm(forms.Form):
+    """Form for OTP verification"""
+    otp_code = forms.CharField(
+        max_length=6,
+        min_length=6,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'otp-input',
+            'placeholder': '------',
+            'autocomplete': 'off',
+            'inputmode': 'numeric',
+            'pattern': '[0-9]*',
+            'maxlength': '6'
+        }),
+        label='Verification Code',
+        help_text='Enter the 6-digit code sent to your email'
+    )
+
+    def clean_otp_code(self):
+        code = self.cleaned_data.get('otp_code')
+        if not code.isdigit():
+            raise forms.ValidationError('Please enter only numbers.')
+        return code

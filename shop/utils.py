@@ -17,6 +17,8 @@ from twilio.rest import Client
 
 def generate_otp(length=6):
     """Generate a random numeric OTP"""
+    import random
+    import string
     return ''.join(random.choices(string.digits, k=length))
 
 
@@ -25,8 +27,32 @@ def generate_otp(length=6):
 # ============================================
 
 def send_email_otp(user, email):
-    """Send OTP via email"""
+    """Send OTP via email with rate limiting"""
     from .models import VerificationCode
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+    from django.utils.html import strip_tags
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    # Check rate limiting (max 3 per hour)
+    recent_codes = VerificationCode.objects.filter(
+        user=user,
+        verification_type='email',
+        created_at__gte=timezone.now() - timezone.timedelta(hours=1)
+    ).count()
+    
+    if recent_codes >= settings.MAX_OTP_RESEND:
+        logger.warning(f"Rate limit exceeded for {email}")
+        return False
+    
+    # Invalidate old unused codes
+    VerificationCode.objects.filter(
+        user=user,
+        verification_type='email',
+        is_used=False
+    ).update(is_used=True)
     
     # Generate new OTP
     otp = generate_otp()
@@ -69,48 +95,64 @@ def send_email_otp(user, email):
         )
         return True
     except Exception as e:
-        print(f"Email sending failed: {e}")
-        # In production, you might want to log this properly
+        logger.error(f"Email sending failed: {e}")
         return False
 
 
 def send_sms_otp(user, phone_number):
     """Send OTP via SMS using Twilio"""
     from .models import VerificationCode
+    import logging
+    from django.conf import settings
     
-    if not settings.TWILIO_ACCOUNT_SID or not settings.TWILIO_AUTH_TOKEN:
-        print("Twilio credentials not configured")
+    logger = logging.getLogger(__name__)
+    
+    # Generate OTP
+    otp = generate_otp()
+    
+    # Invalidate old unused codes
+    VerificationCode.objects.filter(
+        user=user,
+        verification_type='phone',
+        is_used=False
+    ).update(is_used=True)
+    
+    # Create verification record
+    verification = VerificationCode.objects.create(
+        user=user,
+        code=otp,
+        verification_type='phone',
+        phone=phone_number,
+        expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
+    )
+    
+    # Check if Twilio is configured
+    if not hasattr(settings, 'TWILIO_ACCOUNT_SID') or not settings.TWILIO_ACCOUNT_SID:
+        # In development, just print to console
+        if settings.DEBUG:
+            print(f"\n{'='*50}")
+            print(f"📱 SMS VERIFICATION CODE for {phone_number}: {otp}")
+            print(f"(Twilio not configured - this would be sent via SMS)")
+            print(f"{'='*50}\n")
+            return True
         return False
     
+    # In production with Twilio configured
     try:
-        # from twilio.rest import Client  # REMOVE THIS - already imported at top
+        from twilio.rest import Client
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-        
-        # Generate OTP
-        otp = generate_otp()
-        
-        # Create verification record
-        verification = VerificationCode.objects.create(
-            user=user,
-            code=otp,
-            verification_type='phone',
-            phone=phone_number,
-            expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
-        )
         
         # Send SMS
-        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
         message = client.messages.create(
             body=f'Your MALICE verification code is: {otp}. Valid for {settings.OTP_EXPIRY_MINUTES} minutes.',
             from_=settings.TWILIO_PHONE_NUMBER,
             to=phone_number
         )
-        
+        logger.info(f"SMS sent to {phone_number}")
         return True
     except Exception as e:
-        print(f"SMS sending failed: {e}")
+        logger.error(f"SMS sending failed: {e}")
         return False
-
 
 # ============================================
 # SHIPPING CALCULATIONS

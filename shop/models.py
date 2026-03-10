@@ -117,6 +117,10 @@ class UserProfile(models.Model):
     phone = models.CharField(max_length=20, blank=True, validators=[
         RegexValidator(regex=r'^[\+]?[0-9\s\-\(\)]{10,20}$', message='Enter a valid phone number.')
     ])
+    email_otp_created_at = models.DateTimeField(null=True, blank=True)
+    phone_otp_created_at = models.DateTimeField(null=True, blank=True)
+    email_otp_attempts = models.PositiveIntegerField(default=0)
+    phone_otp_attempts = models.PositiveIntegerField(default=0)
     phone_verified = models.BooleanField(default=False)
     email_verified = models.BooleanField(default=False)
     is_fully_verified = models.BooleanField(default=False)
@@ -142,6 +146,8 @@ class UserProfile(models.Model):
         self.save(update_fields=['is_fully_verified'])
         return self.is_fully_verified
 
+
+# In shop/models.py - ensure this model exists
 
 class VerificationCode(models.Model):
     VERIFICATION_TYPE_CHOICES = [
