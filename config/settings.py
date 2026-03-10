@@ -211,38 +211,37 @@ MAYA_SECRET_API_KEY = config('MAYA_SECRET_API_KEY', default='')
 MAYA_WEBHOOK_SECRET = config('MAYA_WEBHOOK_SECRET', default='')
 
 # ============================================
-# REDIS & CELERY CONFIGURATION
+# REDIS & CELERY CONFIGURATION - FIXED
 # ============================================
-# ============================================
-# REDIS & CELERY CONFIGURATION
-# ============================================
-REDIS_URL = config('REDIS_URL', default='redis://localhost:6379/0')
+REDIS_URL = config('REDIS_URL', default=None)
 
-# Only use Redis in production, use local memory cache in development
-if DEBUG:
-    # Development - use local memory cache
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'unique-snowflake',
-        }
-    }
-    
-    # Disable Celery in development (or use synchronous tasks)
-    CELERY_TASK_ALWAYS_EAGER = True
-    CELERY_TASK_EAGER_PROPAGATES = True
-else:
-    # Production - use Redis
+# Use Redis only if REDIS_URL is provided, otherwise use database cache
+if REDIS_URL:
+    # Use Redis cache
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
             'LOCATION': REDIS_URL,
         }
     }
+    CELERY_BROKER_URL = REDIS_URL
+    CELERY_RESULT_BACKEND = REDIS_URL
+    CELERY_TASK_ALWAYS_EAGER = False
+else:
+    # No Redis - use database cache (works on Render without Redis)
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+            'LOCATION': 'django_cache_table',
+        }
+    }
+    # Run Celery tasks synchronously without Redis
+    CELERY_TASK_ALWAYS_EAGER = True
+    CELERY_TASK_EAGER_PROPAGATES = True
+    CELERY_BROKER_URL = None
+    CELERY_RESULT_BACKEND = None
 
-# Celery Configuration - only used if Redis is available
-CELERY_BROKER_URL = REDIS_URL if not DEBUG else None
-CELERY_RESULT_BACKEND = REDIS_URL if not DEBUG else None
+# Celery settings
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'

@@ -12,6 +12,9 @@ echo "=========================================="
 echo "🔍 Checking migration status BEFORE running migrations..."
 python manage.py showmigrations
 
+echo "Creating cache table..."
+python manage.py createcachetable
+
 echo "=========================================="
 echo "📊 Checking if database tables exist..."
 python manage.py shell << EOF
@@ -37,8 +40,10 @@ python manage.py showmigrations
 echo "=========================================="
 echo "📊 Verifying tables exist after migrations..."
 python manage.py shell << EOF
+
 from django.db import connection
 from django.db.utils import ProgrammingError
+
 
 try:
     with connection.cursor() as cursor:
