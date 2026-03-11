@@ -120,15 +120,42 @@ USE_I18N = True
 USE_TZ = True
 
 # ============================================
-# STATIC & MEDIA FILES
+# STATIC & MEDIA FILES - FIXED FOR CLOUDINARY
 # ============================================
+
+# Static files (WhiteNoise for both local and production)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'shop', 'static')]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Cloudinary Configuration
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
+CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
+
+# Media files - Cloudinary in production, local in development
+if not DEBUG and CLOUDINARY_CLOUD_NAME:
+    # Production - Use Cloudinary
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/'
+    
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY': CLOUDINARY_API_KEY,
+        'API_SECRET': CLOUDINARY_API_SECRET,
+        'SECURE': True,
+        'MEDIA_TAG': 'malice',
+        'STATIC_IMAGES': False,
+        'FOLDER': 'malice/products',
+    }
+    print(f"☁️ Using Cloudinary for media: {CLOUDINARY_CLOUD_NAME}")
+else:
+    # Development - Use local filesystem
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    print("💾 Using local filesystem for media (development mode)")
 
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
@@ -202,12 +229,6 @@ MAYA_WEBHOOK_SECRET = config('MAYA_WEBHOOK_SECRET', default='')
 
 # ============================================
 # REDIS & CELERY CONFIGURATION - FIXED
-# ============================================
-# ============================================
-# REDIS & CELERY CONFIGURATION - FIXED FOR LOCAL
-# ============================================
-# ============================================
-# REDIS & CELERY CONFIGURATION - FIXED FOR RENDER
 # ============================================
 REDIS_URL = config('REDIS_URL', default=None)
 
@@ -389,14 +410,3 @@ LOGGING = {
         },
     },
 }
-
-import os
-from decouple import config   # if you use decouple
-
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-}
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
