@@ -295,10 +295,6 @@ def register_view(request):
             profile.phone = phone
             profile.save()
             
-            # Send verification email
-            from .utils import send_email_otp
-            send_email_otp(user, user.email)
-            
             # Store user ID in session for verification
             request.session['verification_user_id'] = user.id
             request.session['verification_email'] = user.email
@@ -343,16 +339,9 @@ def verify_account_view(request):
                 valid, message = email_verification.verify(otp_code)
                 if valid:
                     profile.email_verified = True
-                    
-                    # Check if phone is also verified (if needed)
-                    if profile.phone and profile.phone_verified:
-                        profile.is_fully_verified = True
-                    elif not profile.phone:
-                        # No phone required, consider fully verified with just email
-                        profile.is_fully_verified = True
-                    
+                    profile.is_fully_verified = True  # Add this line
                     profile.save()
-                    
+                                        
                     # Activate user
                     user.is_active = True
                     user.save()

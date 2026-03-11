@@ -3,40 +3,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>{% block title %}MALICE{% endblock %}</title>
     
-    <!-- Preconnect for performance -->
+    <!-- CSRF Token for AJAX -->
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- CSRF Token -->
-    <meta name="csrf-token" content="{{ csrf_token }}">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <style>
         /* ============================================
-           CSS VARIABLES - DARK MODE AESTHETIC
+           2026 MODERN DESIGN SYSTEM - MALICE
            ============================================ */
+        
         :root {
-            --bg: #0a0a0a;
+            /* Core Colors */
+            --bg: #050505;
+            --bg-elevated: #0a0a0a;
             --bg-card: #111111;
-            --bg-elevated: #1a1a1a;
-            --bg-hover: #222222;
+            --bg-hover: #1a1a1a;
             --text: #ffffff;
-            --text-muted: #a0a0a0;
-            --text-dim: #666666;
-            --border: #2a2a2a;
-            --border-light: #3a3a3a;
-            --accent: #ffffff;
-            --error: #ef4444;
-            --success: #22c55e;
-            --warning: #fbbf24;
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-            --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
+            --text-muted: #888888;
+            --text-dim: #555555;
+            --border: #222222;
+            --border-light: #333333;
+            
+            /* Easing Functions */
             --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+            --ease-in-expo: cubic-bezier(0.7, 0, 0.84, 0);
+            --ease-elastic: cubic-bezier(0.68, -0.55, 0.265, 1.55);
             --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+            
+            /* Spacing Scale */
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-2xl: 3rem;
+            --space-3xl: 4rem;
+            --space-4xl: 6rem;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+            --shadow-glow: 0 0 40px rgba(255,255,255,0.05);
         }
         
         * {
@@ -47,32 +62,70 @@
         
         html {
             scroll-behavior: smooth;
-            -webkit-text-size-adjust: 100%;
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: var(--bg);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--bg);
             color: var(--text);
             line-height: 1.6;
-            overflow-x: hidden;
-            min-height: 100vh;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            font-size: 15px;
+            overflow-x: hidden;
+            min-height: 100vh;
         }
         
-        /* Grain Overlay - Enhanced for lovable look */
+        /* Typography */
+        .font-bebas { 
+            font-family: 'Bebas Neue', sans-serif; 
+            letter-spacing: 0.02em; 
+        }
+        .font-space { 
+            font-family: 'Space Grotesk', sans-serif; 
+            letter-spacing: -0.01em; 
+        }
+        
+        /* Gradient Text */
+        .gradient-text {
+            background: linear-gradient(135deg, var(--text) 0%, var(--text-muted) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .gradient-text-accent {
+            background: linear-gradient(135deg, #fff 0%, #888 50%, #fff 100%);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 8s ease infinite;
+        }
+        
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        /* ============================================
+        NOISE TEXTURE OVERLAY – SOFTER, WARMER GRAIN
+        ============================================ */
         .grain {
             position: fixed;
-            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             pointer-events: none;
-            z-index: 9998;
-            opacity: 0.04; /* Increased for better visibility */
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'%3E%3Canimate attributeName='baseFrequency' values='0.8;0.85;0.8' dur='10s' repeatCount='indefinite'/%3E%3C/feTurbulence%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            z-index: 9999;
+            opacity: 0.025;               /* even lighter, more delicate */
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.4 0' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' fill='%23ffffff' /%3E%3C/svg%3E");
+            mix-blend-mode: multiply;     /* gives a warmer, blended look */
         }
         
         /* ============================================
-           WISHLIST HEART ICON - GLOBAL STYLES
+           WISHLIST HEART - GLOBAL STYLES
            ============================================ */
         .wishlist-heart {
             position: absolute;
@@ -110,7 +163,6 @@
             height: 18px;
         }
         
-        /* Touch-friendly tap target */
         @media (pointer: coarse) {
             .wishlist-heart {
                 width: 44px;
@@ -123,31 +175,157 @@
         }
         
         /* ============================================
-           NAVIGATION - MOBILE RESPONSIVE
+           NAVIGATION - 2026 GLASSMORPHISM
            ============================================ */
         .navbar {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
+            background: rgba(5, 5, 5, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(34, 34, 34, 0.5);
             z-index: 1000;
-            padding: 1rem;
             transition: all 0.4s var(--ease-out-expo);
-            background: transparent;
         }
         
         .navbar.scrolled {
-            background: rgba(10, 10, 10, 0.95);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border);
+            background: rgba(5, 5, 5, 0.9);
+            border-bottom-color: rgba(51, 51, 51, 0.5);
+        }
+        
+        .navbar.hidden {
+            transform: translateY(-100%);
         }
         
         .nav-container {
             max-width: 1440px;
             margin: 0 auto;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.75rem;
+            letter-spacing: 0.08em;
+            color: var(--text);
+            text-decoration: none;
+            line-height: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .logo::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--text), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s var(--ease-out-expo);
+        }
+        
+        .logo:hover::after {
+            transform: translateX(100%);
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 2.5rem;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            font-family: 'Space Grotesk', sans-serif;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            transition: all 0.3s var(--ease-smooth);
+            position: relative;
+            padding: 0.5rem 0;
+        }
+        
+        .nav-links a::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--text);
+            transition: width 0.3s var(--ease-out-expo);
+        }
+        
+        .nav-links a:hover {
+            color: var(--text);
+        }
+        
+        .nav-links a:hover::before {
+            width: 100%;
+        }
+        
+        .nav-right {
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 0.75rem;
+        }
+        
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            padding: 0.625rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.7;
+            transition: all 0.3s var(--ease-smooth);
+            position: relative;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+        
+        .icon-btn:hover { 
+            opacity: 1;
+            background: rgba(255,255,255,0.05);
+            transform: translateY(-2px);
+        }
+        
+        .icon-btn:active {
+            transform: translateY(0);
+        }
+        
+        .cart-badge {
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            background: var(--text);
+            color: var(--bg);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.65rem;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: badgePop 0.3s var(--ease-elastic);
+        }
+        
+        @keyframes badgePop {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.3); }
+            100% { transform: scale(1); }
         }
         
         .menu-toggle {
@@ -157,116 +335,385 @@
             color: var(--text);
             cursor: pointer;
             padding: 0.5rem;
-            z-index: 1001;
+            border-radius: 8px;
+            transition: background 0.3s ease;
         }
         
-        .logo {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.75rem;
-            letter-spacing: 0.05em;
-            color: var(--text);
-            text-decoration: none;
-            transition: opacity 0.3s ease;
+        .menu-toggle:hover {
+            background: rgba(255,255,255,0.05);
         }
         
-        .logo:hover {
-            opacity: 0.8;
+        /* ============================================
+           CART SIDEBAR - 2026 DESIGN
+           ============================================ */
+        .cart-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s var(--ease-smooth);
         }
         
-        .nav-links {
-            display: flex;
-            gap: 2.5rem;
+        .cart-overlay.active { 
+            opacity: 1; 
+            visibility: visible; 
         }
         
-        .nav-links a {
-            font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.8rem;
-            font-weight: 500;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.3s ease;
-            position: relative;
-        }
-        
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            bottom: -4px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--text);
-            transition: width 0.3s ease;
-        }
-        
-        .nav-links a:hover {
-            color: var(--text);
-        }
-        
-        .nav-links a:hover::after {
+        .cart-sidebar {
+            position: fixed;
+            top: 0;
+            right: 0;
             width: 100%;
+            max-width: 440px;
+            height: 100vh;
+            background: var(--bg-elevated);
+            border-left: 1px solid var(--border);
+            z-index: 2001;
+            transform: translateX(100%);
+            transition: transform 0.5s var(--ease-out-expo);
+            display: flex;
+            flex-direction: column;
         }
         
-        .nav-right {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
+        .cart-sidebar.active { 
+            transform: translateX(0); 
         }
         
-        .icon-btn {
-            position: relative;
-            width: 40px;
-            height: 40px;
+        .cart-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
+        }
+        
+        .cart-header h2 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+            font-weight: 400;
+        }
+        
+        .close-btn {
             background: none;
             border: none;
-            color: var(--text);
+            color: var(--text-muted);
             cursor: pointer;
+            padding: 0.5rem;
             border-radius: 8px;
             transition: all 0.3s ease;
         }
         
-        .icon-btn:hover {
-            background: var(--bg-hover);
+        .close-btn:hover { 
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+            transform: rotate(90deg);
         }
         
-        .cart-badge {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            min-width: 18px;
-            height: 18px;
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .cart-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.3s var(--ease-smooth);
+        }
+        
+        .cart-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.08);
+            transform: translateX(-4px);
+        }
+        
+        .cart-item-img {
+            width: 70px;
+            height: 90px;
+            background: var(--bg);
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .cart-item-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        
+        .cart-item:hover .cart-item-img img {
+            transform: scale(1.05);
+        }
+        
+        .cart-item-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+        }
+        
+        .cart-item-name {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .cart-item-variant {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .cart-item-price {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+        
+        .cart-item-remove {
+            color: var(--text-dim);
+            font-size: 0.7rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: left;
+            padding: 0;
+            margin-top: 0.5rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            width: fit-content;
+        }
+        
+        .cart-item-remove:hover { 
+            color: #ff6b6b;
+        }
+        
+        .cart-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+            background: var(--bg-card);
+        }
+        
+        .cart-subtotal {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .checkout-btn {
+            width: 100%;
+            padding: 1rem 1.5rem;
             background: var(--text);
             color: var(--bg);
+            border: none;
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.65rem;
-            font-weight: 700;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            transition: all 0.4s var(--ease-out-expo);
+            text-decoration: none;
+            display: block;
+            text-align: center;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .checkout-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .checkout-btn:hover { 
+            background: #e8e8e8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(255,255,255,0.15);
+        }
+        
+        .checkout-btn:hover::before {
+            left: 100%;
+        }
+        
+        .checkout-btn:active {
+            transform: translateY(0);
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 4rem 1rem;
+            color: var(--text-muted);
+        }
+        
+        .empty-cart-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 1.5rem;
+            border: 1px solid var(--border);
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 9px;
-            padding: 0 4px;
+            opacity: 0.5;
         }
         
-        /* Mobile Menu */
+        /* ============================================
+           SEARCH OVERLAY - 2026 DESIGN
+           ============================================ */
+        .search-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 5, 5, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 3000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s var(--ease-smooth);
+        }
+        
+        .search-overlay.active { 
+            opacity: 1; 
+            visibility: visible; 
+        }
+        
+        .search-container {
+            width: 90%;
+            max-width: 700px;
+            text-align: center;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: all 0.5s var(--ease-out-expo) 0.1s;
+        }
+        
+        .search-overlay.active .search-container {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .search-label {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            margin-bottom: 2rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            display: block;
+        }
+        
+        .search-input-wrapper {
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 0;
+            font-size: clamp(2rem, 8vw, 4rem);
+            color: var(--text);
+            outline: none;
+            font-family: 'Bebas Neue', sans-serif;
+            text-align: center;
+            transition: border-color 0.4s ease;
+        }
+        
+        .search-input:focus { 
+            border-color: var(--text-muted); 
+        }
+        
+        .search-input::placeholder { 
+            color: var(--border-light);
+            opacity: 0.5;
+        }
+        
+        .search-hint {
+            margin-top: 2rem;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+        }
+        
+        .search-close {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .search-close:hover { 
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
+            transform: rotate(90deg);
+        }
+        
+        /* ============================================
+           MOBILE MENU - 2026 DESIGN
+           ============================================ */
         .mobile-menu {
             position: fixed;
             inset: 0;
             background: var(--bg);
-            z-index: 9999;
+            z-index: 1500;
+            transform: translateX(-100%);
+            transition: transform 0.5s var(--ease-out-expo);
+            padding: 6rem 2rem 2rem;
             display: flex;
             flex-direction: column;
-            padding: 2rem;
-            transform: translateX(-100%);
-            transition: transform 0.4s var(--ease-out-expo);
         }
         
-        .mobile-menu.active {
-            transform: translateX(0);
+        .mobile-menu.active { 
+            transform: translateX(0); 
         }
         
         .mobile-menu-header {
@@ -274,120 +721,170 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .mobile-menu-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.05em;
+            color: var(--text);
         }
         
         .mobile-menu-close {
             background: none;
             border: none;
-            color: var(--text);
+            color: var(--text-muted);
             cursor: pointer;
             padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .mobile-menu-close:hover {
+            color: var(--text);
+            background: rgba(255,255,255,0.05);
         }
         
         .mobile-menu-links {
             display: flex;
             flex-direction: column;
-            gap: 1.5rem;
+            gap: 0.5rem;
         }
         
         .mobile-menu-links a {
             font-family: 'Space Grotesk', sans-serif;
             font-size: 1.5rem;
-            font-weight: 500;
             color: var(--text);
             text-decoration: none;
-            padding-bottom: 0.5rem;
+            padding: 1rem 0;
             border-bottom: 1px solid var(--border);
+            letter-spacing: -0.01em;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        
+        .mobile-menu.active .mobile-menu-links a {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .mobile-menu.active .mobile-menu-links a:nth-child(1) { transition-delay: 0.1s; }
+        .mobile-menu.active .mobile-menu-links a:nth-child(2) { transition-delay: 0.15s; }
+        .mobile-menu.active .mobile-menu-links a:nth-child(3) { transition-delay: 0.2s; }
+        .mobile-menu.active .mobile-menu-links a:nth-child(4) { transition-delay: 0.25s; }
+        .mobile-menu.active .mobile-menu-links a:nth-child(5) { transition-delay: 0.3s; }
+        .mobile-menu.active .mobile-menu-links a:nth-child(6) { transition-delay: 0.35s; }
+        .mobile-menu.active .mobile-menu-links a:nth-child(7) { transition-delay: 0.4s; }
+        .mobile-menu.active .mobile-menu-links a:nth-child(8) { transition-delay: 0.45s; }
+        
+        .mobile-menu-links a:hover {
+            color: var(--text-muted);
+            padding-left: 1rem;
+        }
+        
+        .mobile-menu-links a:last-child { 
+            border-bottom: none; 
+        }
+        
+        .mobile-menu-footer {
+            margin-top: auto;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .mobile-menu-footer p {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            letter-spacing: 0.05em;
         }
         
         /* ============================================
-           MOBILE RESPONSIVE NAVIGATION
-           ============================================ */
-        @media (max-width: 768px) {
-            .menu-toggle {
-                display: flex;
-            }
-            
-            .nav-links {
-                display: none;
-            }
-            
-            .logo {
-                font-size: 1.5rem;
-            }
-            
-            .icon-btn {
-                width: 36px;
-                height: 36px;
-            }
-            
-            .icon-btn svg {
-                width: 20px;
-                height: 20px;
-            }
-        }
-        
-        /* ============================================
-           FOOTER - MOBILE RESPONSIVE
+           FOOTER - 2026 DESIGN (ENHANCED)
            ============================================ */
         .footer {
-            padding: 4rem 2rem 2rem;
+            background: var(--bg-elevated);
             border-top: 1px solid var(--border);
-            margin-top: auto;
+            padding: 5rem 2rem 2rem;
+            position: relative;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
         }
         
         .footer-content {
             max-width: 1440px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: 2fr repeat(3, 1fr);
-            gap: 3rem;
-            margin-bottom: 3rem;
-        }
-        
-        @media (max-width: 768px) {
-            .footer-content {
-                grid-template-columns: 1fr;
-                gap: 2rem;
-            }
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 4rem;
         }
         
         .footer-brand h3 {
             font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.5rem;
+            font-size: 2rem;
             letter-spacing: 0.05em;
             margin-bottom: 1rem;
+            font-weight: 400;
         }
         
         .footer-brand p {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.9rem;
             color: var(--text-muted);
-            line-height: 1.7;
-            max-width: 300px;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            max-width: 320px;
         }
         
         .footer-section h4 {
             font-family: 'Space Grotesk', sans-serif;
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            letter-spacing: 0.1em;
+            font-size: 0.7rem;
+            letter-spacing: 0.15em;
             text-transform: uppercase;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-dim);
+            font-weight: 600;
         }
         
         .footer-section a {
             display: block;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.85rem;
             color: var(--text-muted);
             text-decoration: none;
-            margin-bottom: 0.5rem;
-            transition: color 0.2s ease;
+            padding: 0.4rem 0;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+            position: relative;
+            width: fit-content;
         }
         
-        .footer-section a:hover {
+        .footer-section a::after {
+            content: '';
+            position: absolute;
+            bottom: 0.3rem;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--text);
+            transition: width 0.3s var(--ease-out-expo);
+        }
+        
+        .footer-section a:hover { 
             color: var(--text);
+        }
+        
+        .footer-section a:hover::after {
+            width: 100%;
         }
         
         .footer-bottom {
@@ -398,40 +895,252 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-dim);
             flex-wrap: wrap;
             gap: 1rem;
         }
         
+        .footer-bottom a {
+            color: var(--text-dim);
+            text-decoration: none;
+            margin-left: 2rem;
+            transition: color 0.3s ease;
+        }
+        
+        .footer-bottom a:hover { 
+            color: var(--text);
+        }
+        
+        /* ============================================
+           SCROLL ANIMATIONS
+           ============================================ */
+        .reveal {
+            opacity: 0;
+            transform: translateY(40px);
+            transition: all 0.8s var(--ease-out-expo);
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .reveal-left {
+            opacity: 0;
+            transform: translateX(-60px);
+            transition: all 0.8s var(--ease-out-expo);
+        }
+        
+        .reveal-left.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .reveal-right {
+            opacity: 0;
+            transform: translateX(60px);
+            transition: all 0.8s var(--ease-out-expo);
+        }
+        
+        .reveal-right.active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .reveal-scale {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 0.8s var(--ease-out-expo);
+        }
+        
+        .reveal-scale.active {
+            opacity: 1;
+            transform: scale(1);
+        }
+        
+        .stagger-1 { transition-delay: 0.1s; }
+        .stagger-2 { transition-delay: 0.2s; }
+        .stagger-3 { transition-delay: 0.3s; }
+        .stagger-4 { transition-delay: 0.4s; }
+        .stagger-5 { transition-delay: 0.5s; }
+        
+        /* ============================================
+           FLOATING ELEMENTS
+           ============================================ */
+        .float {
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .pulse {
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        /* ============================================
+           SCROLLBAR
+           ============================================ */
+        ::-webkit-scrollbar { 
+            width: 6px; 
+        }
+        ::-webkit-scrollbar-track { 
+            background: var(--bg); 
+        }
+        ::-webkit-scrollbar-thumb { 
+            background: var(--border-light); 
+            border-radius: 3px; 
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: var(--text-muted); 
+        }
+        
+        /* ============================================
+           RESPONSIVE STYLES
+           ============================================ */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 3rem;
+            }
+        }
+        
         @media (max-width: 768px) {
+            .nav-links { 
+                display: none; 
+            }
+            .menu-toggle { 
+                display: block; 
+            }
+            .nav-container { 
+                padding: 0.875rem 1rem; 
+            }
+            .logo { 
+                font-size: 1.5rem; 
+            }
+            .nav-right { 
+                gap: 0.5rem; 
+            }
+            .icon-btn { 
+                padding: 0.5rem; 
+            }
+            .cart-badge { 
+                width: 16px; 
+                height: 16px; 
+                font-size: 0.6rem; 
+            }
+            
+            .cart-sidebar { 
+                max-width: 100%; 
+            }
+            .cart-header { 
+                padding: 1.25rem; 
+            }
+            .cart-header h2 { 
+                font-size: 1.25rem; 
+            }
+            .cart-items { 
+                padding: 0.875rem; 
+            }
+            .cart-item { 
+                padding: 0.875rem; 
+                gap: 0.875rem; 
+            }
+            .cart-item-img { 
+                width: 60px; 
+                height: 80px; 
+            }
+            .cart-item-name { 
+                font-size: 0.85rem; 
+            }
+            .cart-footer { 
+                padding: 1.25rem; 
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: 2.5rem;
+                margin-bottom: 3rem;
+            }
+            
             .footer-bottom {
                 flex-direction: column;
                 text-align: center;
             }
-        }
-        
-        .footer-bottom p {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            color: var(--text-dim);
-        }
-        
-        .footer-bottom a {
-            font-family: 'Inter', sans-serif;
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-decoration: none;
-            margin-left: 1.5rem;
-            transition: color 0.2s ease;
-        }
-        
-        @media (max-width: 768px) {
-            .footer-bottom a {
-                margin: 0 0.75rem;
+            
+            .footer-bottom a { 
+                margin: 0 0.75rem; 
+            }
+            
+            .search-input { 
+                font-size: 2rem; 
+                padding: 1rem 0; 
+            }
+            .search-close { 
+                top: 1rem; 
+                right: 1rem; 
+                font-size: 2rem; 
+            }
+            
+            .spotlight {
+                display: none;
             }
         }
         
-        .footer-bottom a:hover {
-            color: var(--text);
+        @media (max-width: 480px) {
+            .logo { 
+                font-size: 1.35rem; 
+            }
+            .mobile-menu-links a { 
+                font-size: 1.25rem; 
+                padding: 0.875rem 0; 
+            }
+        }
+
+        /* User menu responsive */
+        @media (min-width: 769px) {
+            .username-desktop {
+                display: inline !important;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #userDropdown {
+                position: fixed !important;
+                top: auto !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                width: 100% !important;
+                border-radius: 20px 20px 0 0 !important;
+                transform: translateY(100%) !important;
+            }
+            
+            #userDropdown.active {
+                transform: translateY(0) !important;
+            }
+        }
+        
+        /* ============================================
+           LOADING STATES
+           ============================================ */
+        .skeleton {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: skeleton 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes skeleton {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
         
         /* ============================================
@@ -451,15 +1160,9 @@
             max-width: 400px;
         }
         
-        @media (max-width: 768px) {
-            #toastContainer {
-                top: 80px;
-            }
-        }
-        
         .toast {
             padding: 1rem 1.5rem;
-            border-radius: 10px;
+            border-radius: 12px;
             font-family: 'Space Grotesk', sans-serif;
             font-size: 0.9rem;
             opacity: 0;
@@ -497,67 +1200,22 @@
             border: 1px solid rgba(59, 130, 246, 0.3);
             color: #60a5fa;
         }
-        
-        /* ============================================
-           ANIMATIONS
-           ============================================ */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: all 0.8s var(--ease-out-expo);
-        }
-        
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        /* Reduced motion preference */
-        @media (prefers-reduced-motion: reduce) {
-            *,
-            *::before,
-            *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-        
-        /* Touch-friendly improvements */
-        @media (pointer: coarse) {
-            .icon-btn,
-            .btn-primary,
-            .place-order-btn,
-            .verify-btn {
-                min-height: 44px;
-            }
-            
-            .radio-option,
-            .form-control {
-                min-height: 44px;
-            }
-        }
     </style>
     
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Grain Overlay (only) -->
-    <div class="grain"></div>
+    <!-- Spotlight Cursor Effect -->
+    <div class="spotlight" id="spotlight"></div>
     
-    <!-- Toast Container -->
-    <div id="toastContainer"></div>
+    <!-- Noise Texture Overlay -->
+    <div class="grain"></div>
     
     <!-- Navigation -->
     <nav class="navbar" id="navbar">
         <div class="nav-container">
-            <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle menu">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="menu-toggle" onclick="toggleMobileMenu()" aria-label="Menu">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <line x1="3" y1="12" x2="21" y2="12"></line>
                     <line x1="3" y1="6" x2="21" y2="6"></line>
                     <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -569,41 +1227,73 @@
             <div class="nav-links">
                 <a href="{% url 'home' %}">Home</a>
                 <a href="{% url 'product_list' %}">Shop</a>
-                <a href="{% url 'product_list' %}?category=new">New Arrivals</a>
-                <a href="{% url 'product_list' %}?category=best">Best Sellers</a>
+                <a href="{% url 'product_list' %}?category=new">New</a>
+                <a href="{% url 'product_list' %}?category=best">Best</a>
+                <a href="#footer">About</a>
             </div>
             
             <div class="nav-right">
-                {% if user.is_authenticated %}
+                <!-- Search Button -->
+                <button class="icon-btn" onclick="toggleSearch()" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="m21 21-4.35-4.35"></path>
+                    </svg>
+                </button>
+                
+                <!-- Wishlist Link -->
                 <a href="{% url 'wishlist' %}" class="icon-btn" aria-label="Wishlist">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                     </svg>
+                    <span class="cart-badge" id="wishlist-count" style="display: none;">0</span>
                 </a>
-                <a href="{% url 'cart' %}" class="icon-btn" aria-label="Cart">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                
+                <!-- Cart Button -->
+                <button class="icon-btn" onclick="toggleCart()" aria-label="Cart">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                        <path d="M3 6h18"></path>
                         <path d="M16 10a4 4 0 0 1-8 0"></path>
                     </svg>
-                    {% if cart_count > 0 %}
-                    <span class="cart-badge">{{ cart_count }}</span>
-                    {% endif %}
-                </a>
-                <a href="{% url 'profile' %}" class="icon-btn" aria-label="Profile">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="12" cy="7" r="4"></circle>
-                    </svg>
-                </a>
+                    <span class="cart-badge" id="cart-count" style="display: none;">0</span>
+                </button>
+                
+                <!-- User Account -->
+                {% if user.is_authenticated %}
+                    <div style="position: relative;" id="userMenuContainer">
+                        <button class="icon-btn" onclick="toggleUserMenu()" aria-label="Account" style="display: flex; align-items: center; gap: 0.25rem;">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                            <span class="username-desktop" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none;">
+                                {{ user.first_name|default:user.username }}
+                            </span>
+                        </button>
+                        
+                        <!-- User Dropdown -->
+                        <div id="userDropdown" style="position: absolute; top: calc(100% + 0.5rem); right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; min-width: 200px; opacity: 0; visibility: hidden; transform: translateY(-10px) scale(0.95); transition: all 0.3s var(--ease-out-expo); z-index: 1001; overflow: hidden; box-shadow: var(--shadow-lg);">
+                            <div style="padding: 1rem; border-bottom: 1px solid var(--border);">
+                                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: var(--text); margin: 0; font-weight: 600;">{{ user.first_name|default:user.username }}</p>
+                                <p style="font-family: 'Inter', sans-serif; font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0 0 0;">{{ user.email }}</p>
+                            </div>
+                            <a href="{% url 'profile' %}" style="display: block; padding: 0.875rem 1rem; color: var(--text-muted); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-hover)'; this.style.color='var(--text)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">
+                                My Orders
+                            </a>
+                            <a href="{% url 'logout' %}" style="display: block; padding: 0.875rem 1rem; color: #ef4444; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; border-top: 1px solid var(--border); transition: all 0.2s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+                                Sign Out
+                            </a>
+                        </div>
+                    </div>
                 {% else %}
-                <a href="{% url 'login' %}" class="icon-btn" aria-label="Login">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
-                        <polyline points="10 17 15 12 10 7"></polyline>
-                        <line x1="15" y1="12" x2="3" y2="12"></line>
-                    </svg>
-                </a>
+                    <a href="{% url 'login' %}" class="icon-btn" aria-label="Sign In" style="text-decoration: none;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                            <polyline points="10,17 15,12 10,7"></polyline>
+                            <line x1="15" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                    </a>
                 {% endif %}
             </div>
         </div>
@@ -612,62 +1302,142 @@
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
         <div class="mobile-menu-header">
-            <a href="{% url 'home' %}" class="logo">MALICE</a>
-            <button class="mobile-menu-close" onclick="toggleMobileMenu()" aria-label="Close menu">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <span class="mobile-menu-logo">MALICE</span>
+            <button class="mobile-menu-close" onclick="toggleMobileMenu()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
+        
         <div class="mobile-menu-links">
             <a href="{% url 'home' %}" onclick="toggleMobileMenu()">Home</a>
-            <a href="{% url 'product_list' %}" onclick="toggleMobileMenu()">Shop</a>
+            <a href="{% url 'product_list' %}" onclick="toggleMobileMenu()">Shop All</a>
             <a href="{% url 'product_list' %}?category=new" onclick="toggleMobileMenu()">New Arrivals</a>
             <a href="{% url 'product_list' %}?category=best" onclick="toggleMobileMenu()">Best Sellers</a>
+            <a href="#footer" onclick="toggleMobileMenu()">About</a>
+            
             {% if user.is_authenticated %}
-            <a href="{% url 'profile' %}" onclick="toggleMobileMenu()">My Account</a>
-            <a href="{% url 'wishlist' %}" onclick="toggleMobileMenu()">Wishlist</a>
-            <a href="{% url 'cart' %}" onclick="toggleMobileMenu()">Cart</a>
-            <a href="{% url 'logout' %}" onclick="toggleMobileMenu()">Logout</a>
+                <div style="padding: 1rem 0; border-top: 1px solid var(--border); margin-top: 0.5rem;">
+                    <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">Account</p>
+                    <a href="{% url 'wishlist' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0;">Wishlist</a>
+                    <a href="{% url 'profile' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0;">My Orders</a>
+                    <a href="{% url 'logout' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0; color: #ef4444;">Sign Out</a>
+                </div>
             {% else %}
-            <a href="{% url 'login' %}" onclick="toggleMobileMenu()">Login</a>
-            <a href="{% url 'register' %}" onclick="toggleMobileMenu()">Register</a>
+                <div style="padding: 1rem 0; border-top: 1px solid var(--border); margin-top: 0.5rem;">
+                    <a href="{% url 'login' %}" onclick="toggleMobileMenu()" style="font-size: 1.25rem; color: var(--text); font-weight: 600;">Sign In / Register</a>
+                </div>
             {% endif %}
+        </div>
+        
+        <div class="mobile-menu-footer">
+            <p>&copy; 2026 MALICE. All rights reserved.</p>
         </div>
     </div>
     
-    <!-- Main Content -->
+    <!-- Search Overlay -->
+    <div class="search-overlay" id="searchOverlay">
+        <button class="search-close" onclick="toggleSearch()">&times;</button>
+        <div class="search-container">
+            <span class="search-label">Search the collection</span>
+            <div class="search-input-wrapper">
+                <form action="{% url 'product_list' %}" method="get">
+                    <input type="text" name="q" class="search-input" placeholder="TYPE TO SEARCH..." autofocus autocomplete="off">
+                </form>
+            </div>
+            <p class="search-hint">Press ESC to close</p>
+        </div>
+    </div>
+    
+    <!-- Cart Sidebar -->
+    <div class="cart-overlay" id="cartOverlay" onclick="toggleCart()"></div>
+    <div class="cart-sidebar" id="cartSidebar">
+        <div class="cart-header">
+            <h2>YOUR CART (<span id="sidebar-cart-count">0</span>)</h2>
+            <button class="close-btn" onclick="toggleCart()">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="empty-cart">
+                <div class="empty-cart-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                        <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                        <path d="M3 6h18"></path>
+                        <path d="M16 10a4 4 0 0 1-8 0"></path>
+                    </svg>
+                </div>
+                <p>Your cart is empty</p>
+                <span style="font-size: 0.8rem; color: var(--text-dim); display: block; margin-top: 0.5rem;">Add items to begin</span>
+            </div>
+        </div>
+        <div class="cart-footer">
+            <div class="cart-subtotal">
+                <span>Subtotal</span>
+                <span id="cartSubtotal">₱0.00</span>
+            </div>
+            <div class="cart-total">
+                <span>Total</span>
+                <span id="cartTotal">₱0.00</span>
+            </div>
+            {% if user.is_authenticated %}
+                <!-- Changed from 'order_create' to 'cart' to match existing URL -->
+                <a href="{% url 'cart' %}" class="checkout-btn">Proceed to Checkout</a>
+            {% else %}
+                <a href="{% url 'login' %}?next={% url 'cart' %}" class="checkout-btn" style="background: var(--bg-hover); color: var(--text); border: 1px solid var(--border);">Sign In to Checkout</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer"></div>
+
+    <!-- Messages Display -->
+    {% if messages %}
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                {% for message in messages %}
+                    showToast('{{ message|escapejs }}', '{{ message.tags }}');
+                {% endfor %}
+            });
+        </script>
+    {% endif %}
+
     <main>
         {% block content %}{% endblock %}
     </main>
     
     <!-- Footer -->
-    <footer class="footer">
+    <footer class="footer" id="footer">
         <div class="footer-content">
-            <div class="footer-brand">
+            <div class="footer-brand reveal-left">
                 <h3>MALICE</h3>
-                <p>Premium streetwear for the bold. Quality craftsmanship meets urban style.</p>
+                <p>Minimalist streetwear crafted for the modern individual. Designed with intention, made to transcend trends.</p>
             </div>
-            <div class="footer-section">
+            <div class="footer-section reveal stagger-1">
                 <h4>Shop</h4>
                 <a href="{% url 'product_list' %}">All Products</a>
                 <a href="{% url 'product_list' %}?category=new">New Arrivals</a>
                 <a href="{% url 'product_list' %}?category=best">Best Sellers</a>
             </div>
-            <div class="footer-section">
+            <div class="footer-section reveal stagger-2">
                 <h4>Support</h4>
-                <a href="#">Contact Us</a>
-                <a href="#">Shipping Info</a>
-                <a href="#">Returns</a>
+                <a href="#">Shipping & Returns</a>
                 <a href="#">Size Guide</a>
+                <a href="#">FAQ</a>
+                <a href="#">Contact</a>
             </div>
-            <div class="footer-section">
+            <div class="footer-section reveal stagger-3">
                 <h4>Company</h4>
                 <a href="#">About Us</a>
-                <a href="#">Careers</a>
                 <a href="#">Privacy Policy</a>
                 <a href="#">Terms of Service</a>
+                <a href="#">Careers</a>
             </div>
         </div>
         <div class="footer-bottom">
@@ -681,27 +1451,119 @@
     </footer>
     
     <script>
-        // CSRF Token for AJAX requests
+        // ============================================
+        // 2026 MODERN JAVASCRIPT - MALICE
+        // ============================================
+        
+        // CSRF Token from meta
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        // Mobile Menu Toggle
-        function toggleMobileMenu() {
-            const mobileMenu = document.getElementById('mobileMenu');
-            mobileMenu.classList.toggle('active');
-            document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
-        }
+        // Spotlight cursor effect
+        const spotlight = document.getElementById('spotlight');
+        let mouseX = 50, mouseY = 50;
+        let currentX = 50, currentY = 50;
         
-        // Navbar scroll effect
-        window.addEventListener('scroll', function() {
-            const navbar = document.getElementById('navbar');
-            if (window.scrollY > 50) {
+        document.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) * 100;
+            mouseY = (e.clientY / window.innerHeight) * 100;
+        });
+        
+        function updateSpotlight() {
+            currentX += (mouseX - currentX) * 0.1;
+            currentY += (mouseY - currentY) * 0.1;
+            spotlight.style.setProperty('--mouse-x', currentX + '%');
+            spotlight.style.setProperty('--mouse-y', currentY + '%');
+            requestAnimationFrame(updateSpotlight);
+        }
+        updateSpotlight();
+        
+        // Navbar scroll behavior
+        let lastScroll = 0;
+        const navbar = document.getElementById('navbar');
+        
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            
+            if (currentScroll > 50) {
                 navbar.classList.add('scrolled');
             } else {
                 navbar.classList.remove('scrolled');
             }
+            
+            if (currentScroll > lastScroll && currentScroll > 100) {
+                navbar.classList.add('hidden');
+            } else {
+                navbar.classList.remove('hidden');
+            }
+            
+            lastScroll = currentScroll;
+        }, { passive: true });
+        
+        // Toggle functions
+        function toggleCart() {
+            const sidebar = document.getElementById('cartSidebar');
+            const overlay = document.getElementById('cartOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+        }
+        
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            menu.classList.toggle('active');
+            document.body.style.overflow = menu.classList.contains('active') ? 'hidden' : '';
+        }
+        
+        function toggleSearch() {
+            const overlay = document.getElementById('searchOverlay');
+            overlay.classList.toggle('active');
+            if (overlay.classList.contains('active')) {
+                setTimeout(() => overlay.querySelector('input').focus(), 100);
+            }
+        }
+        
+        function toggleUserMenu() {
+            const dropdown = document.getElementById('userDropdown');
+            const isVisible = dropdown.style.opacity === '1';
+            dropdown.style.opacity = isVisible ? '0' : '1';
+            dropdown.style.visibility = isVisible ? 'hidden' : 'visible';
+            dropdown.style.transform = isVisible ? 'translateY(-10px) scale(0.95)' : 'translateY(0) scale(1)';
+        }
+        
+        // Close user menu when clicking outside
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('userMenuContainer');
+            const dropdown = document.getElementById('userDropdown');
+            if (container && !container.contains(e.target)) {
+                dropdown.style.opacity = '0';
+                dropdown.style.visibility = 'hidden';
+                dropdown.style.transform = 'translateY(-10px) scale(0.95)';
+            }
         });
         
-        // Toast notifications
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('searchOverlay').classList.remove('active');
+                document.getElementById('cartSidebar').classList.remove('active');
+                document.getElementById('cartOverlay').classList.remove('active');
+                document.getElementById('mobileMenu').classList.remove('active');
+                document.body.style.overflow = '';
+                
+                const dropdown = document.getElementById('userDropdown');
+                if (dropdown) {
+                    dropdown.style.opacity = '0';
+                    dropdown.style.visibility = 'hidden';
+                }
+            }
+            
+            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+                e.preventDefault();
+                toggleSearch();
+            }
+        });
+        
+        // Toast notification system
         function showToast(message, type = 'info') {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
@@ -709,53 +1571,235 @@
             toast.textContent = message;
             container.appendChild(toast);
             
-            // Trigger animation
             setTimeout(() => toast.classList.add('show'), 10);
-            
-            // Remove after delay
             setTimeout(() => {
                 toast.classList.remove('show');
                 setTimeout(() => toast.remove(), 400);
             }, 4000);
         }
         
-        // Scroll reveal animation
-        function revealOnScroll() {
-            const reveals = document.querySelectorAll('.reveal');
-            reveals.forEach((element, index) => {
-                const windowHeight = window.innerHeight;
-                const elementTop = element.getBoundingClientRect().top;
-                const elementVisible = 100;
-                
-                if (elementTop < windowHeight - elementVisible) {
-                    setTimeout(() => {
-                        element.classList.add('active');
-                    }, index * 100);
+        // Scroll reveal animation (Intersection Observer)
+        const revealElements = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale');
+        
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                    revealObserver.unobserve(entry.target);
                 }
             });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+        
+        revealElements.forEach(el => revealObserver.observe(el));
+        
+        // Cart functionality
+        async function loadCart() {
+            try {
+                const response = await fetch('/cart/api/');
+                const data = await response.json();
+                updateCartUI(data);
+            } catch (error) {
+                console.error('Error loading cart:', error);
+            }
         }
-        
-        window.addEventListener('scroll', revealOnScroll);
-        window.addEventListener('load', revealOnScroll);
-        
-        // Wishlist toggle from product cards
+
+        // Load wishlist count
+        async function loadWishlistCount() {
+            try {
+                const response = await fetch('/wishlist/api/');
+                const data = await response.json();
+                updateWishlistBadge(data.count);
+            } catch (error) {
+                console.error('Error loading wishlist count:', error);
+            }
+        }
+
+        function updateWishlistBadge(count) {
+            const badge = document.getElementById('wishlist-count');
+            if (badge) {
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.style.display = 'flex';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        // Modify toggleWishlistFromCard to update badge
+        // In base.html, the existing toggleWishlistFromCard function should be updated.
+        // Find it (around line ~990) and modify the fetch success callback:
         function toggleWishlistFromCard(button) {
             const productId = button.dataset.productId;
             const wasActive = button.classList.contains('active');
             
-            // Disable button to prevent double clicks
             button.disabled = true;
             
             fetch(`/wishlist/toggle/${productId}/`, {
                 method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrfToken
-                }
+                headers: { 'X-CSRFToken': csrfToken }
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Toggle active class and SVG fill
+                    button.classList.toggle('active', data.in_wishlist);
+                    const svg = button.querySelector('svg');
+                    if (svg) {
+                        svg.setAttribute('fill', data.in_wishlist ? 'currentColor' : 'none');
+                    }
+                    showToast(data.message, 'success');
+                    // Update wishlist badge
+                    updateWishlistBadge(data.wishlist_count);
+                } else {
+                    showToast(data.error || 'Please log in to manage wishlist', 'error');
+                    if (data.redirect) {
+                        setTimeout(() => window.location.href = data.redirect, 1500);
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Wishlist error:', error);
+                showToast('Failed to update wishlist', 'error');
+            })
+            .finally(() => {
+                button.disabled = false;
+            });
+        }
+
+        // Call loadWishlistCount on DOMContentLoaded
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCart();
+            loadWishlistCount();
+        });
+        
+        function formatPeso(amount) {
+            return '₱' + parseFloat(amount).toLocaleString('en-PH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        
+        function updateCartUI(data) {
+            const count = data.count || 0;
+            const countBadge = document.getElementById('cart-count');
+            const sidebarCount = document.getElementById('sidebar-cart-count');
+            const cartItems = document.getElementById('cartItems');
+            const cartSubtotal = document.getElementById('cartSubtotal');
+            const cartTotal = document.getElementById('cartTotal');
+            
+            if (countBadge) {
+                countBadge.textContent = count;
+                countBadge.style.display = count > 0 ? 'flex' : 'none';
+            }
+            if (sidebarCount) sidebarCount.textContent = count;
+            
+            if (!cartItems) return;
+            
+            if (count === 0) {
+                cartItems.innerHTML = `
+                    <div class="empty-cart">
+                        <div class="empty-cart-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                                <path d="M3 6h18"></path>
+                                <path d="M16 10a4 4 0 0 1-8 0"></path>
+                            </svg>
+                        </div>
+                        <p>Your cart is empty</p>
+                        <span style="font-size: 0.8rem; color: var(--text-dim); display: block; margin-top: 0.5rem;">Add items to begin</span>
+                    </div>`;
+                if (cartSubtotal) cartSubtotal.textContent = formatPeso(0);
+                if (cartTotal) cartTotal.textContent = formatPeso(0);
+                return;
+            }
+            
+            cartItems.innerHTML = data.items.map(item => `
+                <div class="cart-item">
+                    <div class="cart-item-img">
+                        ${item.image ? `<img src="${item.image}" alt="${item.name}">` : ''}
+                    </div>
+                    <div class="cart-item-info">
+                        <div>
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-variant">Size: ${item.size} | Qty: ${item.quantity}</div>
+                            <div class="cart-item-price">${formatPeso(item.price)} each</div>
+                        </div>
+                        <button class="cart-item-remove" onclick="removeFromCart(${item.id})">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (cartSubtotal) cartSubtotal.textContent = formatPeso(data.subtotal);
+            if (cartTotal) cartTotal.textContent = formatPeso(data.total);
+        }
+        
+        async function addToCart(productId, size = null) {
+            const btn = event?.target;
+            if (btn) {
+                const originalText = btn.textContent;
+                btn.textContent = 'Adding...';
+                btn.style.opacity = '0.7';
+            }
+            
+            try {
+                const response = await fetch(`/cart/add/${productId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken,
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: size ? `size=${size}` : ''
+                });
+                
+                if (response.ok) {
+                    await loadCart();
+                    toggleCart();
+                    showToast('Item added to cart', 'success');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Failed to add item', 'error');
+            } finally {
+                if (btn) {
+                    btn.textContent = originalText;
+                    btn.style.opacity = '1';
+                }
+            }
+        }
+        
+        async function removeFromCart(itemId) {
+            try {
+                await fetch(`/cart/remove/${itemId}/`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': csrfToken }
+                });
+                await loadCart();
+                showToast('Item removed', 'info');
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+        
+        // Quick add function for product cards
+        async function quickAddToCart(productId, size, event) {
+            event.stopPropagation();
+            await addToCart(productId, size);
+        }
+        
+        // Wishlist toggle (from base.html)
+        function toggleWishlistFromCard(button) {
+            const productId = button.dataset.productId;
+            const wasActive = button.classList.contains('active');
+            
+            button.disabled = true;
+            
+            fetch(`/wishlist/toggle/${productId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': csrfToken }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
                     button.classList.toggle('active', data.in_wishlist);
                     const svg = button.querySelector('svg');
                     if (svg) {
@@ -763,7 +1807,6 @@
                     }
                     showToast(data.message, 'success');
                 } else {
-                    // If not authenticated, show error and maybe redirect to login
                     showToast(data.error || 'Please log in to manage wishlist', 'error');
                     if (data.redirect) {
                         setTimeout(() => window.location.href = data.redirect, 1500);
@@ -779,14 +1822,16 @@
             });
         }
         
-        // Django messages to toast
-        {% if messages %}
-        document.addEventListener('DOMContentLoaded', function() {
-            {% for message in messages %}
-            showToast('{{ message|escapejs }}', '{{ message.tags }}');
-            {% endfor %}
-        });
-        {% endif %}
+        // Load cart on page load
+        document.addEventListener('DOMContentLoaded', loadCart);
+        
+        // Reduced motion preference
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            document.documentElement.style.setProperty('--ease-out-expo', 'ease');
+            document.querySelectorAll('.float, .pulse').forEach(el => {
+                el.style.animation = 'none';
+            });
+        }
     </script>
     
     {% block extra_js %}{% endblock %}

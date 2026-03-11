@@ -7,6 +7,7 @@ pip install -r requirements.txt
 
 echo "Collecting static files..."
 python manage.py collectstatic --no-input
+python manage.py clearsessions
 
 echo "=========================================="
 echo "🔍 Checking migration status BEFORE running migrations..."

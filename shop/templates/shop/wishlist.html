@@ -218,8 +218,8 @@
         {% if wishlist_items %}
         <div class="wishlist-grid">
             {% for item in wishlist_items %}
-            <div class="wishlist-item reveal" data-wishlist-id="{{ item.id }}">
-                <button type="button" class="remove-wishlist-btn" onclick="removeFromWishlist({{ item.id }})" aria-label="Remove from wishlist">
+            <div class="wishlist-item reveal" data-product-id="{{ item.product.id }}">
+                <button type="button" class="remove-wishlist-btn" onclick="removeFromWishlist({{ item.product.id }})" aria-label="Remove from wishlist">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -254,10 +254,10 @@
 </div>
 
 <script>
-function removeFromWishlist(wishlistId) {
+function removeFromWishlist(productId) {
     if (!confirm('Remove this item from your wishlist?')) return;
     
-    fetch(`/wishlist/toggle/${wishlistId}/`, {
+    fetch(`/wishlist/toggle/${productId}/`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
@@ -267,8 +267,11 @@ function removeFromWishlist(wishlistId) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const item = document.querySelector(`[data-wishlist-id="${wishlistId}"]`);
-            item.remove();
+            // Find and remove the wishlist item card from DOM
+            const itemCard = document.querySelector(`[data-product-id="${productId}"]`);
+            if (itemCard) {
+                itemCard.remove();
+            }
             showToast('Removed from wishlist', 'success');
             
             // Reload if empty

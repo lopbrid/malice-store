@@ -396,9 +396,10 @@
                     <div class="size-options">
                         {% for variant in product.variants.all %}
                         <div class="size-option">
-                            <input type="radio" name="size" id="size_{{ variant.id }}" value="{{ variant.id }}" 
-                                   {% if not variant.stock %}disabled{% endif %}
-                                   {% if forloop.first and variant.stock %}checked{% endif %}>
+                            <input type="radio" name="size" id="size_{{ variant.id }}" value="{{ variant.id }}"
+                                data-stock="{{ variant.stock }}"
+                                {% if not variant.stock %}disabled{% endif %}
+                                {% if forloop.first and variant.stock %}checked{% endif %}>
                             <label for="size_{{ variant.id }}">{{ variant.size }}</label>
                         </div>
                         {% endfor %}
@@ -409,10 +410,11 @@
                 <div class="quantity-selector">
                     <label>Quantity</label>
                     <div class="quantity-control">
-                        <button type="button" onclick="updateQuantity(-1)">-</button>
-                        <input type="number" id="quantity" value="1" min="1" max="10" readonly>
-                        <button type="button" onclick="updateQuantity(1)">+</button>
+                        <button type="button" onclick="updateQuantity(-1)" id="qtyMinus">-</button>
+                        <input type="number" id="quantity" value="1" min="1" max="1" readonly>
+                        <button type="button" onclick="updateQuantity(1)" id="qtyPlus">+</button>
                     </div>
+                    <span id="stockMessage" style="display: none; color: var(--error); font-size: 0.8rem; margin-top: 0.5rem;">Maximum stock reached</span>
                 </div>
                 
                 <div class="action-buttons">
@@ -463,12 +465,40 @@
 </div>
 
 <script>
+let currentMaxStock = 1;
+
+// Update max stock when variant changes
+document.querySelectorAll('input[name="size"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const variantId = this.value;
+        // You may need to get stock from a data attribute or API
+        // For simplicity, assume we have data-stock on each size option
+        const stock = parseInt(this.getAttribute('data-stock'));
+        currentMaxStock = stock;
+        const qtyInput = document.getElementById('quantity');
+        qtyInput.max = stock;
+        qtyInput.value = 1; // reset to 1
+        updateQuantityButtons();
+    });
+});
+
 function updateQuantity(change) {
     const input = document.getElementById('quantity');
     let value = parseInt(input.value) + change;
     if (value < 1) value = 1;
-    if (value > 10) value = 10;
+    if (value > currentMaxStock) value = currentMaxStock;
     input.value = value;
+    updateQuantityButtons();
+}
+
+function updateQuantityButtons() {
+    const minus = document.getElementById('qtyMinus');
+    const plus = document.getElementById('qtyPlus');
+    const message = document.getElementById('stockMessage');
+    const current = parseInt(document.getElementById('quantity').value);
+    minus.disabled = current <= 1;
+    plus.disabled = current >= currentMaxStock;
+    message.style.display = current >= currentMaxStock ? 'block' : 'none';
 }
 
 function addToCart() {

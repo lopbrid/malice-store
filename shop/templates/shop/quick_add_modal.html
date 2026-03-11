@@ -484,7 +484,7 @@ async function addToCartFromQuickAdd() {
         const response = await fetch('/cart/quick-add/', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': CSRF_TOKEN,
+                'X-CSRFToken': csrfToken,
             },
             body: formData
         });
