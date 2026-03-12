@@ -39,17 +39,18 @@ INSTALLED_APPS = [
 
 # Middleware
 MIDDLEWARE = [
+    'shop.middleware.AdminNoCacheMiddleware',
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'shop.middleware.SeparateAdminSessionMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # custom middleware last
-    'shop.middleware.AdminNoCacheMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
     'shop.middleware.VerificationRequiredMiddleware',
 ]
 
@@ -129,11 +130,13 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # CLOUDINARY CONFIGURATION - FIXED
 # ============================================
 import cloudinary
+import cloudinary_storage  # Ensure this is imported
 
-CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME')
-CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY')
-CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET')
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
+CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
 
+# Configure cloudinary package
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
     api_key=CLOUDINARY_API_KEY,
@@ -141,10 +144,14 @@ cloudinary.config(
     secure=True
 )
 
-# IMPORTANT: Tell Django to store files in Cloudinary
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# Add this dictionary for django-cloudinary-storage
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+    'API_KEY': CLOUDINARY_API_KEY,
+    'API_SECRET': CLOUDINARY_API_SECRET,
+}
 
-MEDIA_URL = '/media/'
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
 # ============================================
