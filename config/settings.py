@@ -32,9 +32,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'shop',
     'cloudinary_storage',
     'cloudinary',
+    'shop',
 ]
 
 # Middleware
@@ -129,13 +129,28 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ============================================
 # CLOUDINARY CONFIGURATION - FIXED
 # ============================================
+
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name='dfpmrfwcu',
+    api_key='526994497796367',
+    api_secret='ifmXJcy2sK_JvWrEI5WQbYochmo'
+)
+
+# Set Cloudinary as the default file storage
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# Optional: Configure Cloudinary storage settings
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': 'dfpmrfwcu',
     'API_KEY': '526994497796367',
-    'API_SECRET': 'ifmXJcy2sK_JvWrEI5WQbYochmo'
+    'API_SECRET': 'ifmXJcy2sK_JvWrEI5WQbYochmo',
+    'SECURE': True,
 }
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
 # ============================================
