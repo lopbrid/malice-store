@@ -143,7 +143,7 @@ CLOUDINARY_CONFIGURED = all([
 if CLOUDINARY_CONFIGURED:
     # Use Cloudinary for media storage
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/'
+    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
     
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
@@ -152,7 +152,7 @@ if CLOUDINARY_CONFIGURED:
         'SECURE': True,
         'MEDIA_TAG': 'malice',
         'STATIC_IMAGES': False,
-        'FOLDER': 'malice/products',
+        'FOLDER': 'products',  # Changed from 'malice/products'
     }
     print(f"☁️ Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
 else:
