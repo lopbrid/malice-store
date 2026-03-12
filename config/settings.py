@@ -152,7 +152,7 @@ if CLOUDINARY_CONFIGURED:
         'SECURE': True,
         'MEDIA_TAG': 'malice',
         'STATIC_IMAGES': False,
-        'FOLDER': 'products',  # Changed from 'malice/products'
+        # 'FOLDER': 'products',
     }
     print(f"☁️ Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
 else:
