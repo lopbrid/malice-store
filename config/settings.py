@@ -129,14 +129,17 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ============================================
 # CLOUDINARY CONFIGURATION - FIXED
 # ============================================
+# ============================================
+# CLOUDINARY CONFIGURATION - FIXED FOR RENDER
+# ============================================
 import cloudinary
-import cloudinary_storage  # Ensure this is imported
+import cloudinary_storage  # ADD THIS IMPORT
 
 CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
 CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
 CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
 
-# Configure cloudinary package
+# Configure the cloudinary package
 cloudinary.config(
     cloud_name=CLOUDINARY_CLOUD_NAME,
     api_key=CLOUDINARY_API_KEY,
@@ -144,14 +147,17 @@ cloudinary.config(
     secure=True
 )
 
-# Add this dictionary for django-cloudinary-storage
+# ADD THIS - Required by django-cloudinary-storage
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
     'API_KEY': CLOUDINARY_API_KEY,
     'API_SECRET': CLOUDINARY_API_SECRET,
+    'SECURE': True,
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+MEDIA_URL = '/media/'
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
 # ============================================
@@ -405,3 +411,11 @@ LOGGING = {
         },
     },
 }
+
+# Add after Cloudinary config
+print("="*50)
+print("CLOUDINARY DEBUG:")
+print(f"CLOUD_NAME: {CLOUDINARY_CLOUD_NAME or 'NOT SET'}")
+print(f"API_KEY exists: {bool(CLOUDINARY_API_KEY)}")
+print(f"API_SECRET exists: {bool(CLOUDINARY_API_SECRET)}")
+print("="*50)
