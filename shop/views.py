@@ -20,6 +20,19 @@ from django.http import HttpResponse
 from django.conf import settings
 import os
 
+# In views.py
+from django.http import JsonResponse
+from django.conf import settings
+
+def debug_cloudinary(request):
+    return JsonResponse({
+        'cloudinary_cloud_name': settings.CLOUDINARY_CLOUD_NAME if hasattr(settings, 'CLOUDINARY_CLOUD_NAME') else 'NOT SET',
+        'cloudinary_api_key': settings.CLOUDINARY_API_KEY if hasattr(settings, 'CLOUDINARY_API_KEY') else 'NOT SET',
+        'cloudinary_api_secret_set': bool(settings.CLOUDINARY_API_SECRET) if hasattr(settings, 'CLOUDINARY_API_SECRET') else False,
+        'default_file_storage': settings.DEFAULT_FILE_STORAGE,
+        'media_url': settings.MEDIA_URL,
+    })
+
 print("="*50)
 print("DJANGO SETTINGS DEBUG INFO:")
 print(f"DEBUG mode: {settings.DEBUG}")

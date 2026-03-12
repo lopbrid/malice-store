@@ -52,4 +52,6 @@ urlpatterns = [
     # Profile
     path('profile/', views.profile_view, name='profile'),
     path('test-email/', views.test_email_render, name='test_email'),
+
+    path('debug/cloudinary/', views.debug_cloudinary, name='debug_cloudinary'),
 ]
