@@ -6,6 +6,7 @@ Enhanced with PostgreSQL for Render, Payment Integration, SMS/Email OTP, and Shi
 from pathlib import Path
 import os
 import dj_database_url
+import cloudinary_storage
 from decouple import config, Csv
 from django.templatetags.static import static
 from django.urls import reverse_lazy
@@ -128,40 +129,13 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ============================================
 # CLOUDINARY CONFIGURATION - FIXED
 # ============================================
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': 'dfpmrfwcu',
+    'API_KEY': '526994497796367',
+    'API_SECRET': 'ifmXJcy2sK_JvWrEI5WQbYochmo'
+}
 
-CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
-CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
-CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
-
-# Check if all Cloudinary credentials are present
-CLOUDINARY_CONFIGURED = all([
-    CLOUDINARY_CLOUD_NAME,
-    CLOUDINARY_API_KEY, 
-    CLOUDINARY_API_SECRET
-])
-
-if CLOUDINARY_CONFIGURED:
-    # Use Cloudinary for media storage
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/image/upload/'
-    
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
-        'API_KEY': CLOUDINARY_API_KEY,
-        'API_SECRET': CLOUDINARY_API_SECRET,
-        'SECURE': True,
-        'MEDIA_TAG': 'malice',
-        'STATIC_IMAGES': False,
-        # 'FOLDER': 'products',
-    }
-    print(f"☁️ Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
-else:
-    # Local filesystem fallback
-    MEDIA_URL = '/media/'
-    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    print(f"💾 Local filesystem storage")
-    print(f"   DEBUG={DEBUG}, CLOUD_NAME={CLOUDINARY_CLOUD_NAME or 'NOT SET'}")
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
 # ============================================
