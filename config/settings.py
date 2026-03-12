@@ -81,10 +81,6 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # ============================================
 # DATABASE CONFIGURATION - FIXED FOR RENDER
 # ============================================
-# Priority: 1. DATABASE_URL (Render PostgreSQL), 2. Local PostgreSQL, 3. SQLite (fallback)
-# ============================================
-# DATABASE CONFIGURATION - RENDER + LOCAL DEV
-# ============================================
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
@@ -129,14 +125,23 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'shop', 'static')]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Cloudinary Configuration
+# ============================================
+# CLOUDINARY CONFIGURATION - FIXED
+# ============================================
+
 CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
 CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
 CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
 
-# Media files - Cloudinary in production, local in development
-if not DEBUG and CLOUDINARY_CLOUD_NAME:
-    # Production - Use Cloudinary
+# Check if all Cloudinary credentials are present
+CLOUDINARY_CONFIGURED = all([
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY, 
+    CLOUDINARY_API_SECRET
+])
+
+if CLOUDINARY_CONFIGURED:
+    # Use Cloudinary for media storage
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     MEDIA_URL = f'https://res.cloudinary.com/{CLOUDINARY_CLOUD_NAME}/'
     
@@ -149,14 +154,14 @@ if not DEBUG and CLOUDINARY_CLOUD_NAME:
         'STATIC_IMAGES': False,
         'FOLDER': 'malice/products',
     }
-    print(f"☁️ Using Cloudinary for media: {CLOUDINARY_CLOUD_NAME}")
+    print(f"☁️ Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
 else:
-    # Development - Use local filesystem
+    # Local filesystem fallback
     MEDIA_URL = '/media/'
     MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
-    print("💾 Using local filesystem for media (development mode)")
-
+    print(f"💾 Local filesystem storage")
+    print(f"   DEBUG={DEBUG}, CLOUD_NAME={CLOUDINARY_CLOUD_NAME or 'NOT SET'}")
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
 # ============================================
