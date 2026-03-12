@@ -153,6 +153,8 @@ CLOUDINARY_STORAGE = {
     'API_KEY': CLOUDINARY_API_KEY,
     'API_SECRET': CLOUDINARY_API_SECRET,
     'SECURE': True,
+    'MEDIA_TAG': 'malice',
+    'STATIC_TAG': 'malice-static',
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
