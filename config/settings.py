@@ -130,27 +130,43 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # CLOUDINARY CONFIGURATION - FIXED
 # ============================================
 
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+# Get credentials from environment variables
+CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
+CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
+CLOUDINARY_API_SECRET = config('CLOUDINARY_API_SECRET', default='')
 
-# Configure Cloudinary
-cloudinary.config(
-    cloud_name='dfpmrfwcu',
-    api_key='526994497796367',
-    api_secret='ifmXJcy2sK_JvWrEI5WQbYochmo'
-)
+# Check if all credentials are present
+CLOUDINARY_CONFIGURED = all([
+    CLOUDINARY_CLOUD_NAME,
+    CLOUDINARY_API_KEY,
+    CLOUDINARY_API_SECRET
+])
 
-# Set Cloudinary as the default file storage
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# Optional: Configure Cloudinary storage settings
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dfpmrfwcu',
-    'API_KEY': '526994497796367',
-    'API_SECRET': 'ifmXJcy2sK_JvWrEI5WQbYochmo',
-    'SECURE': True,
-}
+if CLOUDINARY_CONFIGURED:
+    # Set Cloudinary as default storage
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+    
+    # IMPORTANT: Keep MEDIA_URL as /media/ - the storage backend handles the rest
+    MEDIA_URL = '/media/'
+    
+    # Cloudinary storage configuration
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': CLOUDINARY_CLOUD_NAME,
+        'API_KEY': CLOUDINARY_API_KEY,
+        'API_SECRET': CLOUDINARY_API_SECRET,
+        'SECURE': True,
+        'MEDIA_TAG': 'malice',
+        'STATIC_IMAGES': False,
+        # Remove 'FOLDER' key - let upload_to handle the path
+    }
+    
+    print(f"☁️ Cloudinary configured: {CLOUDINARY_CLOUD_NAME}")
+else:
+    # Local filesystem fallback
+    MEDIA_URL = '/media/'
+    MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    print("💾 Using local filesystem storage")
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
 # ============================================

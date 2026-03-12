@@ -41,7 +41,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
     weight_kg = models.DecimalField(max_digits=8, decimal_places=3, default=0.5, help_text="Weight in kilograms")
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='products', null=True, blank=True)
-    image = models.ImageField(upload_to='products-img/', blank=True, null=True)
+    image = models.ImageField(upload_to='products/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
     is_new = models.BooleanField(default=False)
