@@ -109,10 +109,29 @@ def home(request):
         is_active=True, is_best_seller=True
     ).select_related('category').prefetch_related('variants')[:4]
     
+    # Get user's wishlist product IDs if authenticated - FIXED
+    user_wishlist_ids = set()
+    if request.user.is_authenticated:
+        user_wishlist_ids = set(Wishlist.objects.filter(
+            user=request.user
+        ).values_list('product_id', flat=True))
+    
+    # Add in_wishlist flag to products - CONVERT TO LISTS FIRST
+    featured_list = list(featured_products)
+    new_list = list(new_arrivals)
+    best_list = list(best_sellers)
+    
+    for product in featured_list:
+        product.in_wishlist = product.id in user_wishlist_ids
+    for product in new_list:
+        product.in_wishlist = product.id in user_wishlist_ids
+    for product in best_list:
+        product.in_wishlist = product.id in user_wishlist_ids
+    
     context = {
-        'featured': featured_products,
-        'new_arrivals': new_arrivals,
-        'best_sellers': best_sellers,
+        'featured': featured_list,
+        'new_arrivals': new_list,
+        'best_sellers': best_list,
     }
     return render(request, 'shop/home.html', context)
 
@@ -149,7 +168,19 @@ def product_list(request):
     else:
         products = products.order_by('-created_at')
     
-    paginator = Paginator(products, 12)
+    # Get user's wishlist product IDs - FIXED VERSION
+    user_wishlist_ids = set()
+    if request.user.is_authenticated:
+        user_wishlist_ids = set(Wishlist.objects.filter(
+            user=request.user
+        ).values_list('product_id', flat=True))
+    
+    # Add in_wishlist flag to products - CONVERT TO LIST FIRST
+    product_list = list(products)  # Convert QuerySet to list
+    for product in product_list:
+        product.in_wishlist = product.id in user_wishlist_ids
+    
+    paginator = Paginator(product_list, 12)
     page_number = request.GET.get('page')
     products = paginator.get_page(page_number)
     
@@ -160,7 +191,6 @@ def product_list(request):
         'sort_by': sort_by,
     }
     return render(request, 'shop/product_list.html', context)
-
 
 def product_detail(request, slug):
     """Product detail view"""

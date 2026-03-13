@@ -283,6 +283,7 @@
     border-radius: 12px;
     overflow: hidden;
     transition: transform 0.3s ease, border-color 0.3s ease;
+    position: relative;
 }
 
 .product-card:hover {
@@ -300,6 +301,7 @@
     aspect-ratio: 3/4;
     overflow: hidden;
     background: var(--bg-elevated);
+    position: relative;
 }
 
 .product-image img {
@@ -322,12 +324,51 @@
     font-size: 0.85rem;
     font-weight: 500;
     margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .product-info-card .price {
     color: var(--text-muted);
     font-family: 'Space Grotesk', sans-serif;
     font-size: 0.85rem;
+}
+
+.wishlist-heart {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 10;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.wishlist-heart:hover {
+    transform: scale(1.1);
+    border-color: var(--text-muted);
+}
+
+.wishlist-heart.active {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+}
+
+.wishlist-heart svg {
+    width: 18px;
+    height: 18px;
 }
 
 @media (max-width: 768px) {
@@ -352,11 +393,24 @@
         width: 100%;
         height: 44px;
     }
+    
+    .wishlist-heart {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .wishlist-heart svg {
+        width: 16px;
+        height: 16px;
+    }
 }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- CSRF Token must be inside content block, not before it -->
+{% csrf_token %}
+
 <div class="product-detail-page">
     <div class="product-detail-container">
         <div class="product-detail">
@@ -414,14 +468,14 @@
                         <input type="number" id="quantity" value="1" min="1" max="1" readonly>
                         <button type="button" onclick="updateQuantity(1)" id="qtyPlus">+</button>
                     </div>
-                    <span id="stockMessage" style="display: none; color: var(--error); font-size: 0.8rem; margin-top: 0.5rem;">Maximum stock reached</span>
+                    <span id="stockMessage" style="display: none; color: #ef4444; font-size: 0.8rem; margin-top: 0.5rem;">Maximum stock reached</span>
                 </div>
                 
                 <div class="action-buttons">
-                    <button type="button" class="add-to-cart-btn" onclick="addToCart()" {% if not product.is_in_stock %}disabled{% endif %}>
-                        {% if product.is_in_stock %}Add to Cart{% else %}Out of Stock{% endif %}
+                    <button type="button" id="addToCartBtn" class="add-to-cart-btn" onclick="addToCart({{ product.id }})" {% if not product.is_in_stock %}disabled{% endif %}>
+                            {% if product.is_in_stock %}Add to Cart{% else %}Out of Stock{% endif %}
                     </button>
-                    <button type="button" class="wishlist-btn {% if in_wishlist %}active{% endif %}" onclick="toggleWishlist()">
+                    <button type="button" id="wishlistBtn" class="wishlist-btn {% if in_wishlist %}active{% endif %}" onclick="toggleProductWishlist()">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="{% if in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5">
                             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                         </svg>
@@ -445,8 +499,8 @@
                         <!-- Wishlist Heart Icon -->
                         <button class="wishlist-heart {% if related.in_wishlist %}active{% endif %}" 
                                 data-product-id="{{ related.id }}"
-                                onclick="toggleWishlistFromCard(this)"
-                                aria-label="Add to wishlist">
+                                onclick="event.stopPropagation(); toggleWishlistFromCard(this)"
+                                aria-label="{% if related.in_wishlist %}Remove from{% else %}Add to{% endif %} wishlist">
                             <svg viewBox="0 0 24 24" fill="{% if related.in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
@@ -465,25 +519,45 @@
 </div>
 
 <script>
+// ============================================
+// PRODUCT DETAIL PAGE JAVASCRIPT
+// ============================================
+
 let currentMaxStock = 1;
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Set initial max stock from first selected variant
+    const initialSize = document.querySelector('input[name="size"]:checked');
+    if (initialSize) {
+        const stock = parseInt(initialSize.getAttribute('data-stock')) || 1;
+        currentMaxStock = stock;
+        const qtyInput = document.getElementById('quantity');
+        if (qtyInput) {
+            qtyInput.max = stock;
+        }
+        updateQuantityButtons();
+    }
+});
 
 // Update max stock when variant changes
 document.querySelectorAll('input[name="size"]').forEach(radio => {
     radio.addEventListener('change', function() {
-        const variantId = this.value;
-        // You may need to get stock from a data attribute or API
-        // For simplicity, assume we have data-stock on each size option
-        const stock = parseInt(this.getAttribute('data-stock'));
+        const stock = parseInt(this.getAttribute('data-stock')) || 1;
         currentMaxStock = stock;
         const qtyInput = document.getElementById('quantity');
-        qtyInput.max = stock;
-        qtyInput.value = 1; // reset to 1
+        if (qtyInput) {
+            qtyInput.max = stock;
+            qtyInput.value = 1;
+        }
         updateQuantityButtons();
     });
 });
 
 function updateQuantity(change) {
     const input = document.getElementById('quantity');
+    if (!input) return;
+    
     let value = parseInt(input.value) + change;
     if (value < 1) value = 1;
     if (value > currentMaxStock) value = currentMaxStock;
@@ -495,75 +569,260 @@ function updateQuantityButtons() {
     const minus = document.getElementById('qtyMinus');
     const plus = document.getElementById('qtyPlus');
     const message = document.getElementById('stockMessage');
-    const current = parseInt(document.getElementById('quantity').value);
-    minus.disabled = current <= 1;
-    plus.disabled = current >= currentMaxStock;
-    message.style.display = current >= currentMaxStock ? 'block' : 'none';
+    const input = document.getElementById('quantity');
+    
+    if (!input) return;
+    
+    const current = parseInt(input.value);
+    if (minus) minus.disabled = current <= 1;
+    if (plus) plus.disabled = current >= currentMaxStock;
+    if (message) message.style.display = current >= currentMaxStock ? 'block' : 'none';
 }
 
-function addToCart() {
-    const sizeInput = document.querySelector('input[name="size"]:checked');
-    const quantity = document.getElementById('quantity').value;
+// ============================================
+// WISHLIST FUNCTIONS
+// ============================================
+
+function toggleProductWishlist() {
+    const btn = document.getElementById('wishlistBtn');
+    if (!btn) return;
     
-    if (!sizeInput) {
-        showToast('Please select a size', 'warning');
-        return;
+    const wasActive = btn.classList.contains('active');
+    const svg = btn.querySelector('svg');
+    
+    // Optimistic UI update
+    btn.classList.toggle('active');
+    const isNowActive = btn.classList.contains('active');
+    if (svg) {
+        svg.setAttribute('fill', isNowActive ? 'currentColor' : 'none');
     }
     
-    fetch('/cart/add/{{ product.id }}/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': csrfToken
-        },
-        body: `variant_id=${sizeInput.value}&quantity=${quantity}`
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message, 'success');
-            updateCartBadge(data.cart_count);
-        } else {
-            showToast(data.error, 'error');
-        }
-    })
-    .catch(error => {
-        showToast('Failed to add to cart', 'error');
-    });
-}
-
-function toggleWishlist() {
-    const btn = document.querySelector('.wishlist-btn');
+    // Update badge optimistically
+    updateWishlistBadgeOptimistic(isNowActive);
+    
+    const csrfToken = getCsrfToken();
     
     fetch('/wishlist/toggle/{{ product.id }}/', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
-            'X-CSRFToken': csrfToken
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
         }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showToast(data.message, 'success');
-            btn.classList.toggle('active');
-            const svg = btn.querySelector('svg');
-            svg.setAttribute('fill', data.in_wishlist ? 'currentColor' : 'none');
+            // Sync with server response
+            btn.classList.toggle('active', data.in_wishlist);
+            if (svg) {
+                svg.setAttribute('fill', data.in_wishlist ? 'currentColor' : 'none');
+            }
+            // Update global badge
+            if (typeof updateWishlistBadge === 'function') {
+                updateWishlistBadge(data.wishlist_count);
+            }
+        } else {
+            // Revert on error
+            btn.classList.toggle('active', wasActive);
+            if (svg) {
+                svg.setAttribute('fill', wasActive ? 'currentColor' : 'none');
+            }
+            updateWishlistBadgeOptimistic(!isNowActive);
+            showToast(data.error || 'Failed to update wishlist', 'error');
+            if (data.redirect) {
+                setTimeout(() => window.location.href = data.redirect, 1500);
+            }
         }
     })
     .catch(error => {
+        console.error('Wishlist error:', error);
+        // Revert on error
+        btn.classList.toggle('active', wasActive);
+        if (svg) {
+            svg.setAttribute('fill', wasActive ? 'currentColor' : 'none');
+        }
+        updateWishlistBadgeOptimistic(!isNowActive);
         showToast('Failed to update wishlist', 'error');
     });
 }
 
-function updateCartBadge(count) {
-    const badge = document.querySelector('.cart-badge');
-    if (badge) {
-        if (count > 0) {
-            badge.textContent = count;
+// For related products cards
+function toggleWishlistFromCard(button) {
+    if (!button) return;
+    
+    const productId = button.dataset.productId;
+    const wasActive = button.classList.contains('active');
+    const svg = button.querySelector('svg');
+    
+    // Prevent double-clicks
+    if (button.disabled) return;
+    button.disabled = true;
+    
+    // Optimistic UI update
+    button.classList.toggle('active');
+    const isNowActive = button.classList.contains('active');
+    if (svg) {
+        svg.setAttribute('fill', isNowActive ? 'currentColor' : 'none');
+    }
+    
+    // Update badge optimistically
+    updateWishlistBadgeOptimistic(isNowActive);
+    
+    const csrfToken = getCsrfToken();
+    
+    fetch(`/wishlist/toggle/${productId}/`, {
+        method: 'POST',
+        headers: { 
+            'X-CSRFToken': csrfToken,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Sync with server
+            button.classList.toggle('active', data.in_wishlist);
+            if (svg) {
+                svg.setAttribute('fill', data.in_wishlist ? 'currentColor' : 'none');
+            }
+            // Update global badge
+            if (typeof updateWishlistBadge === 'function') {
+                updateWishlistBadge(data.wishlist_count);
+            }
+        } else {
+            // Revert on error
+            button.classList.toggle('active', wasActive);
+            if (svg) {
+                svg.setAttribute('fill', wasActive ? 'currentColor' : 'none');
+            }
+            updateWishlistBadgeOptimistic(!isNowActive);
+            showToast(data.error || 'Please log in to manage wishlist', 'error');
+            if (data.redirect) {
+                setTimeout(() => window.location.href = data.redirect, 1500);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Wishlist error:', error);
+        // Revert on error
+        button.classList.toggle('active', wasActive);
+        if (svg) {
+            svg.setAttribute('fill', wasActive ? 'currentColor' : 'none');
+        }
+        updateWishlistBadgeOptimistic(!isNowActive);
+        showToast('Failed to update wishlist', 'error');
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+
+// Helper to optimistically update wishlist badge
+function updateWishlistBadgeOptimistic(isAdding) {
+    const badge = document.getElementById('wishlist-count');
+    if (!badge) return;
+    
+    let currentCount = badge.style.display !== 'none' ? parseInt(badge.textContent) || 0 : 0;
+    const newCount = isAdding ? currentCount + 1 : Math.max(0, currentCount - 1);
+    
+    if (typeof updateWishlistBadge === 'function') {
+        updateWishlistBadge(newCount);
+    } else {
+        // Fallback if global function not loaded yet
+        if (newCount > 0) {
+            badge.textContent = newCount;
             badge.style.display = 'flex';
         } else {
             badge.style.display = 'none';
+        }
+    }
+}
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+function getCsrfToken() {
+    // Try input field first (from {% csrf_token %})
+    const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (input) return input.value;
+    
+    // Fallback to meta tag
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) return meta.getAttribute('content');
+    
+    // Fallback to cookie
+    const cookie = document.cookie.match(/csrftoken=([^;]+)/);
+    if (cookie) return cookie[1];
+    
+    return '';
+}
+
+// Fallback showToast if not defined in base.html
+if (typeof showToast !== 'function') {
+    function showToast(message, type = 'info') {
+        console.log(`[${type}] ${message}`);
+        // Create simple toast if container exists
+        const container = document.getElementById('toastContainer');
+        if (container) {
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            toast.style.cssText = `
+                padding: 1rem 1.5rem;
+                border-radius: 12px;
+                margin-bottom: 0.5rem;
+                font-family: 'Space Grotesk', sans-serif;
+                font-size: 0.9rem;
+                opacity: 0;
+                transform: translateY(-20px);
+                transition: all 0.4s ease;
+                ${type === 'success' ? 'background: rgba(34, 197, 94, 0.15); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.3);' : 
+                  type === 'error' ? 'background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3);' :
+                  'background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);'}
+            `;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateY(0)';
+            }, 10);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                setTimeout(() => toast.remove(), 400);
+            }, 4000);
+        } else {
+            alert(message);
+        }
+    }
+}
+
+// Fallback cart functions if not defined in base.html
+if (typeof updateCartBadge !== 'function') {
+    function updateCartBadge(count) {
+        const badge = document.getElementById('cart-count');
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = count;
+                badge.style.display = 'flex';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    }
+}
+
+if (typeof toggleCart !== 'function') {
+    function toggleCart() {
+        const sidebar = document.getElementById('cartSidebar');
+        const overlay = document.getElementById('cartOverlay');
+        if (sidebar && overlay) {
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
         }
     }
 }

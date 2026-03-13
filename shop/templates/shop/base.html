@@ -360,7 +360,7 @@
         
         .cart-overlay.active { 
             opacity: 1; 
-            visibility: visible; 
+            visibility: visible;
         }
         
         .cart-sidebar {
@@ -368,8 +368,7 @@
             top: 0;
             right: 0;
             width: 100%;
-            max-width: 440px;
-            height: 100vh;
+            height: 100dvh;
             background: var(--bg-elevated);
             border-left: 1px solid var(--border);
             z-index: 2001;
@@ -377,7 +376,18 @@
             transition: transform 0.5s var(--ease-out-expo);
             display: flex;
             flex-direction: column;
+            box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+            will-change: transform;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
+
+        body.cart-open {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+}
         
         .cart-sidebar.active { 
             transform: translateX(0); 
@@ -1478,25 +1488,6 @@
         // CSRF Token from meta
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
-        // Spotlight cursor effect
-        const spotlight = document.getElementById('spotlight');
-        let mouseX = 50, mouseY = 50;
-        let currentX = 50, currentY = 50;
-        
-        document.addEventListener('mousemove', (e) => {
-            mouseX = (e.clientX / window.innerWidth) * 100;
-            mouseY = (e.clientY / window.innerHeight) * 100;
-        });
-        
-        function updateSpotlight() {
-            currentX += (mouseX - currentX) * 0.1;
-            currentY += (mouseY - currentY) * 0.1;
-            spotlight.style.setProperty('--mouse-x', currentX + '%');
-            spotlight.style.setProperty('--mouse-y', currentY + '%');
-            requestAnimationFrame(updateSpotlight);
-        }
-        updateSpotlight();
-        
         // Navbar scroll behavior
         let lastScroll = 0;
         const navbar = document.getElementById('navbar');
@@ -1523,11 +1514,17 @@
         function toggleCart() {
             const sidebar = document.getElementById('cartSidebar');
             const overlay = document.getElementById('cartOverlay');
+            const isOpening = !sidebar.classList.contains('active');
+            
             sidebar.classList.toggle('active');
             overlay.classList.toggle('active');
-            document.body.style.overflow = sidebar.classList.contains('active') ? 'hidden' : '';
+            document.body.classList.toggle('cart-open', isOpening);
+            
+            if (isOpening) {
+                loadCart(); // Refresh cart data when opening
+            }
         }
-        
+                
         function toggleMobileMenu() {
             const menu = document.getElementById('mobileMenu');
             menu.classList.toggle('active');
@@ -1754,11 +1751,21 @@
         }
         
         async function addToCart(productId, size = null) {
-            const btn = event?.target;
-            if (btn) {
-                const originalText = btn.textContent;
+            // Get button reference safely
+            let btn = null;
+            let originalText = '';  // ✅ DECLARED AT FUNCTION SCOPE
+            
+            // Try to get the button from event if available
+            if (typeof event !== 'undefined' && event && event.target) {
+                btn = event.target.closest('button') || event.target;
+            }
+            
+            // Store original text if we have a button
+            if (btn && btn.textContent) {
+                originalText = btn.textContent;
                 btn.textContent = 'Adding...';
                 btn.style.opacity = '0.7';
+                btn.disabled = true;
             }
             
             try {
@@ -1772,17 +1779,23 @@
                 });
                 
                 if (response.ok) {
+                    const data = await response.json();
                     await loadCart();
                     toggleCart();
-                    showToast('Item added to cart', 'success');
+                    showToast(data.message || 'Item added to cart', 'success');
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showToast(errorData.error || 'Failed to add item', 'error');
                 }
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Failed to add item', 'error');
             } finally {
-                if (btn) {
+                // Restore button state safely - originalText is now accessible!
+                if (btn && originalText) {
                     btn.textContent = originalText;
                     btn.style.opacity = '1';
+                    btn.disabled = false;
                 }
             }
         }
