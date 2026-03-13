@@ -282,83 +282,259 @@
     margin-bottom: 1.5rem;
 }
 
-.product-grid {
+/* Use standard product grid from home.html */
+.recommended .product-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
 }
 
-.product-card {
+/* Standard Product Card - Matches home.html */
+.recommended .product-card {
     background: var(--bg-card);
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.5s var(--ease-out-expo);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    overflow: hidden;
-    transition: transform 0.3s ease, border-color 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
-.product-card:hover {
-    transform: translateY(-3px);
-    border-color: var(--text-muted);
+.recommended .product-card:hover {
+    transform: translateY(-8px);
+    border-color: var(--border-light);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4);
 }
 
-.product-card a {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-}
-
-.product-image {
-    aspect-ratio: 3/4;
-    overflow: hidden;
+.recommended .product-image-container {
+    aspect-ratio: 4/5;
     background: var(--bg-elevated);
+    overflow: hidden;
+    position: relative;
+    width: 100%;
 }
 
-.product-image img {
+.recommended .product-image-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.6s var(--ease-out-expo);
 }
 
-.product-info {
-    padding: 1rem;
+.recommended .product-card:hover .product-image-container img {
+    transform: scale(1.05);
 }
 
-.product-info h3 {
+.recommended .product-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
+}
+
+/* Wishlist Heart */
+.recommended .wishlist-heart {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    z-index: 11;
+    padding: 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.recommended .wishlist-heart:hover {
+    transform: scale(1.1);
+    border-color: var(--text-muted);
+}
+
+.recommended .wishlist-heart.active {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #ef4444;
+}
+
+.recommended .wishlist-heart svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Quick Add Overlay */
+.recommended .quick-add-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 5, 5, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s var(--ease-smooth);
+    z-index: 10;
+}
+
+.recommended .product-card:hover .quick-add-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+.recommended .quick-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--text);
+    color: var(--bg);
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s var(--ease-out-expo);
+    text-decoration: none;
+    transform: translateY(10px);
+}
+
+.recommended .quick-add-btn:hover {
+    transform: translateY(0) scale(1.05);
+    box-shadow: 0 8px 30px rgba(255,255,255,0.2);
+}
+
+.recommended .sign-in-btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--text);
+}
+
+.recommended .out-of-stock, .recommended .no-variants {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.8rem;
+    color: #ef4444;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     font-weight: 500;
-    margin-bottom: 0.25rem;
 }
 
-.product-info .price {
+/* Product Info */
+.recommended .product-info {
+    padding: 1.25rem;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.recommended .product-info h3 {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recommended .product-info h3 a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.recommended .product-info h3 a:hover {
+    text-decoration: underline;
+}
+
+.recommended .product-price {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
     color: var(--text-muted);
+    font-weight: 500;
 }
 
-@media (max-width: 1024px) {
-    .cart-content {
-        grid-template-columns: 1fr;
-    }
-    
-    .cart-summary {
-        position: static;
-    }
-}
-
-@media (max-width: 640px) {
-    .cart-item {
-        flex-direction: column;
+@media (max-width: 768px) {
+    .recommended .product-grid {
+        grid-template-columns: repeat(2, 1fr);
         gap: 1rem;
     }
     
-    .cart-item-image {
-        width: 100%;
-        height: 200px;
+    .recommended .product-card {
+        min-height: 380px;
     }
     
-    .product-grid {
+    .recommended .product-image-container {
+        height: 280px !important;
+        aspect-ratio: auto;
+    }
+    
+    .recommended .quick-add-overlay {
+        all: unset;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        z-index: 20;
+        display: block;
+        opacity: 1;
+        visibility: visible;
+        background: transparent;
+        backdrop-filter: none;
+    }
+    
+    .recommended .quick-add-btn {
+        transform: translateY(0);
+        padding: 0.5rem 0.75rem;
+        font-size: 0.7rem;
+        min-width: 100px;
+    }
+    
+    .recommended .wishlist-heart {
+        width: 32px;
+        height: 32px;
+        top: 8px;
+        right: 8px;
+    }
+    
+    .recommended .wishlist-heart svg {
+        width: 16px;
+        height: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .recommended .product-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    
+    .recommended .product-card {
+        min-height: 320px;
+    }
+    
+    .recommended .product-image-container {
+        height: 220px !important;
     }
 }
 </style>
@@ -423,28 +599,60 @@
             <h2>You May Also Like</h2>
             <div class="product-grid">
                 {% for product in recommended_products %}
-                <div class="product-card">
-                    <div class="product-image">
+                <article class="product-card" onclick="if(!event.target.closest('.quick-add-btn') && !event.target.closest('.quick-add-overlay') && !event.target.closest('.wishlist-heart')) window.location.href='{{ product.get_absolute_url }}'">
+                    <div class="product-image-container">
                         <a href="{{ product.get_absolute_url }}">
                             {% if product.image %}
                             <img src="{{ product.image.url }}" alt="{{ product.name }}" loading="lazy">
+                            {% else %}
+                            <div class="product-placeholder">
+                                <span>{{ product.name }}</span>
+                            </div>
                             {% endif %}
                         </a>
-                        <!-- Wishlist Heart Icon -->
+                        
+                        <!-- Wishlist Heart -->
                         <button class="wishlist-heart {% if product.in_wishlist %}active{% endif %}" 
                                 data-product-id="{{ product.id }}"
-                                onclick="toggleWishlistFromCard(this)"
-                                aria-label="Add to wishlist">
+                                onclick="event.stopPropagation(); toggleWishlistFromCard(this)"
+                                aria-label="{% if product.in_wishlist %}Remove from{% else %}Add to{% endif %} wishlist">
                             <svg viewBox="0 0 24 24" fill="{% if product.in_wishlist %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.5">
                                 <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
                             </svg>
                         </button>
+                        
+                        {% if user.is_authenticated %}
+                            {% with first_variant=product.variants.first %}
+                            <div class="quick-add-overlay">
+                                {% if first_variant and first_variant.stock > 0 %}
+                                    <button onclick="quickAddToCart({{ product.id }}, '{{ first_variant.size }}', event)" class="quick-add-btn">
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"></path>
+                                            <path d="M3 6h18"></path>
+                                            <path d="M16 10a4 4 0 0 1-8 0"></path>
+                                        </svg>
+                                    </button>
+                                {% else %}
+                                    <span class="out-of-stock">Out of Stock</span>
+                                {% endif %}
+                            </div>
+                            {% endwith %}
+                        {% else %}
+                            <div class="quick-add-overlay">
+                                <a href="{% url 'login' %}?next={{ request.path }}" class="quick-add-btn sign-in-btn" onclick="event.stopPropagation()">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                                        <polyline points="10,17 15,12 10,7"></polyline>
+                                    </svg>
+                                </a>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="product-info">
                         <h3><a href="{{ product.get_absolute_url }}">{{ product.name }}</a></h3>
-                        <p class="price">₱{{ product.price|floatformat:2 }}</p>
+                        <p class="product-price">₱{{ product.price|floatformat:2 }}</p>
                     </div>
-                </div>
+                </article>
                 {% endfor %}
             </div>
         </div>

@@ -1349,7 +1349,7 @@
             <a href="#footer" onclick="toggleMobileMenu()">About</a>
             
             {% if user.is_authenticated %}
-                <div style="padding: 1rem 0; border-top: 1px solid var(--border); margin-top: 0.5rem;">
+                <div style="padding: 1rem 0; border-top: 1px solid var(--border); margin-top: 0.5rem; display: flex; flex-direction: column;">
                     <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">Account</p>
                     <a href="{% url 'wishlist' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0;">Wishlist</a>
                     <a href="{% url 'profile' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0;">My Orders</a>
