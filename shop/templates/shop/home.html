@@ -409,6 +409,22 @@
     transform: translateY(10px);
 }
 
+.product-card:not(.product-card-large) .quick-add-btn {
+
+}
+
+.product-card:not(.product-card-large) .quick-add-btn svg {
+
+}
+
+.product-card:not(.product-card-large) .wishlist-heart {
+
+}
+
+.product-card:not(.product-card-large) .wishlist-heart svg {
+
+}
+
 .quick-add-btn:hover {
     transform: translateY(0) scale(1.05);
     box-shadow: 0 8px 30px rgba(255,255,255,0.2);
@@ -817,31 +833,29 @@
     
     .products-bento {
         grid-template-columns: repeat(2, 1fr);
-        grid-auto-rows: auto; /* Changed from fixed height to auto */
-        gap: 1rem;
+        grid-auto-rows: auto;
     }
 
     .product-card {
         display: flex;
         flex-direction: column;
         height: 100%;
-        min-height: 380px; /* Set a consistent minimum height */
+        min-height: 380px;
     }
     
     .product-card-large {
         grid-column: span 2;
-        min-height: 450px; /* Larger minimum height for large cards */
+        min-height: 450px;
     }
 
-    /* Image container styles */
     .product-card .product-image-container {
-        height: 280px !important; /* Fixed height for images */
+        height: 280px !important;
         width: 100%;
         flex-shrink: 0;
     }
     
     .product-card-large .product-image-container {
-        height: 350px !important; /* Larger height for large cards */
+        height: 350px !important;
     }
 
     .product-card .product-info {
@@ -854,8 +868,12 @@
     }
 
     .product-card-large .product-info {
-        min-height: 100px; /* Slightly larger for large cards */
+        min-height: 100px;
         padding: 1.25rem;
+    }
+
+    .product-card:not(.product-card-large) .quick-add-btn {
+
     }
 
     .product-image-container img {
@@ -1073,14 +1091,7 @@
             </a>
         </div>
     </div>
-    
-    <div class="hero-scroll-indicator float">
-        <span>Scroll</span>
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-            <path d="M12 5v14M19 12l-7 7-7-7"/>
-        </svg>
-    </div>
-    
+        
     <!-- Decorative elements -->
     <div class="hero-glow"></div>
     <div class="hero-grid"></div>
