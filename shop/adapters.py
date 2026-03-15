@@ -1,6 +1,25 @@
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from django.db import IntegrityError, transaction
+import logging
+
+logger = logging.getLogger(__name__)
+
+class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def pre_social_login(self, request, sociallogin):
+        """Called before the social login process"""
+        logger.info(f"Pre-social login: {sociallogin.account.provider}")
+        return super().pre_social_login(request, sociallogin)
+    
+    def save_user(self, request, sociallogin, form=None):
+        logger.info(f"Saving social user: {sociallogin.account.extra_data.get('email')}")
+        try:
+            user = super().save_user(request, sociallogin, form)
+            logger.info(f"User saved successfully: {user.username}")
+            return user
+        except Exception as e:
+            logger.error(f"Error saving social user: {str(e)}")
+            raise
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
