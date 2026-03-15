@@ -274,18 +274,19 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 # ============================================
 # EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
 # ============================================
-if DEBUG:
-    # Development - print emails to console
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-else:
+if config('PLUNK_SECRET_KEY', default=None):
     # Production - Plunk SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_HOST = 'smtp.useplunk.com'
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = 'plunk'
-    EMAIL_HOST_PASSWORD = config('PLUNK_SMTP_PASSWORD')
+    EMAIL_HOST_USER = config('PLUNK_PUBLIC_KEY')
+    EMAIL_HOST_PASSWORD = config('PLUNK_SECRET_KEY')
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@malice.com')
+else:
+    # Development - print to console
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'webmaster@localhost'
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
