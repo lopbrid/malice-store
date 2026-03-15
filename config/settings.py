@@ -19,7 +19,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-%7_au68r_#c7b%n$#2$u^fr&7hb-dwvc7jw6ll+ak_64k#qu%1')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if config('DATABASE_URL', default=None):
+    DEBUG = False
+else:
+    DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = ['malice-store.onrender.com', 'localhost', '127.0.0.1', '*']
 
@@ -274,6 +277,9 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 # ============================================
 # EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
 # ============================================
+# ============================================
+# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
+# ============================================
 if config('PLUNK_SECRET_KEY', default=None):
     # Production - Plunk SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -287,6 +293,16 @@ else:
     # Development - print to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+
+# DEBUG OUTPUT - Check what's happening
+print("="*50)
+print("EMAIL DEBUG INFO:")
+print(f"PLUNK_SECRET_KEY set: {bool(config('PLUNK_SECRET_KEY', default=None))}")
+print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
+print(f"EMAIL_HOST: {EMAIL_HOST if 'EMAIL_HOST' in locals() else 'N/A'}")
+print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER[:20]}..." if 'EMAIL_HOST_USER' in locals() and EMAIL_HOST_USER else "USER: NOT SET")
+print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+print("="*50)
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
