@@ -21,7 +21,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-%7_au68r_#c7b%n$#2$u^
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+ALLOWED_HOSTS = ['malice-store.onrender.com', 'localhost', '127.0.0.1', '*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -271,7 +271,6 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 if DEBUG:
     # Development - print emails to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    print("📧 Using console email backend for development")
 else:
     # Production - Plunk SMTP
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -335,7 +334,6 @@ if DEBUG:
     CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = None
     CELERY_RESULT_BACKEND = None
-    print("📦 Using local memory cache for development")
     
 elif REDIS_URL:
     # Production with Redis
@@ -348,7 +346,6 @@ elif REDIS_URL:
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
     CELERY_TASK_ALWAYS_EAGER = False
-    print("📦 Using Redis cache for production")
     
 else:
     # Production fallback to database cache (no Redis needed)
@@ -361,7 +358,6 @@ else:
     CELERY_TASK_ALWAYS_EAGER = True
     CELERY_BROKER_URL = None
     CELERY_RESULT_BACKEND = None
-    print("📦 Using database cache (no Redis)")
 
 # Celery settings
 CELERY_ACCEPT_CONTENT = ['json']
@@ -529,11 +525,3 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
 SOCIALACCOUNT_CALLBACK_URLS = {
     'google': '/accounts/google/login/callback/'
 }
-
-# Debug output
-print("="*50)
-print("CLOUDINARY DEBUG:")
-print(f"CLOUD_NAME: {CLOUDINARY_CLOUD_NAME or 'NOT SET'}")
-print(f"API_KEY exists: {bool(CLOUDINARY_API_KEY)}")
-print(f"API_SECRET exists: {bool(CLOUDINARY_API_SECRET)}")
-print("="*50)
