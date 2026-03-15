@@ -22,7 +22,6 @@ def save_user_profile(sender, instance, **kwargs):
         instance.profile.save()
 
 
-# NEW: Signal to create OTP token on user creation
 @receiver(post_save, sender=User)
 def create_verification_otp(sender, instance, created, **kwargs):
     """Create OTP verification code when user is created (if not a superuser or social user)"""
@@ -32,7 +31,7 @@ def create_verification_otp(sender, instance, created, **kwargs):
     # Check if this is a social login user by looking at the social account
     from allauth.socialaccount.models import SocialAccount
     
-    # If user has a social account (Google, etc.), skip OTP and activate
+    # If user has a social account (Google, etc.), skip OTP and ensure active
     if SocialAccount.objects.filter(user=instance).exists():
         # Ensure profile exists and is marked verified
         profile, _ = UserProfile.objects.get_or_create(
@@ -47,7 +46,7 @@ def create_verification_otp(sender, instance, created, **kwargs):
             profile.is_fully_verified = True
             profile.save()
         
-        # Ensure user is active (they already should be from adapter, but double-check)
+        # Ensure user is active - CRITICAL FIX
         if not instance.is_active:
             instance.is_active = True
             instance.save(update_fields=['is_active'])
@@ -58,7 +57,7 @@ def create_verification_otp(sender, instance, created, **kwargs):
     if instance.is_active:
         instance.is_active = False
         instance.save(update_fields=['is_active'])
-    
+
     try:
         # Get or create profile
         profile, _ = UserProfile.objects.get_or_create(user=instance)
