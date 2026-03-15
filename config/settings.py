@@ -1,6 +1,7 @@
 """
 Django settings for config project.
-Enhanced with PostgreSQL for Render, Payment Integration, SMS/Email OTP, and Shipping System.
+Enhanced with PostgreSQL for Render, Payment Integration, SMS/Email OTP, 
+Shipping System, and Google OAuth Sign-In.
 """
 
 from pathlib import Path
@@ -24,18 +25,43 @@ ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
 
 # Application definition
 INSTALLED_APPS = [
-    "unfold",
+    # Django core
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.humanize',
-    'cloudinary_storage',
+    'django.contrib.sites',  # Required for allauth
+    
+    # Third party
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'ckeditor',
+    'ckeditor_uploader',
+    'colorfield',
+    'admin_interface',
     'cloudinary',
+    'cloudinary_storage',
+    'storages',
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
+    'unfold.contrib.guardian',
+    'unfold.contrib.simple_history',
+    
+    # allauth apps - REQUIRED FOR GOOGLE SIGN-IN
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    
+    # Local apps
     'shop',
 ]
+
+SITE_ID = 1  # Required for allauth
 
 # Middleware
 MIDDLEWARE = [
@@ -52,6 +78,8 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.cache.FetchFromCacheMiddleware',
     'shop.middleware.VerificationRequiredMiddleware',
+    # allauth middleware - MUST BE AFTER VerificationRequiredMiddleware
+    'allauth.account.middleware.AccountMiddleware',
 ]
 
 # Cache settings
@@ -60,14 +88,20 @@ CACHE_MIDDLEWARE_KEY_PREFIX = ''
 
 ROOT_URLCONF = 'config.urls'
 
+# =============================================================================
+# TEMPLATES - FIXED FOR ALLAUTH
+# =============================================================================
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [
+            BASE_DIR / 'templates',  # ADD THIS for allauth templates
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'django.template.context_processors.request',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',  # Required by allauth
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'shop.context_processors.cart_context',
@@ -127,13 +161,10 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'shop', 'static')]
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ============================================
-# CLOUDINARY CONFIGURATION - FIXED
-# ============================================
-# ============================================
 # CLOUDINARY CONFIGURATION - FIXED FOR RENDER
 # ============================================
 import cloudinary
-import cloudinary_storage  # ADD THIS IMPORT
+import cloudinary_storage
 
 CLOUDINARY_CLOUD_NAME = config('CLOUDINARY_CLOUD_NAME', default='')
 CLOUDINARY_API_KEY = config('CLOUDINARY_API_KEY', default='')
@@ -160,13 +191,70 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MEDIA_URL = '/media/'
+
+# =============================================================================
+# DJANGO-ALLAUTH CONFIGURATION - GOOGLE SIGN-IN
+# =============================================================================
+
+# Authentication backends - REQUIRED
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# allauth Account Adapter
+ACCOUNT_ADAPTER = 'shop.adapters.CustomAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'shop.adapters.CustomSocialAccountAdapter'
+
+# Account settings
+ACCOUNT_LOGIN_METHODS = {'email', 'username'}
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_LOGOUT_ON_GET = True
+ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+# Social Account settings
+SOCIALACCOUNT_QUERY_EMAIL = True
+SOCIALACCOUNT_AUTO_SIGNUP = True  
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
+SOCIALACCOUNT_STORE_TOKENS = False
+
+# Google OAuth Provider Configuration
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        'APP': {
+            'client_id': config('GOOGLE_CLIENT_ID'),
+            'secret': config('GOOGLE_CLIENT_SECRET'),
+            'key': ''
+        },
+        'SCOPE': ['profile', 'email'],
+        'AUTH_PARAMS': {'access_type': 'online'},
+        'OAUTH_PKCE_ENABLED': True,
+    }
+}
+
+# Redirect URLs
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/login/'
+
+# Social Auth Pipeline - Custom signup flow for phone verification
+SOCIALACCOUNT_SIGNUP_FORM_CLASS = 'shop.forms.SocialSignupForm'
+
+# Custom redirect after social login to collect phone number
+SOCIALACCOUNT_LOGIN_ON_GET = True
+
+# Security settings for OAuth
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'
+
 # ============================================
 # AUTHENTICATION & SESSION SETTINGS
 # ============================================
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
 SESSION_COOKIE_AGE = 1209600  # 2 weeks
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_COOKIE_NAME = 'malice_sessionid'
@@ -382,11 +470,12 @@ UNFOLD = {
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Add this near the top of settings.py
+# ============================================
+# LOGGING
+# ============================================
 import logging
 import sys
 
-# Logging configuration for production debugging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -414,7 +503,34 @@ LOGGING = {
     },
 }
 
-# Add after Cloudinary config
+# ============================================
+# CKEDITOR CONFIGURATION
+# ============================================
+CKEDITOR_UPLOAD_PATH = 'uploads/ckeditor/'
+
+# Optional: Additional CKEDITOR settings
+CKEDITOR_IMAGE_BACKEND = 'pillow'
+CKEDITOR_CONFIGS = {
+    'default': {
+        'toolbar': 'full',
+        'height': 300,
+        'width': '100%',
+    },
+}
+
+# ============================================
+# ALLAUTH GOOGLE OAUTH - REDIRECT URI FIX
+# ============================================
+
+# Force the callback URL to use the correct path
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
+
+# Add this to ensure redirect URI matches exactly
+SOCIALACCOUNT_CALLBACK_URLS = {
+    'google': '/accounts/google/login/callback/'
+}
+
+# Debug output
 print("="*50)
 print("CLOUDINARY DEBUG:")
 print(f"CLOUD_NAME: {CLOUDINARY_CLOUD_NAME or 'NOT SET'}")

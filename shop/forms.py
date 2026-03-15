@@ -3,6 +3,8 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from .models import Order, UserProfile, VerificationCode
+from allauth.socialaccount.forms import SignupForm as SocialSignupFormBase
+
 
 
 class CustomAuthenticationForm(forms.Form):
@@ -560,3 +562,19 @@ class OTPVerificationForm(forms.Form):
         if not code.isdigit():
             raise forms.ValidationError('Please enter only numbers.')
         return code
+
+class SocialSignupForm(SocialSignupFormBase):
+    """Custom form for social signup - collects phone number"""
+    
+    phone_number = forms.CharField(
+        max_length=20,
+        required=True,
+        widget=forms.TextInput(attrs={
+            'placeholder': 'Enter your phone number',
+            'class': 'form-control'
+        })
+    )
+    
+    def save(self, request):
+        user = super().save(request)
+        return user

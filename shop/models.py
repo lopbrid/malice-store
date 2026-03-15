@@ -10,7 +10,6 @@ from cloudinary.models import CloudinaryField
 import random
 import string
 
-
 # ============================================
 # CATEGORY & PRODUCT MODELS
 # ============================================
@@ -133,10 +132,14 @@ class UserProfile(models.Model):
     newsletter_subscribed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    # Promotion tracking
     first_order_completed = models.BooleanField(default=False)
     welcome_discount_used = models.BooleanField(default=False)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone_number = models.CharField(max_length=20, blank=True)
+    is_verified = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.phone_number}"
 
     def __str__(self):
         return f"Profile - {self.user.username}"
