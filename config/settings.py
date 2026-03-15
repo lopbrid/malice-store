@@ -280,27 +280,35 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 # ============================================
 # EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
 # ============================================
-if config('PLUNK_SECRET_KEY', default=None):
-    # Production - Plunk SMTP
+# ============================================
+# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
+# ============================================
+
+# Check if we're on Render (has DATABASE_URL)
+IS_PRODUCTION = config('DATABASE_URL', default=None) is not None
+
+if IS_PRODUCTION or config('PLUNK_SECRET_KEY', default=None):
+    # Production - Plunk SMTP (Render or when Plunk is configured)
     EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.useplunk.com'
-    EMAIL_PORT = 587
+    EMAIL_HOST = config('EMAIL_HOST', default='next-smtp.useplunk.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=2587, cast=int)
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = config('PLUNK_PUBLIC_KEY')
-    EMAIL_HOST_PASSWORD = config('PLUNK_SECRET_KEY')
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='plunk')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@malice.com')
 else:
     # Development - print to console
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'webmaster@localhost'
 
-# DEBUG OUTPUT - Check what's happening
+# Debug output
 print("="*50)
-print("EMAIL DEBUG INFO:")
-print(f"PLUNK_SECRET_KEY set: {bool(config('PLUNK_SECRET_KEY', default=None))}")
+print("EMAIL CONFIGURATION:")
+print(f"IS_PRODUCTION: {IS_PRODUCTION}")
 print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
-print(f"EMAIL_HOST: {EMAIL_HOST if 'EMAIL_HOST' in locals() else 'N/A'}")
-print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER[:20]}..." if 'EMAIL_HOST_USER' in locals() and EMAIL_HOST_USER else "USER: NOT SET")
+print(f"EMAIL_HOST: {EMAIL_HOST if 'EMAIL_HOST' in dir() else 'N/A'}")
+print(f"EMAIL_PORT: {EMAIL_PORT if 'EMAIL_PORT' in dir() else 'N/A'}")
+print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER if 'EMAIL_HOST_USER' in dir() else 'N/A'}")
 print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
 print("="*50)
 
