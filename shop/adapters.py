@@ -1,5 +1,6 @@
 from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
+from django.db import IntegrityError, transaction
 
 
 class CustomAccountAdapter(DefaultAccountAdapter):
@@ -25,8 +26,9 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         Google users are pre-verified, so we activate them immediately.
         """
         from .models import UserProfile
+        from django.contrib.auth.models import User
         
-        # Save user first
+        # Save user first using parent's save_user
         user = super().save_user(request, sociallogin, form)
         
         # Get Google data
@@ -47,13 +49,44 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         user.is_active = True
         user.save()
         
-        # Create/update profile - mark as fully verified
-        profile, created = UserProfile.objects.get_or_create(user=user)
-        profile.email_verified = True
-        profile.is_fully_verified = True
-        profile.save()
+        # Create/update profile with transaction to avoid race conditions
+        try:
+            with transaction.atomic():
+                profile, created = UserProfile.objects.get_or_create(
+                    user=user,
+                    defaults={
+                        'email_verified': True,
+                        'is_fully_verified': True,
+                    }
+                )
+                if not created:
+                    profile.email_verified = True
+                    profile.is_fully_verified = True
+                    profile.save()
+        except Exception as e:
+            # Log error but don't crash - user is already saved
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Profile creation failed for {user.email}: {e}")
         
         return user
     
     def get_connect_redirect_url(self, request, socialaccount):
         return '/'
+    
+import logging
+
+logger = logging.getLogger(__name__)
+
+class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    def save_user(self, request, sociallogin, form=None):
+        logger.info(f"Google login attempt: {sociallogin.account.extra_data.get('email')}")
+        
+        try:
+            user = super().save_user(request, sociallogin, form)
+            logger.info(f"User saved: {user.username}, is_active: {user.is_active}")
+        except Exception as e:
+            logger.error(f"Google login error: {str(e)}")
+            raise
+        
+        return user

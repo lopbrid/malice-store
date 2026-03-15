@@ -443,7 +443,7 @@ UNFOLD = {
             },
         ],
     },
-        
+
     "COLORS": {
         "primary": {
             "50": "#fafafa", "100": "#f5f5f5", "200": "#e5e5e5",

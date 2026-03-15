@@ -134,12 +134,6 @@ class UserProfile(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     first_order_completed = models.BooleanField(default=False)
     welcome_discount_used = models.BooleanField(default=False)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone_number = models.CharField(max_length=20, blank=True)
-    is_verified = models.BooleanField(default=False)
-    
-    def __str__(self):
-        return f"{self.user.username} - {self.phone_number}"
 
     def __str__(self):
         return f"Profile - {self.user.username}"
@@ -150,8 +144,6 @@ class UserProfile(models.Model):
         self.save(update_fields=['is_fully_verified'])
         return self.is_fully_verified
 
-
-# In shop/models.py - ensure this model exists
 
 class VerificationCode(models.Model):
     VERIFICATION_TYPE_CHOICES = [
