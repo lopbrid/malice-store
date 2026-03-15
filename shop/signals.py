@@ -5,6 +5,9 @@ from django.conf import settings
 from django.utils import timezone
 from .models import UserProfile, Cart, VerificationCode
 from .utils import send_email_otp
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=User)
@@ -24,16 +27,15 @@ def save_user_profile(sender, instance, **kwargs):
 
 @receiver(post_save, sender=User)
 def create_verification_otp(sender, instance, created, **kwargs):
-    """Create OTP verification code when user is created (if not a superuser or social user)"""
+    """Create OTP verification code when user is created"""
     if not created or instance.is_superuser:
         return
     
     # Check if this is a social login user by looking at the social account
     from allauth.socialaccount.models import SocialAccount
     
-    # If user has a social account (Google, etc.), skip OTP and ensure active
+    # If user has a social account (Google, etc.), skip OTP and activate
     if SocialAccount.objects.filter(user=instance).exists():
-        # Ensure profile exists and is marked verified
         profile, _ = UserProfile.objects.get_or_create(
             user=instance,
             defaults={
@@ -46,14 +48,13 @@ def create_verification_otp(sender, instance, created, **kwargs):
             profile.is_fully_verified = True
             profile.save()
         
-        # Ensure user is active - CRITICAL FIX
+        # Ensure user is active
         if not instance.is_active:
             instance.is_active = True
             instance.save(update_fields=['is_active'])
         return
     
-    # For regular email signups (no social account): Create OTP
-    # Only deactivate if they're not already active
+    # For regular email signups: Create OTP
     if instance.is_active:
         instance.is_active = False
         instance.save(update_fields=['is_active'])
@@ -71,7 +72,12 @@ def create_verification_otp(sender, instance, created, **kwargs):
         )
         
         # Send OTP via email
-        send_email_otp(instance, instance.email)
+        success = send_email_otp(instance, instance.email)
+        
+        if success:
+            logger.info(f"OTP sent successfully to {instance.email}")
+        else:
+            logger.error(f"Failed to send OTP to {instance.email}")
         
         # If phone is provided, create phone verification too
         if profile.phone:
@@ -82,7 +88,4 @@ def create_verification_otp(sender, instance, created, **kwargs):
                 expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
             )
     except Exception as e:
-        # Log error but don't crash user creation
-        import logging
-        logger = logging.getLogger(__name__)
         logger.error(f"Failed to create verification OTP for {instance.email}: {e}")

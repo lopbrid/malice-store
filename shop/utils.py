@@ -13,6 +13,10 @@ from django.utils.html import strip_tags
 from django.utils import timezone
 import stripe
 from twilio.rest import Client
+from django.core.mail import send_mail
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def generate_otp(length=6):
@@ -27,64 +31,75 @@ def generate_otp(length=6):
 # ============================================
 
 def send_email_otp(user, email):
-    """Send OTP via email with rate limiting"""
+    """Send OTP via email with HTML template"""
     from .models import VerificationCode
-    from django.core.mail import send_mail
-    from django.template.loader import render_to_string
-    from django.utils.html import strip_tags
-    import logging
     
-    logger = logging.getLogger(__name__)
-    
-    # Check rate limiting (max 3 per hour)
-    recent_codes = VerificationCode.objects.filter(
-        user=user,
-        verification_type='email',
-        created_at__gte=timezone.now() - timezone.timedelta(hours=1)
-    ).count()
-    
-    if recent_codes >= settings.MAX_OTP_RESEND:
-        logger.warning(f"Rate limit exceeded for {email}")
-        return False
-    
-    # Invalidate old unused codes
-    VerificationCode.objects.filter(
-        user=user,
-        verification_type='email',
-        is_used=False
-    ).update(is_used=True)
-    
-    # Generate new OTP
-    otp = generate_otp()
-    
-    # Create verification record
-    verification = VerificationCode.objects.create(
-        user=user,
-        code=otp,
-        verification_type='email',
-        email=email,
-        expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
-    )
-    
-    # In development, just print to console
-    if settings.DEBUG:
-        print(f"\n{'='*50}")
-        print(f"🔐 EMAIL VERIFICATION CODE for {email}: {otp}")
-        print(f"{'='*50}\n")
-        return True
-    
-    # In production, try to send email
     try:
-        # Prepare email
-        subject = 'Your MALICE Verification Code'
-        html_message = render_to_string('shop/emails/otp_email.html', {
-            'user': user,
-            'otp': otp,
-            'expiry_minutes': settings.OTP_EXPIRY_MINUTES,
-        })
-        plain_message = strip_tags(html_message)
+        # Get the most recent unused email verification code
+        verification = VerificationCode.objects.filter(
+            user=user,
+            verification_type='email',
+            email=email,
+            is_used=False
+        ).latest('created_at')
         
-        # Send email
+        otp = verification.code
+        
+        subject = 'MALICE - Your Verification Code'
+        
+        # Plain text message
+        plain_message = f"""
+Hello {user.first_name or user.username},
+
+Thank you for registering with MALICE!
+
+Your verification code is: {otp}
+
+This code will expire in 10 minutes.
+
+If you didn't request this code, please ignore this email.
+
+Best regards,
+The MALICE Team
+"""
+        
+        # HTML message
+        html_message = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: #000; color: #fff; padding: 20px; text-align: center; }}
+        .content {{ padding: 30px; background: #f9f9f9; }}
+        .code {{ font-size: 32px; font-weight: bold; color: #000; letter-spacing: 5px; 
+                padding: 20px; background: #fff; border: 2px solid #000; 
+                text-align: center; margin: 20px 0; }}
+        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MALICE</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {user.first_name or user.username},</h2>
+            <p>Thank you for registering with MALICE!</p>
+            <p>Your verification code is:</p>
+            <div class="code">{otp}</div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+        </div>
+        <div class="footer">
+            <p>© 2024 MALICE. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
+        
         send_mail(
             subject=subject,
             message=plain_message,
@@ -93,9 +108,12 @@ def send_email_otp(user, email):
             html_message=html_message,
             fail_silently=False,
         )
+        
+        logger.info(f"OTP email sent successfully to {email}")
         return True
+        
     except Exception as e:
-        logger.error(f"Email sending failed: {e}")
+        logger.error(f"Failed to send OTP email to {email}: {str(e)}")
         return False
 
 
