@@ -29,26 +29,41 @@ def create_verification_otp(sender, instance, created, **kwargs):
     if not created or instance.is_superuser:
         return
     
-    # Get or create profile - don't assume it exists
-    profile, profile_created = UserProfile.objects.get_or_create(user=instance)
+    # Check if this is a social login user by looking at the social account
+    from allauth.socialaccount.models import SocialAccount
     
-    # Check if this is a social user (Google) - they skip OTP
-    # Social users have is_active=True set by adapter, regular users have is_active=False
-    # Also check if email is already verified (Google users are pre-verified)
-    if profile.email_verified:
-        # Ensure user is active and skip OTP creation
+    # If user has a social account (Google, etc.), skip OTP and activate
+    if SocialAccount.objects.filter(user=instance).exists():
+        # Ensure profile exists and is marked verified
+        profile, _ = UserProfile.objects.get_or_create(
+            user=instance,
+            defaults={
+                'email_verified': True,
+                'is_fully_verified': True,
+            }
+        )
+        if not profile.email_verified:
+            profile.email_verified = True
+            profile.is_fully_verified = True
+            profile.save()
+        
+        # Ensure user is active (they already should be from adapter, but double-check)
         if not instance.is_active:
             instance.is_active = True
             instance.save(update_fields=['is_active'])
         return
     
-    # For regular email signups: Mark user as inactive until verified
+    # For regular email signups (no social account): Create OTP
+    # Only deactivate if they're not already active
     if instance.is_active:
         instance.is_active = False
         instance.save(update_fields=['is_active'])
     
-    # Create email verification code
     try:
+        # Get or create profile
+        profile, _ = UserProfile.objects.get_or_create(user=instance)
+        
+        # Create email verification code
         verification = VerificationCode.objects.create(
             user=instance,
             verification_type='email',
