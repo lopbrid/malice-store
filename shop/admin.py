@@ -2,6 +2,9 @@ from django.contrib import admin
 from django.utils.html import format_html
 from django.urls import reverse
 from django.utils.safestring import mark_safe
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from unfold.admin import ModelAdmin
 from .models import (
     Category, Product, ProductVariant, Cart, CartItem,
     Order, OrderItem, Wishlist, UserProfile,
@@ -505,5 +508,18 @@ def customize_admin_site():
     admin.site.index_title = 'Dashboard'
 
 customize_admin_site()
+
+class UserAdmin(BaseUserAdmin, ModelAdmin):
+    list_display = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active', 'date_joined']
+    list_filter = ['is_staff', 'is_active', 'is_superuser', 'date_joined']
+    search_fields = ['username', 'email', 'first_name', 'last_name']
+    ordering = ['-date_joined']
+    
+    # Unfold specific
+    warn_unsaved_form = True
+
+# Unregister the default User admin and re-register with Unfold support
+admin.site.unregister(User)
+admin.site.register(User, UserAdmin)
 
 from django.utils import timezone

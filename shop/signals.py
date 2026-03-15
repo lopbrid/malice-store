@@ -29,20 +29,17 @@ def create_verification_otp(sender, instance, created, **kwargs):
     if not created or instance.is_superuser:
         return
     
+    # Get or create profile - don't assume it exists
+    profile, profile_created = UserProfile.objects.get_or_create(user=instance)
+    
     # Check if this is a social user (Google) - they skip OTP
     # Social users have is_active=True set by adapter, regular users have is_active=False
     # Also check if email is already verified (Google users are pre-verified)
-    try:
-        profile = instance.profile
-        # If profile shows email is already verified, this is a social user - skip OTP
-        if profile.email_verified:
-            # Ensure user is active and skip OTP creation
-            if not instance.is_active:
-                instance.is_active = True
-                instance.save(update_fields=['is_active'])
-            return
-    except UserProfile.DoesNotExist:
-        # Profile doesn't exist yet, skip this signal - adapter will handle it
+    if profile.email_verified:
+        # Ensure user is active and skip OTP creation
+        if not instance.is_active:
+            instance.is_active = True
+            instance.save(update_fields=['is_active'])
         return
     
     # For regular email signups: Mark user as inactive until verified

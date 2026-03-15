@@ -25,14 +25,21 @@ ALLOWED_HOSTS = ['malice-store.onrender.com', 'localhost', '127.0.0.1', '*']
 
 # Application definition
 INSTALLED_APPS = [
-    # Django core
+    'unfold',
+    'unfold.contrib.filters',
+    'unfold.contrib.forms',
+    'unfold.contrib.inlines',
+    'unfold.contrib.guardian',
+    'unfold.contrib.simple_history',
+    
+    # Django core - AFTER Unfold
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',  # Required for allauth
+    'django.contrib.sites',
     
     # Third party
     'rest_framework',
@@ -44,14 +51,8 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
     'storages',
-    'unfold',
-    'unfold.contrib.filters',
-    'unfold.contrib.forms',
-    'unfold.contrib.inlines',
-    'unfold.contrib.guardian',
-    'unfold.contrib.simple_history',
     
-    # allauth apps - REQUIRED FOR GOOGLE SIGN-IN
+    # allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -434,25 +435,15 @@ UNFOLD = {
                 "separator": True,
                 "collapsible": True,
                 "items": [
-                    {"title": "Orders", "icon": "shopping_cart", "link": reverse_lazy("admin:shop_order_changelist")},
-                    {"title": "Payments", "icon": "payment", "link": reverse_lazy("admin:shop_payment_changelist")},
-                    {"title": "Shipping Methods", "icon": "local_shipping", "link": reverse_lazy("admin:shop_shippingmethod_changelist")},
-                    {"title": "Shipping Rates", "icon": "attach_money", "link": reverse_lazy("admin:shop_shippingrate_changelist")},
-                ],
-            },
-            {
-                "title": "User Management",
-                "separator": True,
-                "collapsible": True,
-                "items": [
-                    {"title": "Users", "icon": "people", "link": reverse_lazy("admin:auth_user_changelist")},
-                    {"title": "User Profiles", "icon": "person", "link": reverse_lazy("admin:shop_userprofile_changelist")},
-                    {"title": "Verification Codes", "icon": "verified", "link": reverse_lazy("admin:shop_verificationcode_changelist")},
+                    {"title": "Orders", "icon": "shopping_cart", "link": "/admin/shop/order/"},
+                    {"title": "Payments", "icon": "payment", "link": "/admin/shop/payment/"},
+                    {"title": "Shipping Methods", "icon": "local_shipping", "link": "/admin/shop/shippingmethod/"},
+                    {"title": "Shipping Rates", "icon": "attach_money", "link": "/admin/shop/shippingrate/"},
                 ],
             },
         ],
     },
-    
+        
     "COLORS": {
         "primary": {
             "50": "#fafafa", "100": "#f5f5f5", "200": "#e5e5e5",
