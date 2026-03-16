@@ -309,6 +309,7 @@ print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
 print(f"EMAIL_HOST: {EMAIL_HOST if 'EMAIL_HOST' in dir() else 'N/A'}")
 print(f"EMAIL_PORT: {EMAIL_PORT if 'EMAIL_PORT' in dir() else 'N/A'}")
 print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER if 'EMAIL_HOST_USER' in dir() else 'N/A'}")
+print(f"EMAIL_HOST_PASSWORD SET: {bool(EMAIL_HOST_PASSWORD)}")
 print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
 print("="*50)
 
@@ -553,3 +554,4 @@ print("ENVIRONMENT VARIABLE CHECK:")
 print(f"EMAIL_HOST_PASSWORD from os.environ: {os.environ.get('EMAIL_HOST_PASSWORD', 'NOT SET')[:20]}...")
 print(f"EMAIL_HOST_PASSWORD from config(): {config('EMAIL_HOST_PASSWORD', default='NOT SET')[:20]}...")
 print("="*50)
+
