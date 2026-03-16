@@ -3,17 +3,19 @@ Django settings for config project.
 Enhanced with PostgreSQL for Render, Payment Integration, SMS/Email OTP, 
 Shipping System, and Google OAuth Sign-In.
 """
-
+"""
+Django settings for config project.
+"""
 from pathlib import Path
 import os
 import dj_database_url
-import cloudinary_storage
-from decouple import config, Csv
+from decouple import config
 from django.templatetags.static import static
 from django.urls import reverse_lazy
-
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
+env_path = BASE_DIR / '.env'
+load_dotenv(env_path, override=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-%7_au68r_#c7b%n$#2$u^fr&7hb-dwvc7jw6ll+ak_64k#qu%1')
@@ -24,7 +26,7 @@ if config('DATABASE_URL', default=None):
 else:
     DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['malice-store.onrender.com', 'localhost', '127.0.0.1', '*']
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
 
 # Application definition
 INSTALLED_APPS = [
@@ -123,7 +125,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Production: Render PostgreSQL
+    # Use DATABASE_URL if provided
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -132,11 +134,15 @@ if DATABASE_URL:
         )
     }
 else:
-    # Local Development: SQLite (no PostgreSQL server needed)
+    # Fallback to individual DB_* variables
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': config('DB_NAME', default='malice_db'),
+            'USER': config('DB_USER', default='postgres'),
+            'PASSWORD': config('DB_PASSWORD', default=''),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='5432'),
         }
     }
 
@@ -274,12 +280,6 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 ADMIN_SESSION_COOKIE_NAME = 'malice_admin_sessionid'
 FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 
-# ============================================
-# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
-# ============================================
-# ============================================
-# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
-# ============================================
 # ============================================
 # EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
 # ============================================
