@@ -280,38 +280,43 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 ADMIN_SESSION_COOKIE_NAME = 'malice_admin_sessionid'
 FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 
-# ============================================
-# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
-# ============================================
 
 # Check if we're on Render (has DATABASE_URL)
+# ============================================
+# EMAIL CONFIGURATION - PLUNK API (BEST OPTION)
+# ============================================
+
 IS_PRODUCTION = config('DATABASE_URL', default=None) is not None
 
-if IS_PRODUCTION or config('PLUNK_SECRET_KEY', default=None):
-    # Production - Plunk SMTP (Render or when Plunk is configured)
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+if IS_PRODUCTION:
+    # Use Plunk API for reliable delivery without domain verification
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Keep for fallback
     EMAIL_HOST = config('EMAIL_HOST', default='next-smtp.useplunk.com')
     EMAIL_PORT = config('EMAIL_PORT', default=2587, cast=int)
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='plunk')
-    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@malice.com')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    
+    # Use Plunk's verified sender (no domain verification needed)
+    DEFAULT_FROM_EMAIL = 'noreply@useplunk.com'
+    DEFAULT_FROM_NAME = 'MALICE Store'
+    
+    # Flag to use API instead of SMTP
+    USE_PLUNK_API = True
+    PLUNK_SECRET_KEY = config('PLUNK_SECRET_KEY', default='')
+    
+    print("="*50)
+    print("EMAIL CONFIGURATION (PLUNK API MODE)")
+    print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+    print(f"PLUNK_SECRET_KEY set: {bool(PLUNK_SECRET_KEY)}")
+    print("="*50)
+    
 else:
-    # Development - print to console
+    # Development - console only
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'webmaster@localhost'
-
-# Debug output
-print("="*50)
-print("EMAIL CONFIGURATION:")
-print(f"IS_PRODUCTION: {IS_PRODUCTION}")
-print(f"EMAIL_BACKEND: {EMAIL_BACKEND}")
-print(f"EMAIL_HOST: {EMAIL_HOST if 'EMAIL_HOST' in dir() else 'N/A'}")
-print(f"EMAIL_PORT: {EMAIL_PORT if 'EMAIL_PORT' in dir() else 'N/A'}")
-print(f"EMAIL_HOST_USER: {EMAIL_HOST_USER if 'EMAIL_HOST_USER' in dir() else 'N/A'}")
-print(f"EMAIL_HOST_PASSWORD SET: {bool(EMAIL_HOST_PASSWORD)}")
-print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
-print("="*50)
+    USE_PLUNK_API = False
+    PLUNK_SECRET_KEY = ''
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
