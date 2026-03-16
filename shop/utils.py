@@ -13,7 +13,6 @@ from django.utils.html import strip_tags
 from django.utils import timezone
 import stripe
 from twilio.rest import Client
-from django.core.mail import send_mail
 import logging
 import json
 
@@ -32,14 +31,57 @@ def generate_otp(length=6):
 # ============================================
 
 def send_email_otp(user, email):
-    """Send OTP via email - uses Plunk API in production"""
-    from django.conf import settings
+    """Send OTP via Plunk API"""
+    from .models import VerificationCode
     
-    # Use Plunk API if enabled, otherwise fall back to SMTP
-    if getattr(settings, 'USE_PLUNK_API', False) and settings.PLUNK_SECRET_KEY:
-        return _send_email_otp_plunk_api(user, email)
-    else:
-        return _send_email_otp_smtp(user, email)
+    try:
+        # Generate OTP
+        otp = generate_otp()
+        
+        # Invalidate old codes
+        VerificationCode.objects.filter(
+            user=user,
+            verification_type='email',
+            is_used=False
+        ).update(is_used=True)
+        
+        # Create new verification record
+        verification = VerificationCode.objects.create(
+            user=user,
+            code=otp,
+            verification_type='email',
+            email=email,
+            expires_at=timezone.now() + timezone.timedelta(minutes=10)
+        )
+        
+        # Plunk API endpoint
+        url = "https://api.useplunk.com/v1/send"
+        
+        headers = {
+            "Authorization": f"Bearer {settings.PLUNK_SECRET_KEY}",  # Must be set!
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "to": email,
+            "subject": "MALICE - Your Verification Code",
+            "body": f"Your verification code is: {otp}",
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "name": "MALICE Store"
+        }
+        
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        
+        if response.status_code in [200, 201, 202]:
+            return True
+        else:
+            print(f"Plunk API error: {response.status_code} - {response.text}")
+            verification.delete()
+            return False
+            
+    except Exception as e:
+        print(f"Email sending failed: {e}")
+        return False
 
 
 def _send_email_otp_plunk_api(user, email):

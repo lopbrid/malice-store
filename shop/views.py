@@ -1,8 +1,8 @@
-from gettext import translation
-
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User  # ← MOVE HERE
+from django.urls import reverse  # ← MOVE HERE
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
 from django.db.models import Q, Sum
@@ -12,22 +12,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 import json
 import stripe
 import random
-from django.contrib.auth.models import User
-from django.urls import reverse
-from django.core.mail import send_mail
-from django.http import HttpResponse
-from django.conf import settings
-import os
 import logging
-from django.views.decorators.http import require_http_methods
-from .models import UserProfile, VerificationCode
-from .utils import send_email_otp
-from .forms import UserRegisterForm
-from django.db import transaction
-
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +72,7 @@ from .forms import (
     CheckoutForm, UserProfileForm, PasswordChangeForm,
     OTPVerificationForm, ResendOTPForm, CardPaymentForm,
     GCashPaymentForm, MayaPaymentForm, ForgotPasswordForm,
-    ResetPasswordForm
+    ResetPasswordForm, UserRegisterForm
 )
 from .utils import (
     send_sms_otp, send_email_otp, calculate_shipping_cost,

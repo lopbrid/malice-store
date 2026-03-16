@@ -1,3 +1,4 @@
+# signals.py - FIXED
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.contrib.auth.models import User
@@ -5,65 +6,46 @@ from django.conf import settings
 from django.utils import timezone
 from .models import UserProfile, Cart, VerificationCode
 from .utils import send_email_otp
+from allauth.socialaccount.models import SocialAccount
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=User)
-def create_user_profile(sender, instance, created, **kwargs):
-    """Create user profile and cart when user is created"""
-    if created:
-        UserProfile.objects.get_or_create(user=instance)
-        Cart.objects.get_or_create(user=instance)
-
-
-@receiver(post_save, sender=User)
-def save_user_profile(sender, instance, **kwargs):
-    """Save user profile when user is saved"""
-    if hasattr(instance, 'profile'):
-        instance.profile.save()
-
-
-@receiver(post_save, sender=User)
-def create_verification_otp(sender, instance, created, **kwargs):
-    """Create OTP verification code when user is created"""
-    if not created or instance.is_superuser:
+def handle_user_created(sender, instance, created, **kwargs):
+    """Handle user creation: profile, cart, and OTP verification"""
+    if not created:
         return
     
-    # Check if this is a social login user by looking at the social account
-    from allauth.socialaccount.models import SocialAccount
+    # Create profile and cart for ALL users
+    UserProfile.objects.get_or_create(user=instance)
+    Cart.objects.get_or_create(user=instance)
     
-    # If user has a social account (Google, etc.), skip OTP and activate
-    if SocialAccount.objects.filter(user=instance).exists():
-        profile, _ = UserProfile.objects.get_or_create(
-            user=instance,
-            defaults={
-                'email_verified': True,
-                'is_fully_verified': True,
-            }
-        )
-        if not profile.email_verified:
-            profile.email_verified = True
-            profile.is_fully_verified = True
-            profile.save()
+    # Skip OTP for superusers and social auth users
+    if instance.is_superuser:
+        return
         
-        # Ensure user is active
+    # Check if social auth user (Google login)
+    if SocialAccount.objects.filter(user=instance).exists():
+        # Activate immediately, mark as verified
+        profile = instance.profile
+        profile.email_verified = True
+        profile.is_fully_verified = True
+        profile.save()
+        
         if not instance.is_active:
             instance.is_active = True
             instance.save(update_fields=['is_active'])
         return
     
-    # For regular email signups: Create OTP
+    # Regular email signup: deactivate and send OTP
     if instance.is_active:
         instance.is_active = False
         instance.save(update_fields=['is_active'])
-
+    
     try:
-        # Get or create profile
-        profile, _ = UserProfile.objects.get_or_create(user=instance)
-        
-        # Create email verification code
+        # Create verification code
         verification = VerificationCode.objects.create(
             user=instance,
             verification_type='email',
@@ -71,21 +53,13 @@ def create_verification_otp(sender, instance, created, **kwargs):
             expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
         )
         
-        # Send OTP via email
+        # Send OTP email
         success = send_email_otp(instance, instance.email)
         
         if success:
-            logger.info(f"OTP sent successfully to {instance.email}")
+            logger.info(f"✅ OTP sent successfully to {instance.email}")
         else:
-            logger.error(f"Failed to send OTP to {instance.email}")
-        
-        # If phone is provided, create phone verification too
-        if profile.phone:
-            VerificationCode.objects.create(
-                user=instance,
-                verification_type='phone',
-                phone=profile.phone,
-                expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
-            )
+            logger.error(f"❌ Failed to send OTP to {instance.email}")
+            
     except Exception as e:
-        logger.error(f"Failed to create verification OTP for {instance.email}: {e}")
+        logger.error(f"Failed to create/send OTP for {instance.email}: {e}")
