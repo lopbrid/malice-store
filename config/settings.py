@@ -286,14 +286,37 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 # EMAIL CONFIGURATION - PLUNK API (BEST OPTION)
 # ============================================
 
-# Force SMTP backend for testing
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'next-smtp.useplunk.com'
-EMAIL_PORT = 2587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'plunk'
-EMAIL_HOST_PASSWORD = 'sk_9945671cb30d3b34f175e61df87892c55ea988d2695f0a164f2ad66a721c2e63'
-DEFAULT_FROM_EMAIL = 'noreply@useplunk.com'
+IS_PRODUCTION = config('DATABASE_URL', default=None) is not None
+
+if IS_PRODUCTION:
+    # Use Plunk API for reliable delivery without domain verification
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Keep for fallback
+    EMAIL_HOST = config('EMAIL_HOST', default='next-smtp.useplunk.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=2587, cast=int)
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='plunk')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    
+    # Use Plunk's verified sender (no domain verification needed)
+    DEFAULT_FROM_EMAIL = 'noreply@useplunk.com'
+    DEFAULT_FROM_NAME = 'MALICE Store'
+    
+    # Flag to use API instead of SMTP
+    USE_PLUNK_API = True
+    PLUNK_SECRET_KEY = config('PLUNK_SECRET_KEY', default='')
+    
+    print("="*50)
+    print("EMAIL CONFIGURATION (PLUNK API MODE)")
+    print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
+    print(f"PLUNK_SECRET_KEY set: {bool(PLUNK_SECRET_KEY)}")
+    print("="*50)
+    
+else:
+    # Development - console only
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    DEFAULT_FROM_EMAIL = 'webmaster@localhost'
+    USE_PLUNK_API = False
+    PLUNK_SECRET_KEY = ''
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
