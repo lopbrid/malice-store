@@ -294,7 +294,7 @@ if IS_PRODUCTION or config('PLUNK_SECRET_KEY', default=None):
     EMAIL_PORT = config('EMAIL_PORT', default=2587, cast=int)
     EMAIL_USE_TLS = True
     EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='plunk')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
     DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@malice.com')
 else:
     # Development - print to console
@@ -546,3 +546,10 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
 SOCIALACCOUNT_CALLBACK_URLS = {
     'google': '/accounts/google/login/callback/'
 }
+
+import os
+print("="*50)
+print("ENVIRONMENT VARIABLE CHECK:")
+print(f"EMAIL_HOST_PASSWORD from os.environ: {os.environ.get('EMAIL_HOST_PASSWORD', 'NOT SET')[:20]}...")
+print(f"EMAIL_HOST_PASSWORD from config(): {config('EMAIL_HOST_PASSWORD', default='NOT SET')[:20]}...")
+print("="*50)
