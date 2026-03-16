@@ -17,6 +17,22 @@ import json
 import stripe
 import random
 import logging
+from django.http import HttpResponse
+from .utils import send_email_otp
+from django.contrib.auth.models import User
+
+def test_email(request):
+    user = User.objects.first()
+    
+    if not user:
+        return HttpResponse("No users found")
+
+    success = send_email_otp(user, user.email)
+
+    if success:
+        return HttpResponse("✅ Email Sent!")
+    else:
+        return HttpResponse("❌ Email failed")
 
 logger = logging.getLogger(__name__)
 

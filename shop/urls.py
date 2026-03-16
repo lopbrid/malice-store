@@ -1,4 +1,5 @@
 from django.urls import path
+from .views import test_email
 from . import views
 
 urlpatterns = [
@@ -52,4 +53,5 @@ urlpatterns = [
     # Profile
     path('profile/', views.profile_view, name='profile'),
     path('test-email/', views.test_email_render, name='test_email'),
+     path("test-email/", test_email),
 ]
