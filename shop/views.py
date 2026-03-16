@@ -15,6 +15,8 @@ from django.core.mail import send_mail
 import json
 import stripe
 import random
+from django.contrib.auth.models import User
+from django.urls import reverse
 from django.core.mail import send_mail
 from django.http import HttpResponse
 from django.conf import settings
@@ -1374,8 +1376,3 @@ def get_wishlist_count(request):
     if request.user.is_authenticated:
         return Wishlist.objects.filter(user=request.user).count()
     return 0
-
-
-# Import User model at the end to avoid circular import
-from django.contrib.auth.models import User
-from django.urls import reverse
