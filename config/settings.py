@@ -1,3 +1,8 @@
+"""
+Django settings for config project.
+Enhanced with PostgreSQL for Render, Payment Integration, SMS/Email OTP, 
+Shipping System, and Google OAuth Sign-In.
+"""
 from pathlib import Path
 import os
 import dj_database_url
@@ -28,7 +33,7 @@ INSTALLED_APPS = [
     'unfold.contrib.inlines',
     'unfold.contrib.guardian',
     'unfold.contrib.simple_history',
-    
+
     # Django core - AFTER Unfold
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-    
+
     # Third party
     'rest_framework',
     'rest_framework_simplejwt',
@@ -48,13 +53,13 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
     'storages',
-    
+
     # allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-    
+
     # Local apps
     'shop',
 ]
@@ -274,33 +279,42 @@ FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 
 
 # ============================================
-# EMAIL CONFIGURATION - RESEND (REPLACING PLUNK)
+# EMAIL CONFIGURATION - RESEND SMTP (PORT 465)
 # ============================================
 
 IS_PRODUCTION = config('DATABASE_URL', default=None) is not None
 
 if IS_PRODUCTION:
-    # Production - Use Resend API for reliable delivery
-    # Resend doesn't use traditional SMTP, we use their Python SDK
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Fallback only
-    
-    # Resend Configuration
-    RESEND_API_KEY = config('RESEND_API_KEY', default='')
-    # Use onboarding@resend.dev for testing, or your verified domain
-    DEFAULT_FROM_EMAIL = config('EMAIL_FROM', default='onboarding@resend.dev')
+    # Production - Use Resend SMTP with SSL (port 465)
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = config('EMAIL_HOST', default='smtp.resend.com')
+    EMAIL_PORT = config('EMAIL_PORT', default=465, cast=int)
+    EMAIL_USE_SSL = True  # Required for port 465
+    EMAIL_USE_TLS = False  # Don't use TLS with SSL
+    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='resend')
+    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='onboarding@resend.dev')
     DEFAULT_FROM_NAME = config('DEFAULT_FROM_NAME', default='MALICE Store')
-    
+
     print("="*50)
-    print("EMAIL CONFIGURATION (RESEND API MODE)")
+    print("EMAIL CONFIGURATION (RESEND SMTP - SSL)")
+    print(f"EMAIL_HOST: {EMAIL_HOST}")
+    print(f"EMAIL_PORT: {EMAIL_PORT}")
+    print(f"EMAIL_USE_SSL: {EMAIL_USE_SSL}")
     print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
-    print(f"RESEND_API_KEY set: {bool(RESEND_API_KEY)}")
     print("="*50)
-    
+
 else:
     # Development - console only
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    DEFAULT_FROM_EMAIL = 'webmaster@localhost'
-    RESEND_API_KEY = ''
+    EMAIL_HOST = 'smtp.resend.com'
+    EMAIL_PORT = 465
+    EMAIL_USE_SSL = True
+    EMAIL_USE_TLS = False
+    EMAIL_HOST_USER = 'resend'
+    EMAIL_HOST_PASSWORD = ''
+    DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
+    DEFAULT_FROM_NAME = 'MALICE Store'
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
@@ -355,7 +369,7 @@ if DEBUG:
     CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = None
     CELERY_RESULT_BACKEND = None
-    
+
 elif REDIS_URL:
     # Production with Redis
     CACHES = {
@@ -367,7 +381,7 @@ elif REDIS_URL:
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
     CELERY_TASK_ALWAYS_EAGER = False
-    
+
 else:
     # Production fallback to database cache (no Redis needed)
     CACHES = {
@@ -435,7 +449,7 @@ UNFOLD = {
     "DARK_MODE": True,
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
-    
+
     "SIDEBAR": {
         "show_search": True,
         "show_all_applications": True,
