@@ -16,28 +16,32 @@ logger = logging.getLogger(__name__)
 
 def generate_otp(length=6):
     """Generate a random numeric OTP"""
+    import random
+    import string
     return ''.join(random.choices(string.digits, k=length))
 
 
 # ============================================
-# OTP UTILITIES - RESEND SMTP (using Django send_mail)
+# OTP UTILITIES - RESEND
 # ============================================
 
 def send_email_otp(user, email):
-    """Send OTP via Resend SMTP using Django's built-in send_mail"""
+    """Send OTP via Resend API"""
     from .models import VerificationCode
-
+    
     try:
+        import resend
+        
         # Generate OTP
         otp = generate_otp()
-
+        
         # Invalidate old codes
         VerificationCode.objects.filter(
             user=user,
             verification_type='email',
             is_used=False
         ).update(is_used=True)
-
+        
         # Create new verification record
         verification = VerificationCode.objects.create(
             user=user,
@@ -46,7 +50,10 @@ def send_email_otp(user, email):
             email=email,
             expires_at=timezone.now() + timezone.timedelta(minutes=10)
         )
-
+        
+        # Set Resend API key
+        resend.api_key = settings.RESEND_API_KEY
+        
         # HTML email template
         html_content = f"""
 <!DOCTYPE html>
@@ -83,7 +90,7 @@ def send_email_otp(user, email):
 </body>
 </html>
 """
-
+        
         # Plain text version
         text_content = f"""Hello {user.first_name or user.username},
 
@@ -98,25 +105,29 @@ If you didn't request this code, please ignore this email.
 Best regards,
 The MALICE Team
 """
-
-        # Send email via Django's send_mail (uses Resend SMTP settings from settings.py)
-        sent = send_mail(
-            subject='MALICE - Your Verification Code',
-            message=text_content,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            html_message=html_content,
-            fail_silently=False,
-        )
-
-        if sent:
-            logger.info(f"✅ OTP sent successfully via Resend SMTP to {email}")
+        
+        # Send email via Resend
+        params = {
+            "from": settings.DEFAULT_FROM_EMAIL,
+            "to": [email],
+            "subject": "MALICE - Your Verification Code",
+            "html": html_content,
+            "text": text_content,
+        }
+        
+        response = resend.Emails.send(params)
+        
+        if response and response.get('id'):
+            logger.info(f"✅ OTP sent successfully via Resend to {email}, ID: {response['id']}")
             return True
         else:
-            logger.error(f"❌ Failed to send OTP to {email}")
+            logger.error(f"❌ Resend API error: {response}")
             verification.delete()
             return False
-
+            
+    except ImportError:
+        logger.error("❌ Resend SDK not installed. Run: pip install resend")
+        return False
     except Exception as e:
         logger.error(f"❌ Email sending failed: {e}")
         # Clean up verification code on failure
@@ -130,18 +141,22 @@ The MALICE Team
 def send_sms_otp(user, phone_number):
     """Send OTP via SMS using Twilio"""
     from .models import VerificationCode
-
+    import logging
+    from django.conf import settings
+    
+    logger = logging.getLogger(__name__)
+    
     # Generate OTP
     otp = generate_otp()
-
+    
     # Invalidate old unused codes
     VerificationCode.objects.filter(
         user=user,
         verification_type='phone',
         is_used=False
     ).update(is_used=True)
-
-    # Create verification record
+    
+    # Create verification record (removed unused 'verification' variable)
     VerificationCode.objects.create(
         user=user,
         code=otp,
@@ -149,22 +164,23 @@ def send_sms_otp(user, phone_number):
         phone=phone_number,
         expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
     )
-
+    
     # Check if Twilio is configured
     if not hasattr(settings, 'TWILIO_ACCOUNT_SID') or not settings.TWILIO_ACCOUNT_SID:
         # In development, just print to console
         if settings.DEBUG:
-            print(f"\n{{'='*50}}")
+            print(f"\\n{'='*50}")
             print(f"📱 SMS VERIFICATION CODE for {phone_number}: {otp}")
             print(f"(Twilio not configured - this would be sent via SMS)")
-            print(f"{{'='*50}}\n")
+            print(f"{'='*50}\\n")
             return True
         return False
-
+    
     # In production with Twilio configured
     try:
+        from twilio.rest import Client
         client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
-
+        
         # Send SMS
         message = client.messages.create(
             body=f'Your MALICE verification code is: {otp}. Valid for {settings.OTP_EXPIRY_MINUTES} minutes.',
@@ -187,17 +203,17 @@ def calculate_shipping_cost(method, weight_kg, subtotal, region=None, user=None)
     Also checks for free shipping promotions
     """
     from .models import ShippingRate
-
+    
     # Check for free shipping threshold
     if subtotal >= settings.FREE_SHIPPING_THRESHOLD:
         return 0
-
+    
     # Check for new user free shipping promotion
     if user and settings.NEW_USER_FREE_SHIPPING:
         profile = user.profile
         if not profile.first_order_completed and profile.is_fully_verified:
             return 0
-
+    
     # Get applicable shipping rate
     rate = ShippingRate.objects.filter(
         shipping_method=method,
@@ -205,7 +221,7 @@ def calculate_shipping_cost(method, weight_kg, subtotal, region=None, user=None)
         weight_max__gte=weight_kg,
         is_active=True
     ).first()
-
+    
     if rate:
         # Check region-specific rate
         if region:
@@ -218,9 +234,9 @@ def calculate_shipping_cost(method, weight_kg, subtotal, region=None, user=None)
             ).first()
             if region_rate:
                 return region_rate.calculate_cost(weight_kg, subtotal)
-
+        
         return rate.calculate_cost(weight_kg, subtotal)
-
+    
     # Fallback to default rates
     if method.method_type == 'standard':
         return 0 if subtotal >= 3000 else 150
@@ -230,20 +246,20 @@ def calculate_shipping_cost(method, weight_kg, subtotal, region=None, user=None)
         return 500
     elif method.method_type == 'international':
         return 800
-
+    
     return 150
 
 
 def get_shipping_estimate(destination, weight_kg, method_type='standard'):
     """Get shipping estimate for a destination"""
     from .models import ShippingMethod, ShippingRegion, ShippingRate
-
+    
     method = ShippingMethod.objects.filter(method_type=method_type, is_active=True).first()
     if not method:
         return None
-
+    
     region = ShippingRegion.objects.filter(name__iexact=destination, is_active=True).first()
-
+    
     rate = ShippingRate.objects.filter(
         shipping_method=method,
         region=region,
@@ -251,7 +267,7 @@ def get_shipping_estimate(destination, weight_kg, method_type='standard'):
         weight_max__gte=weight_kg,
         is_active=True
     ).first()
-
+    
     if rate:
         return {
             'cost': float(rate.base_cost),
@@ -259,7 +275,7 @@ def get_shipping_estimate(destination, weight_kg, method_type='standard'):
             'estimated_days': f"{method.estimated_days_min}-{method.estimated_days_max}",
             'method': method.name
         }
-
+    
     return None
 
 
@@ -270,9 +286,9 @@ def get_shipping_estimate(destination, weight_kg, method_type='standard'):
 def create_payment_intent(order):
     """Create Stripe PaymentIntent"""
     stripe.api_key = settings.STRIPE_SECRET_KEY
-
+    
     intent = stripe.PaymentIntent.create(
-        amount=int(order.total * 100),
+        amount=int(order.total * 100),  # Convert to cents
         currency='php',
         metadata={
             'order_number': order.order_number,
@@ -280,17 +296,17 @@ def create_payment_intent(order):
         },
         automatic_payment_methods={'enabled': True},
     )
-
+    
     return intent
 
 
 def process_stripe_payment(payment, payment_intent_id):
     """Process Stripe payment"""
     stripe.api_key = settings.STRIPE_SECRET_KEY
-
+    
     try:
         intent = stripe.PaymentIntent.retrieve(payment_intent_id)
-
+        
         if intent.status == 'succeeded':
             payment.mark_completed(intent.id)
             return {'success': True}
@@ -302,7 +318,7 @@ def process_stripe_payment(payment, payment_intent_id):
             }
         else:
             return {'success': False, 'error': f'Payment status: {intent.status}'}
-
+    
     except stripe.error.CardError as e:
         return {'success': False, 'error': e.user_message}
     except Exception as e:
@@ -312,11 +328,16 @@ def process_stripe_payment(payment, payment_intent_id):
 def process_gcash_payment(payment, data):
     """Process GCash payment via Xendit or PayMongo"""
     try:
+        # Use Xendit if configured
         if settings.XENDIT_SECRET_KEY:
             return _process_gcash_xendit(payment, data)
+        
+        # Fallback to PayMongo
         elif settings.PAYMONGO_SECRET_KEY:
             return _process_gcash_paymongo(payment, data)
+        
         return {'success': False, 'error': 'GCash payment gateway not configured'}
+    
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
@@ -324,7 +345,7 @@ def process_gcash_payment(payment, data):
 def _process_gcash_xendit(payment, data):
     """Process GCash via Xendit"""
     url = 'https://api.xendit.co/ewallets/charges'
-
+    
     payload = {
         'reference_id': payment.order.order_number,
         'currency': 'PHP',
@@ -336,28 +357,32 @@ def _process_gcash_xendit(payment, data):
             'failure_redirect_url': f'{settings.ALLOWED_HOSTS[0]}/payment/failed/{payment.order.order_number}/',
         }
     }
-
+    
     response = requests.post(
         url,
         json=payload,
         auth=(settings.XENDIT_SECRET_KEY, ''),
         headers={'Content-Type': 'application/json'}
     )
-
+    
     if response.status_code == 200:
         result = response.json()
         payment.gateway_reference = result.get('id')
         payment.authentication_url = result.get('actions', {}).get('desktop_web_checkout_url', '')
         payment.save()
-        return {'success': True, 'redirect_url': payment.authentication_url}
-
+        
+        return {
+            'success': True,
+            'redirect_url': payment.authentication_url
+        }
+    
     return {'success': False, 'error': 'Failed to create GCash charge'}
 
 
 def _process_gcash_paymongo(payment, data):
     """Process GCash via PayMongo"""
     url = 'https://api.paymongo.com/v1/sources'
-
+    
     payload = {
         'data': {
             'attributes': {
@@ -371,7 +396,7 @@ def _process_gcash_paymongo(payment, data):
             }
         }
     }
-
+    
     response = requests.post(
         url,
         json=payload,
@@ -380,15 +405,19 @@ def _process_gcash_paymongo(payment, data):
             'Content-Type': 'application/json'
         }
     )
-
+    
     if response.status_code == 200:
         result = response.json()
         source = result.get('data', {})
         payment.gateway_reference = source.get('id')
         payment.authentication_url = source.get('attributes', {}).get('redirect', {}).get('checkout_url', '')
         payment.save()
-        return {'success': True, 'redirect_url': payment.authentication_url}
-
+        
+        return {
+            'success': True,
+            'redirect_url': payment.authentication_url
+        }
+    
     return {'success': False, 'error': 'Failed to create GCash source'}
 
 
@@ -397,9 +426,9 @@ def process_maya_payment(payment, data):
     try:
         if not settings.MAYA_SECRET_API_KEY:
             return {'success': False, 'error': 'Maya payment gateway not configured'}
-
+        
         url = 'https://pg-sandbox.paymaya.com/checkout/v1/checkouts'
-
+        
         payload = {
             'totalAmount': {
                 'currency': 'PHP',
@@ -412,7 +441,7 @@ def process_maya_payment(payment, data):
                 'cancel': f'{settings.ALLOWED_HOSTS[0]}/payment/cancelled/{payment.order.order_number}/'
             }
         }
-
+        
         response = requests.post(
             url,
             json=payload,
@@ -421,16 +450,20 @@ def process_maya_payment(payment, data):
                 'Content-Type': 'application/json'
             }
         )
-
+        
         if response.status_code == 200:
             result = response.json()
             payment.gateway_reference = result.get('checkoutId')
             payment.authentication_url = result.get('redirectUrl')
             payment.save()
-            return {'success': True, 'redirect_url': payment.authentication_url}
-
+            
+            return {
+                'success': True,
+                'redirect_url': payment.authentication_url
+            }
+        
         return {'success': False, 'error': 'Failed to create Maya checkout'}
-
+    
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
@@ -439,16 +472,18 @@ def process_paypal_payment(payment, data):
     """Process PayPal payment"""
     try:
         import paypalrestsdk
-
+        
         paypalrestsdk.configure({
             'mode': settings.PAYPAL_MODE,
             'client_id': settings.PAYPAL_CLIENT_ID,
             'client_secret': settings.PAYPAL_CLIENT_SECRET
         })
-
+        
         paypal_payment = paypalrestsdk.Payment({
             'intent': 'sale',
-            'payer': {'payment_method': 'paypal'},
+            'payer': {
+                'payment_method': 'paypal'
+            },
             'redirect_urls': {
                 'return_url': f'{settings.ALLOWED_HOSTS[0]}/payment/paypal/execute/',
                 'cancel_url': f'{settings.ALLOWED_HOSTS[0]}/payment/paypal/cancel/'
@@ -461,16 +496,21 @@ def process_paypal_payment(payment, data):
                 'description': f'Order {payment.order.order_number}'
             }]
         })
-
+        
         if paypal_payment.create():
             payment.gateway_reference = paypal_payment.id
             payment.save()
+            
+            # Get approval URL
             for link in paypal_payment.links:
                 if link.method == 'REDIRECT':
-                    return {'success': True, 'redirect_url': link.href}
-
+                    return {
+                        'success': True,
+                        'redirect_url': link.href
+                    }
+        
         return {'success': False, 'error': 'Failed to create PayPal payment'}
-
+    
     except Exception as e:
         return {'success': False, 'error': str(e)}
 
@@ -479,13 +519,13 @@ def verify_webhook_signature(payload, signature, secret):
     """Verify webhook signature"""
     import hmac
     import hashlib
-
+    
     expected_signature = hmac.new(
         secret.encode(),
         payload.encode(),
         hashlib.sha256
     ).hexdigest()
-
+    
     return hmac.compare_digest(signature, expected_signature)
 
 
@@ -496,35 +536,45 @@ def verify_webhook_signature(payload, signature, secret):
 def apply_promotion_code(user, code, order_amount):
     """Apply promotion code and return discount amount"""
     from .models import Promotion
-
+    
     try:
         promotion = Promotion.objects.get(code=code.upper(), is_active=True)
         valid, message = promotion.is_valid(user, order_amount)
-
+        
         if valid:
             discount = promotion.calculate_discount(order_amount)
-            return {'success': True, 'discount': discount, 'promotion': promotion}
+            return {
+                'success': True,
+                'discount': discount,
+                'promotion': promotion
+            }
         else:
-            return {'success': False, 'error': message}
-
+            return {
+                'success': False,
+                'error': message
+            }
+    
     except Promotion.DoesNotExist:
-        return {'success': False, 'error': 'Invalid promotion code'}
+        return {
+            'success': False,
+            'error': 'Invalid promotion code'
+        }
 
 
 def get_available_promotions(user, order_amount):
     """Get list of available promotions for user"""
     from .models import Promotion
-
+    
     promotions = Promotion.objects.filter(
         is_active=True,
         start_date__lte=timezone.now(),
         end_date__gte=timezone.now()
     )
-
+    
     available = []
     for promo in promotions:
         valid, _ = promo.is_valid(user, order_amount)
         if valid:
             available.append(promo)
-
+    
     return available
