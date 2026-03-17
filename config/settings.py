@@ -1,11 +1,3 @@
-"""
-Django settings for config project.
-Enhanced with PostgreSQL for Render, Payment Integration, SMS/Email OTP, 
-Shipping System, and Google OAuth Sign-In.
-"""
-"""
-Django settings for config project.
-"""
 from pathlib import Path
 import os
 import dj_database_url
@@ -281,42 +273,34 @@ ADMIN_SESSION_COOKIE_NAME = 'malice_admin_sessionid'
 FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 
 
-# Check if we're on Render (has DATABASE_URL)
 # ============================================
-# EMAIL CONFIGURATION - PLUNK API (BEST OPTION)
+# EMAIL CONFIGURATION - RESEND (REPLACING PLUNK)
 # ============================================
 
 IS_PRODUCTION = config('DATABASE_URL', default=None) is not None
 
 if IS_PRODUCTION:
-    # Use Plunk API for reliable delivery without domain verification
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'  # Keep for fallback
-    EMAIL_HOST = config('EMAIL_HOST', default='next-smtp.useplunk.com')
-    EMAIL_PORT = config('EMAIL_PORT', default=2587, cast=int)
-    EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='plunk')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+    # Production - Use Resend API for reliable delivery
+    # Resend doesn't use traditional SMTP, we use their Python SDK
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Fallback only
     
-    # Use Plunk's verified sender (no domain verification needed)
-    DEFAULT_FROM_EMAIL = 'noreply@useplunk.com'
-    DEFAULT_FROM_NAME = 'MALICE Store'
-    
-    # Flag to use API instead of SMTP
-    USE_PLUNK_API = True
-    PLUNK_SECRET_KEY = config('PLUNK_SECRET_KEY', default='')
+    # Resend Configuration
+    RESEND_API_KEY = config('RESEND_API_KEY', default='')
+    # Use onboarding@resend.dev for testing, or your verified domain
+    DEFAULT_FROM_EMAIL = config('EMAIL_FROM', default='onboarding@resend.dev')
+    DEFAULT_FROM_NAME = config('DEFAULT_FROM_NAME', default='MALICE Store')
     
     print("="*50)
-    print("EMAIL CONFIGURATION (PLUNK API MODE)")
+    print("EMAIL CONFIGURATION (RESEND API MODE)")
     print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
-    print(f"PLUNK_SECRET_KEY set: {bool(PLUNK_SECRET_KEY)}")
+    print(f"RESEND_API_KEY set: {bool(RESEND_API_KEY)}")
     print("="*50)
     
 else:
     # Development - console only
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     DEFAULT_FROM_EMAIL = 'webmaster@localhost'
-    USE_PLUNK_API = False
-    PLUNK_SECRET_KEY = ''
+    RESEND_API_KEY = ''
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
@@ -552,11 +536,3 @@ ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
 SOCIALACCOUNT_CALLBACK_URLS = {
     'google': '/accounts/google/login/callback/'
 }
-
-import os
-print("="*50)
-print("ENVIRONMENT VARIABLE CHECK:")
-print(f"EMAIL_HOST_PASSWORD from os.environ: {os.environ.get('EMAIL_HOST_PASSWORD', 'NOT SET')[:20]}...")
-print(f"EMAIL_HOST_PASSWORD from config(): {config('EMAIL_HOST_PASSWORD', default='NOT SET')[:20]}...")
-print("="*50)
-

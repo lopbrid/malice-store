@@ -1,8 +1,3 @@
-"""
-Utility functions for MALICE E-Commerce
-Includes: OTP sending, Payment processing, Shipping calculations
-"""
-
 import random
 import string
 import requests
@@ -27,14 +22,16 @@ def generate_otp(length=6):
 
 
 # ============================================
-# OTP UTILITIES
+# OTP UTILITIES - RESEND
 # ============================================
 
 def send_email_otp(user, email):
-    """Send OTP via Plunk API"""
+    """Send OTP via Resend API"""
     from .models import VerificationCode
     
     try:
+        import resend
+        
         # Generate OTP
         otp = generate_otp()
         
@@ -54,70 +51,48 @@ def send_email_otp(user, email):
             expires_at=timezone.now() + timezone.timedelta(minutes=10)
         )
         
-        # Plunk API endpoint
-        url = "https://api.useplunk.com/v1/send"
+        # Set Resend API key
+        resend.api_key = settings.RESEND_API_KEY
         
-        headers = {
-            "Authorization": f"Bearer {settings.PLUNK_SECRET_KEY}",  # Must be set!
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "to": email,
-            "subject": "MALICE - Your Verification Code",
-            "body": f"Your verification code is: {otp}",
-            "from": settings.DEFAULT_FROM_EMAIL,
-            "name": "MALICE Store"
-        }
-        
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
-        
-        if response.status_code in [200, 201, 202]:
-            return True
-        else:
-            print(f"Plunk API error: {response.status_code} - {response.text}")
-            verification.delete()
-            return False
-            
-    except Exception as e:
-        print(f"Email sending failed: {e}")
-        return False
-
-
-def _send_email_otp_plunk_api(user, email):
-    """Send OTP via Plunk API (recommended - no domain verification needed)"""
-    from .models import VerificationCode
-    
-    try:
-        # Generate OTP
-        otp = generate_otp()
-        
-        # Invalidate old codes
-        VerificationCode.objects.filter(
-            user=user,
-            verification_type='email',
-            is_used=False
-        ).update(is_used=True)
-        
-        # Create new verification record
-        verification = VerificationCode.objects.create(
-            user=user,
-            code=otp,
-            verification_type='email',
-            email=email,
-            expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
-        )
-        
-        # Plunk API endpoint
-        url = "https://api.useplunk.com/v1/send"
-        
-        headers = {
-            "Authorization": f"Bearer {settings.PLUNK_SECRET_KEY}",
-            "Content-Type": "application/json"
-        }
+        # HTML email template
+        html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+        .header {{ background: #000; color: #fff; padding: 20px; text-align: center; }}
+        .content {{ padding: 30px; background: #f9f9f9; }}
+        .code {{ font-size: 32px; font-weight: bold; color: #000; letter-spacing: 5px; 
+                padding: 20px; background: #fff; border: 2px solid #000; 
+                text-align: center; margin: 20px 0; }}
+        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MALICE</h1>
+        </div>
+        <div class="content">
+            <h2>Hello {user.first_name or user.username},</h2>
+            <p>Thank you for registering with MALICE!</p>
+            <p>Your verification code is:</p>
+            <div class="code">{otp}</div>
+            <p>This code will expire in 10 minutes.</p>
+            <p>If you didn't request this code, please ignore this email.</p>
+        </div>
+        <div class="footer">
+            <p>© 2024 MALICE. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""
         
         # Plain text version
-        plain_body = f"""Hello {user.first_name or user.username},
+        text_content = f"""Hello {user.first_name or user.username},
 
 Thank you for registering with MALICE!
 
@@ -131,174 +106,37 @@ Best regards,
 The MALICE Team
 """
         
-        # HTML version
-        html_body = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: #000; color: #fff; padding: 20px; text-align: center; }}
-        .content {{ padding: 30px; background: #f9f9f9; }}
-        .code {{ font-size: 32px; font-weight: bold; color: #000; letter-spacing: 5px; 
-                padding: 20px; background: #fff; border: 2px solid #000; 
-                text-align: center; margin: 20px 0; }}
-        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>MALICE</h1>
-        </div>
-        <div class="content">
-            <h2>Hello {user.first_name or user.username},</h2>
-            <p>Thank you for registering with MALICE!</p>
-            <p>Your verification code is:</p>
-            <div class="code">{otp}</div>
-            <p>This code will expire in 10 minutes.</p>
-            <p>If you didn't request this code, please ignore this email.</p>
-        </div>
-        <div class="footer">
-            <p>© 2024 MALICE. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
-        
-        payload = {
-            "to": email,
-            "subject": "MALICE - Your Verification Code",
-            "body": plain_body,
-            "html": html_body,
+        # Send email via Resend
+        params = {
             "from": settings.DEFAULT_FROM_EMAIL,
-            "name": settings.DEFAULT_FROM_NAME
+            "to": [email],
+            "subject": "MALICE - Your Verification Code",
+            "html": html_content,
+            "text": text_content,
         }
         
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response = resend.Emails.send(params)
         
-        if response.status_code in [200, 201, 202]:
-            result = response.json()
-            logger.info(f"✅ OTP email sent via Plunk API to {email}")
-            logger.info(f"Plunk response: {result}")
+        if response and response.get('id'):
+            logger.info(f"✅ OTP sent successfully via Resend to {email}, ID: {response['id']}")
             return True
         else:
-            logger.error(f"❌ Plunk API error: {response.status_code}")
-            logger.error(f"Response: {response.text}")
-            # Don't mark as used on failure
+            logger.error(f"❌ Resend API error: {response}")
             verification.delete()
             return False
             
-    except requests.exceptions.RequestException as e:
-        logger.error(f"❌ Plunk API request failed: {str(e)}")
+    except ImportError:
+        logger.error("❌ Resend SDK not installed. Run: pip install resend")
         return False
     except Exception as e:
-        logger.error(f"❌ Unexpected error in Plunk API: {str(e)}")
+        logger.error(f"❌ Email sending failed: {e}")
+        # Clean up verification code on failure
+        try:
+            verification.delete()
+        except:
+            pass
         return False
 
-
-def _send_email_otp_smtp(user, email):
-    """Original SMTP method (fallback)"""
-    from .models import VerificationCode
-    
-    try:
-        # Try to get existing unused code
-        verification = VerificationCode.objects.filter(
-            user=user,
-            verification_type='email',
-            email=email,
-            is_used=False,
-            expires_at__gt=timezone.now()
-        ).latest('created_at')
-        otp = verification.code
-        
-    except VerificationCode.DoesNotExist:
-        # Generate new OTP
-        otp = generate_otp()
-        verification = VerificationCode.objects.create(
-            user=user,
-            code=otp,
-            verification_type='email',
-            email=email,
-            expires_at=timezone.now() + timezone.timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
-        )
-    
-    # ... rest of your original SMTP code ...
-    # (Keep your existing HTML template and send_mail call)
-    
-    subject = 'MALICE - Your Verification Code'
-    
-    plain_message = f"""
-Hello {user.first_name or user.username},
-
-Thank you for registering with MALICE!
-
-Your verification code is: {otp}
-
-This code will expire in 10 minutes.
-
-If you didn't request this code, please ignore this email.
-
-Best regards,
-The MALICE Team
-"""
-    
-    html_message = f"""
-<!DOCTYPE html>
-<html>
-<head>
-    <style>
-        body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-        .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-        .header {{ background: #000; color: #fff; padding: 20px; text-align: center; }}
-        .content {{ padding: 30px; background: #f9f9f9; }}
-        .code {{ font-size: 32px; font-weight: bold; color: #000; letter-spacing: 5px; 
-                padding: 20px; background: #fff; border: 2px solid #000; 
-                text-align: center; margin: 20px 0; }}
-        .footer {{ text-align: center; padding: 20px; color: #666; font-size: 12px; }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>MALICE</h1>
-        </div>
-        <div class="content">
-            <h2>Hello {user.first_name or user.username},</h2>
-            <p>Thank you for registering with MALICE!</p>
-            <p>Your verification code is:</p>
-            <div class="code">{otp}</div>
-            <p>This code will expire in 10 minutes.</p>
-            <p>If you didn't request this code, please ignore this email.</p>
-        </div>
-        <div class="footer">
-            <p>© 2024 MALICE. All rights reserved.</p>
-        </div>
-    </div>
-</body>
-</html>
-"""
-    
-    try:
-        send_mail(
-            subject=subject,
-            message=plain_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[email],
-            html_message=html_message,
-            fail_silently=False,
-        )
-        
-        logger.info(f"✅ OTP email sent via SMTP to {email}")
-        return True
-        
-    except Exception as e:
-        logger.error(f"❌ Failed to send OTP email via SMTP to {email}: {str(e)}")
-        verification.is_used = True
-        verification.save()
-        return False
 
 def send_sms_otp(user, phone_number):
     """Send OTP via SMS using Twilio"""
@@ -331,10 +169,10 @@ def send_sms_otp(user, phone_number):
     if not hasattr(settings, 'TWILIO_ACCOUNT_SID') or not settings.TWILIO_ACCOUNT_SID:
         # In development, just print to console
         if settings.DEBUG:
-            print(f"\n{'='*50}")
+            print(f"\\n{'='*50}")
             print(f"📱 SMS VERIFICATION CODE for {phone_number}: {otp}")
             print(f"(Twilio not configured - this would be sent via SMS)")
-            print(f"{'='*50}\n")
+            print(f"{'='*50}\\n")
             return True
         return False
     
