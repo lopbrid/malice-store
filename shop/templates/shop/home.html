@@ -75,7 +75,6 @@
     letter-spacing: 0.02em;
     font-weight: 600;
     text-transform: uppercase;
-    border-radius: 10px;
     transition: all 0.4s var(--ease-out-expo);
     position: relative;
     overflow: hidden;
@@ -115,7 +114,6 @@
     font-weight: 600;
     text-transform: uppercase;
     border: 1px solid var(--border-light);
-    border-radius: 10px;
     transition: all 0.4s var(--ease-out-expo);
 }
 
@@ -188,7 +186,7 @@
 
 .quote-mark {
     font-family: 'Bebas Neue', sans-serif;
-    font-size: 8rem;
+    font-size: 6rem;
     color: var(--border);
     line-height: 1;
     position: absolute;
@@ -200,7 +198,7 @@
 }
 
 .intro-quote {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     font-size: clamp(1.1rem, 3vw, 1.5rem);
     line-height: 1.8;
     color: var(--text-muted);
@@ -553,7 +551,7 @@
 }
 
 .editorial-text {
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
     color: var(--text-muted);
     line-height: 1.8;
     font-size: 1rem;
@@ -818,6 +816,13 @@
         transform: translateX(-50%);
         width: 100%;
         text-align: center;
+    }
+    
+    .hero-title{
+        font-size: 8.5rem;
+    }
+    .hero-subtitle{
+        font-size: 0.7rem;
     }
 
     .hero-buttons {
