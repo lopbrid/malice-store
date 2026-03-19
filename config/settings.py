@@ -3,16 +3,17 @@ Django settings for config project.
 Enhanced with PostgreSQL for Render, Payment Integration, SMS/Email OTP, 
 Shipping System, and Google OAuth Sign-In.
 """
+
 from pathlib import Path
 import os
 import dj_database_url
-from decouple import config
+import cloudinary_storage
+from decouple import config, Csv
 from django.templatetags.static import static
 from django.urls import reverse_lazy
-from dotenv import load_dotenv
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-env_path = BASE_DIR / '.env'
-load_dotenv(env_path, override=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-%7_au68r_#c7b%n$#2$u^fr&7hb-dwvc7jw6ll+ak_64k#qu%1')
@@ -23,7 +24,7 @@ if config('DATABASE_URL', default=None):
 else:
     DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+ALLOWED_HOSTS = ['malice-store.onrender.com', 'localhost', '127.0.0.1', '*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -33,7 +34,7 @@ INSTALLED_APPS = [
     'unfold.contrib.inlines',
     'unfold.contrib.guardian',
     'unfold.contrib.simple_history',
-
+    
     # Django core - AFTER Unfold
     'django.contrib.admin',
     'django.contrib.auth',
@@ -42,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.sites',
-
+    
     # Third party
     'rest_framework',
     'rest_framework_simplejwt',
@@ -53,13 +54,13 @@ INSTALLED_APPS = [
     'cloudinary',
     'cloudinary_storage',
     'storages',
-
+    
     # allauth apps
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
     'allauth.socialaccount.providers.google',
-
+    
     # Local apps
     'shop',
 ]
@@ -122,7 +123,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASE_URL = config('DATABASE_URL', default=None)
 
 if DATABASE_URL:
-    # Use DATABASE_URL if provided
+    # Production: Render PostgreSQL
     DATABASES = {
         'default': dj_database_url.config(
             default=DATABASE_URL,
@@ -131,15 +132,11 @@ if DATABASE_URL:
         )
     }
 else:
-    # Fallback to individual DB_* variables
+    # Local Development: SQLite (no PostgreSQL server needed)
     DATABASES = {
         'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='malice_db'),
-            'USER': config('DB_USER', default='postgres'),
-            'PASSWORD': config('DB_PASSWORD', default=''),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
 
@@ -277,44 +274,31 @@ SESSION_COOKIE_SAMESITE = 'Lax'
 ADMIN_SESSION_COOKIE_NAME = 'malice_admin_sessionid'
 FRONTEND_SESSION_COOKIE_NAME = 'malice_sessionid'
 
+# ============================================
+# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
+# ============================================
 
 # ============================================
-# EMAIL CONFIGURATION - RESEND SMTP (PORT 465)
+# EMAIL CONFIGURATION - FOR OTP & NOTIFICATIONS
 # ============================================
+from decouple import config
 
-IS_PRODUCTION = config('DATABASE_URL', default=None) is not None
+# Resend Email API (used directly in utils.py)
+RESEND_API_KEY = config('RESEND_API_KEY', default='')
+
+# Determine if we're in production (has DATABASE_URL and not empty)
+IS_PRODUCTION = config('DATABASE_URL', default=None) not in (None, '')
 
 if IS_PRODUCTION:
-    # Production - Use Resend SMTP with SSL (port 465)
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = config('EMAIL_HOST', default='smtp.resend.com')
-    EMAIL_PORT = config('EMAIL_PORT', default=465, cast=int)
-    EMAIL_USE_SSL = True  # Required for port 465
-    EMAIL_USE_TLS = False  # Don't use TLS with SSL
-    EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='resend')
-    EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-    DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='onboarding@resend.dev')
-    DEFAULT_FROM_NAME = config('DEFAULT_FROM_NAME', default='MALICE Store')
-
-    print("="*50)
-    print("EMAIL CONFIGURATION (RESEND SMTP - SSL)")
-    print(f"EMAIL_HOST: {EMAIL_HOST}")
-    print(f"EMAIL_PORT: {EMAIL_PORT}")
-    print(f"EMAIL_USE_SSL: {EMAIL_USE_SSL}")
-    print(f"DEFAULT_FROM_EMAIL: {DEFAULT_FROM_EMAIL}")
-    print("="*50)
-
-else:
-    # Development - console only
+    # Production: emails are sent via Resend API, but we keep a console backend
+    # for any Django-generated emails (e.g., admin notifications) – not used for OTP.
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-    EMAIL_HOST = 'smtp.resend.com'
-    EMAIL_PORT = 465
-    EMAIL_USE_SSL = True
-    EMAIL_USE_TLS = False
-    EMAIL_HOST_USER = 'resend'
-    EMAIL_HOST_PASSWORD = ''
-    DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
-    DEFAULT_FROM_NAME = 'MALICE Store'
+else:
+    # Development: print emails to console
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# DEFAULT_FROM_EMAIL is used by Resend and must be a verified sender
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='onboarding@resend.dev')
 
 # ============================================
 # TWILIO SMS CONFIGURATION - FOR OTP
@@ -369,7 +353,7 @@ if DEBUG:
     CELERY_TASK_EAGER_PROPAGATES = True
     CELERY_BROKER_URL = None
     CELERY_RESULT_BACKEND = None
-
+    
 elif REDIS_URL:
     # Production with Redis
     CACHES = {
@@ -381,7 +365,7 @@ elif REDIS_URL:
     CELERY_BROKER_URL = REDIS_URL
     CELERY_RESULT_BACKEND = REDIS_URL
     CELERY_TASK_ALWAYS_EAGER = False
-
+    
 else:
     # Production fallback to database cache (no Redis needed)
     CACHES = {
@@ -449,7 +433,7 @@ UNFOLD = {
     "DARK_MODE": True,
     "SHOW_HISTORY": True,
     "SHOW_VIEW_ON_SITE": True,
-
+    
     "SIDEBAR": {
         "show_search": True,
         "show_all_applications": True,
