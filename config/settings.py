@@ -19,12 +19,24 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-%7_au68r_#c7b%n$#2$u^fr&7hb-dwvc7jw6ll+ak_64k#qu%1')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if config('DATABASE_URL', default=None):
-    DEBUG = False
-else:
-    DEBUG = config('DEBUG', default=True, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = ['malice-store.onrender.com', 'localhost', '127.0.0.1', '*']
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+else:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+
+if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
+    ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Application definition
 INSTALLED_APPS = [
@@ -214,37 +226,15 @@ SOCIALACCOUNT_ADAPTER = 'shop.adapters.CustomSocialAccountAdapter'
 ACCOUNT_LOGIN_METHODS = {'email', 'username'}
 ACCOUNT_SIGNUP_FIELDS = ['email*', 'username*', 'password1*', 'password2*']
 ACCOUNT_EMAIL_VERIFICATION = 'none'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_SESSION_REMEMBER = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
 
 # Social Account settings
 SOCIALACCOUNT_QUERY_EMAIL = True
 SOCIALACCOUNT_AUTO_SIGNUP = True  
 SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'
 SOCIALACCOUNT_STORE_TOKENS = False
-
-# Google OAuth Provider Configuration
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'APP': {
-            'client_id': config('GOOGLE_CLIENT_ID', default=''),
-            'secret': config('GOOGLE_CLIENT_SECRET', default=''),
-            'key': ''
-        },
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'OAUTH_PKCE_ENABLED': True,
-    }
-}
 
 # Redirect URLs
 LOGIN_REDIRECT_URL = '/'
@@ -528,9 +518,4 @@ CKEDITOR_CONFIGS = {
 # ============================================
 
 # Force the callback URL to use the correct path
-ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'https' if not DEBUG else 'http'
-
-# Add this to ensure redirect URI matches exactly
-SOCIALACCOUNT_CALLBACK_URLS = {
-    'google': '/accounts/google/login/callback/'
-}
+ACCOUNT_DEFAULT_HTTP_PROTOCOL = 'http' if DEBUG else 'https'

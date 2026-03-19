@@ -20,7 +20,7 @@
 }
 
 .cart-header h1 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 2.5rem;
     letter-spacing: 0.02em;
     margin-bottom: 0.5rem;
@@ -77,21 +77,20 @@
 }
 
 .cart-item-details h3 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 1rem;
     font-weight: 500;
     margin-bottom: 0.25rem;
 }
 
 .cart-item-details p {
-    font-family: 'Inter', sans-serif;
     font-size: 0.85rem;
     color: var(--text-dim);
     margin-bottom: 0.75rem;
 }
 
 .cart-item-price {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 1rem;
     font-weight: 600;
     color: var(--text);
@@ -134,7 +133,7 @@
 .quantity-control span {
     width: 40px;
     text-align: center;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.9rem;
 }
 
@@ -142,7 +141,6 @@
     background: none;
     border: none;
     color: var(--text-dim);
-    font-family: 'Inter', sans-serif;
     font-size: 0.8rem;
     cursor: pointer;
     text-decoration: underline;
@@ -164,7 +162,7 @@
 }
 
 .cart-summary h2 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.25rem;
     margin-bottom: 1.25rem;
 }
@@ -176,13 +174,12 @@
 }
 
 .summary-row span:first-child {
-    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     color: var(--text-muted);
 }
 
 .summary-row span:last-child {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.9rem;
     color: var(--text);
 }
@@ -209,7 +206,7 @@
     background: var(--text);
     color: var(--bg);
     border: none;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.85rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -238,7 +235,6 @@
     display: block;
     text-align: center;
     margin-top: 1rem;
-    font-family: 'Inter', sans-serif;
     font-size: 0.85rem;
     color: var(--text-muted);
     text-decoration: none;
@@ -262,13 +258,12 @@
 }
 
 .empty-cart h2 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.75rem;
     margin-bottom: 0.5rem;
 }
 
 .empty-cart p {
-    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     color: var(--text-muted);
     margin-bottom: 2rem;
@@ -279,7 +274,7 @@
 }
 
 .recommended h2 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -336,7 +331,6 @@
     align-items: center;
     justify-content: center;
     color: var(--text-dim);
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.875rem;
 }
 
@@ -407,7 +401,7 @@
     background: var(--text);
     color: var(--bg);
     border: none;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.75rem;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -431,7 +425,6 @@
 }
 
 .recommended .out-of-stock, .recommended .no-variants {
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.8rem;
     color: #ef4444;
     text-transform: uppercase;
@@ -450,7 +443,7 @@
 }
 
 .recommended .product-info h3 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.95rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
@@ -471,7 +464,6 @@
 }
 
 .recommended .product-price {
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.9rem;
     color: var(--text-muted);
     font-weight: 500;
@@ -610,7 +602,7 @@
                     <span>Total</span>
                     <span id="cart-total">₱{{ cart_total|floatformat:2 }}</span>
                 </div>
-                <a href="{% url 'checkout' %}" class="checkout-btn">Proceed to Checkout</a>
+                <button onclick="showUnavailableCheckout(); return false;" class="checkout-btn">Proceed to Checkout</button>
                 <a href="{% url 'product_list' %}" class="continue-shopping">Continue Shopping</a>
             </div>
         </div>

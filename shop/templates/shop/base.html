@@ -12,21 +12,21 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;500;600&family=Poppins:wght@500&family=Space+Grotesk:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
     
     <style>
         
         :root {
             /* Core Colors */
-            --bg: #050505;
-            --bg-elevated: #0a0a0a;
+            --bg: #000000;
+            --bg-elevated: #060606;
             --bg-card: #111111;
             --bg-hover: #1a1a1a;
             --text: #ffffff;
             --text-muted: #888888;
             --text-dim: #555555;
-            --border: #222222;
-            --border-light: #333333;
+            --border: #1c1c1c;
+            --border-light: #2a2a2a;
             
             /* Easing Functions */
             --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -49,12 +49,19 @@
             --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
             --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
             --shadow-glow: 0 0 40px rgba(255,255,255,0.05);
+
+            /* Typography */
+            --font-body: 'Inter', sans-serif;
+            --font-ui: 'Outfit', 'Poppins', 'Inter', sans-serif;
+            --font-heading: 'Space Grotesk', sans-serif;
+            --font-display: 'Outfit', 'Poppins', 'Inter', sans-serif;
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: inherit;
         }
         
         html {
@@ -62,7 +69,7 @@
         }
         
         body {
-            font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            font-family: var(--font-body);
             background-color: var(--bg);
             color: var(--text);
             line-height: 1.6;
@@ -76,14 +83,40 @@
             position: relative;
         }
         
-        /* Typography */
-        .font-bebas { 
-            font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; 
-            letter-spacing: 0.02em; 
+        /* Typography Roles */
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+            font-weight: 500;
         }
-        .font-space { 
-            font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
-            letter-spacing: -0.01em; 
+
+        .logo, .display-text {
+            font-family: var(--font-display);
+            letter-spacing: 0.02em;
+        }
+
+        button,
+        .btn-primary,
+        .btn-secondary,
+        .checkout-btn,
+        .add-to-cart-btn {
+            font-family: var(--font-ui);
+            font-weight: 500;
+        }
+
+        label,
+        .small-text {
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Utility classes (old names kept for compatibility) */
+        .font-bebas {
+            font-family: var(--font-display);
+        }
+        .font-space {
+            font-family: var(--font-heading);
         }
         
         /* Gradient Text */
@@ -119,9 +152,9 @@
             height: 100%;
             pointer-events: none;
             z-index: 9999;
-            opacity: 0.025;               /* even lighter, more delicate */
+            opacity: 0.025;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.4 0' /%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' fill='%23ffffff' /%3E%3C/svg%3E");
-            mix-blend-mode: multiply;     /* gives a warmer, blended look */
+            mix-blend-mode: multiply;
         }
         
         /* ============================================
@@ -210,8 +243,9 @@
         }
         
         .logo {
-            font-family: 'Bebas Neue', sans-serif;
-            font-size: 1.75rem;
+            font-family: var(--font-display);
+            font-weight: bolder;
+            font-size: 1.5rem;
             letter-spacing: 0.08em;
             color: var(--text);
             text-decoration: none;
@@ -243,7 +277,7 @@
         }
         
         .nav-links a {
-            font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            font-family: var(--font-ui);
             color: var(--text-muted);
             text-decoration: none;
             font-size: 1rem;
@@ -311,7 +345,7 @@
             right: -2px;
             background: var(--text);
             color: var(--bg);
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 0.65rem;
             font-weight: 700;
             width: 18px;
@@ -386,7 +420,7 @@
             overflow: hidden;
             position: fixed;
             width: 100%;
-}
+        }
         
         .cart-sidebar.active { 
             transform: translateX(0);
@@ -401,7 +435,7 @@
         }
         
         .cart-header h2 {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: var(--font-display);
             font-size: 1.5rem;
             letter-spacing: 0.05em;
             font-weight: 400;
@@ -475,7 +509,7 @@
         }
         
         .cart-item-name {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 0.9rem;
             font-weight: 500;
             margin-bottom: 0.25rem;
@@ -532,7 +566,7 @@
             display: flex;
             justify-content: space-between;
             margin-bottom: 1.5rem;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 1.1rem;
             font-weight: 600;
             padding-top: 1rem;
@@ -545,7 +579,7 @@
             background: var(--text);
             color: var(--bg);
             border: none;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-weight: 600;
             letter-spacing: 0.02em;
             cursor: pointer;
@@ -640,7 +674,7 @@
         }
         
         .search-label {
-            font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+            font-family: var(--font-ui);
             font-size: 0.75rem;
             color: var(--text-dim);
             margin-bottom: 2rem;
@@ -662,7 +696,7 @@
             font-size: clamp(2rem, 8vw, 4rem);
             color: var(--text);
             outline: none;
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: var(--font-display);
             text-align: center;
             transition: border-color 0.4s ease;
         }
@@ -678,7 +712,7 @@
         
         .search-hint {
             margin-top: 2rem;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 0.75rem;
             color: var(--text-dim);
         }
@@ -736,7 +770,7 @@
         }
         
         .mobile-menu-logo {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: var(--font-display);
             font-size: 1.5rem;
             letter-spacing: 0.05em;
             color: var(--text);
@@ -764,7 +798,7 @@
         }
         
         .mobile-menu-links a {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 1.5rem;
             color: var(--text);
             text-decoration: none;
@@ -807,7 +841,7 @@
         }
         
         .mobile-menu-footer p {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 0.75rem;
             color: var(--text-dim);
             letter-spacing: 0.05em;
@@ -843,7 +877,7 @@
         }
         
         .footer-brand h3 {
-            font-family: 'Bebas Neue', sans-serif;
+            font-family: var(--font-display);
             font-size: 2rem;
             letter-spacing: 0.05em;
             margin-bottom: 1rem;
@@ -858,7 +892,7 @@
         }
         
         .footer-section h4 {
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 0.7rem;
             letter-spacing: 0.15em;
             text-transform: uppercase;
@@ -1173,7 +1207,7 @@
         .toast {
             padding: 1rem 1.5rem;
             border-radius: 12px;
-            font-family: 'Space Grotesk', sans-serif;
+            font-family: var(--font-ui);
             font-size: 0.9rem;
             opacity: 0;
             transform: translateY(-20px);
@@ -1295,7 +1329,7 @@
                                 <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
-                            <span class="username-desktop" style="font-family: 'Space Grotesk', sans-serif; font-size: 0.75rem; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none;">
+                            <span class="username-desktop" style="max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: none;">
                                 {{ user.first_name|default:user.username }}
                             </span>
                         </button>
@@ -1303,13 +1337,13 @@
                         <!-- User Dropdown -->
                         <div id="userDropdown" style="position: absolute; top: calc(100% + 0.5rem); right: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; min-width: 200px; opacity: 0; visibility: hidden; transform: translateY(-10px) scale(0.95); transition: all 0.3s var(--ease-out-expo); z-index: 1001; overflow: hidden; box-shadow: var(--shadow-lg);">
                             <div style="padding: 1rem; border-bottom: 1px solid var(--border);">
-                                <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.9rem; color: var(--text); margin: 0; font-weight: 600;">{{ user.first_name|default:user.username }}</p>
-                                <p style="font-family: 'Inter', sans-serif; font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0 0 0;">{{ user.email }}</p>
+                                <p style="font-size: 0.9rem; color: var(--text); margin: 0; font-weight: 600;">{{ user.first_name|default:user.username }}</p>
+                                <p style="font-size: 0.75rem; color: var(--text-dim); margin: 0.25rem 0 0 0;">{{ user.email }}</p>
                             </div>
-                            <a href="{% url 'profile' %}" style="display: block; padding: 0.875rem 1rem; color: var(--text-muted); text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-hover)'; this.style.color='var(--text)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">
+                            <a href="{% url 'profile' %}" style="display: block; padding: 0.875rem 1rem; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='var(--bg-hover)'; this.style.color='var(--text)'" onmouseout="this.style.background='transparent'; this.style.color='var(--text-muted)'">
                                 My Orders
                             </a>
-                            <a href="{% url 'logout' %}" style="display: block; padding: 0.875rem 1rem; color: #ef4444; text-decoration: none; font-family: 'Space Grotesk', sans-serif; font-size: 0.85rem; border-top: 1px solid var(--border); transition: all 0.2s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
+                            <a href="{% url 'logout' %}" style="display: block; padding: 0.875rem 1rem; color: #ef4444; text-decoration: none; font-size: 0.85rem; border-top: 1px solid var(--border); transition: all 0.2s;" onmouseover="this.style.background='var(--bg-hover)'" onmouseout="this.style.background='transparent'">
                                 Sign Out
                             </a>
                         </div>
@@ -1348,7 +1382,7 @@
             
             {% if user.is_authenticated %}
                 <div style="padding: 1rem 0; border-top: 1px solid var(--border); margin-top: 0.5rem; display: flex; flex-direction: column;">
-                    <p style="font-family: 'Space Grotesk', sans-serif; font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">Account</p>
+                    <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em;">Account</p>
                     <a href="{% url 'wishlist' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0;">Wishlist</a>
                     <a href="{% url 'profile' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0;">My Orders</a>
                     <a href="{% url 'logout' %}" onclick="toggleMobileMenu()" style="font-size: 1.1rem; border-bottom: none; padding: 0.75rem 0; color: #ef4444;">Sign Out</a>
@@ -1414,7 +1448,6 @@
                 <span id="cartTotal">₱0.00</span>
             </div>
             {% if user.is_authenticated %}
-                <!-- Changed from 'order_create' to 'cart' to match existing URL -->
                 <a href="{% url 'cart' %}" class="checkout-btn">Proceed to Checkout</a>
             {% else %}
                 <a href="{% url 'login' %}?next={% url 'cart' %}" class="checkout-btn" style="background: var(--bg-hover); color: var(--text); border: 1px solid var(--border);">Sign In to Checkout</a>
@@ -1685,6 +1718,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadCart();
             loadWishlistCount();
+            if (localStorage.getItem('show_dev_notice') === 'true') {
+                showToast('This site is still under development. Checkout isn’t available yet, but feel free to explore and view our products. Contact us for more Info.', 'info');
+                localStorage.removeItem('show_dev_notice');
+            }
         });
         
         function formatPeso(amount) {
@@ -1862,6 +1899,10 @@
             document.querySelectorAll('.float, .pulse').forEach(el => {
                 el.style.animation = 'none';
             });
+        }
+
+        function showUnavailableCheckout() {
+            showToast('Checkout is currently under development and not available yet. Contact us for more Info.', 'info');
         }
     </script>
     

@@ -86,15 +86,16 @@ class UserRegisterForm(UserCreationForm):
         user.last_name = self.cleaned_data['last_name']
         user.email = self.cleaned_data['email']
         user.is_active = False
-        
+
         if commit:
             user.save()
             # Profile is created by signal, just update phone
             if hasattr(user, 'profile'):
                 user.profile.phone = self.cleaned_data['phone']
                 user.profile.save()
-        
+
         return user
+
 
 class CustomAuthenticationForm(forms.Form):
     """Custom login form that accepts username or email"""
@@ -235,7 +236,7 @@ class CustomUserCreationForm(UserCreationForm):
 
 
 class OTPVerificationForm(forms.Form):
-    """Form for OTP verification"""
+    """Form for OTP verification - SINGLE DEFINITION ONLY"""
     otp_code = forms.CharField(
         max_length=6,
         min_length=6,
@@ -482,7 +483,7 @@ class PaymentMethodForm(forms.Form):
         ('card', 'Credit/Debit Card'),
         ('paypal', 'PayPal'),
     ]
-    
+
     payment_method = forms.ChoiceField(
         choices=PAYMENT_CHOICES,
         widget=forms.RadioSelect(),
@@ -626,35 +627,10 @@ class ResetPasswordForm(forms.Form):
 
         return cleaned_data
 
-# In shop/forms.py - add this class
-
-class OTPVerificationForm(forms.Form):
-    """Form for OTP verification"""
-    otp_code = forms.CharField(
-        max_length=6,
-        min_length=6,
-        required=True,
-        widget=forms.TextInput(attrs={
-            'class': 'otp-input',
-            'placeholder': '------',
-            'autocomplete': 'off',
-            'inputmode': 'numeric',
-            'pattern': '[0-9]*',
-            'maxlength': '6'
-        }),
-        label='Verification Code',
-        help_text='Enter the 6-digit code sent to your email'
-    )
-
-    def clean_otp_code(self):
-        code = self.cleaned_data.get('otp_code')
-        if not code.isdigit():
-            raise forms.ValidationError('Please enter only numbers.')
-        return code
 
 class SocialSignupForm(SocialSignupFormBase):
     """Custom form for social signup - collects phone number"""
-    
+
     phone_number = forms.CharField(
         max_length=20,
         required=True,
@@ -663,7 +639,7 @@ class SocialSignupForm(SocialSignupFormBase):
             'class': 'form-control'
         })
     )
-    
+
     def save(self, request):
         user = super().save(request)
         return user

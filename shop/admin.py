@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.utils import timezone
 from unfold.admin import ModelAdmin
 from .models import (
     Category, Product, ProductVariant, Cart, CartItem,
@@ -521,5 +522,3 @@ class UserAdmin(BaseUserAdmin, ModelAdmin):
 # Unregister the default User admin and re-register with Unfold support
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
-
-from django.utils import timezone

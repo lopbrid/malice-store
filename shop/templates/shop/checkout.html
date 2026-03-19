@@ -20,14 +20,13 @@
 }
 
 .checkout-header h1 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 2.5rem;
     letter-spacing: 0.02em;
     margin-bottom: 0.5rem;
 }
 
 .checkout-header p {
-    font-family: 'Inter', sans-serif;
     font-size: 0.9rem;
     color: var(--text-muted);
 }
@@ -52,7 +51,7 @@
 }
 
 .form-section h2 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.25rem;
     margin-bottom: 1.25rem;
     display: flex;
@@ -69,7 +68,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.75rem;
 }
 
@@ -87,7 +85,7 @@
 }
 
 .form-group label {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.75rem;
     color: var(--text-dim);
     text-transform: uppercase;
@@ -101,7 +99,6 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     color: #ffffff !important;
-    font-family: 'Inter', sans-serif;
     font-size: 0.95rem;
     transition: all 0.3s ease;
     outline: none;
@@ -171,21 +168,18 @@ select.form-control {
 
 .radio-option-content span {
     display: block;
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.9rem;
     color: var(--text);
 }
 
 .radio-option-content small {
     display: block;
-    font-family: 'Inter', sans-serif;
     font-size: 0.75rem;
     color: var(--text-dim);
     margin-top: 0.25rem;
 }
 
 .radio-option-price {
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.9rem;
     color: var(--text-muted);
 }
@@ -201,7 +195,7 @@ select.form-control {
 }
 
 .order-summary h2 {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.25rem;
     margin-bottom: 1.25rem;
 }
@@ -242,21 +236,19 @@ select.form-control {
 }
 
 .order-item-info h4 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.85rem;
     font-weight: 500;
     margin-bottom: 0.25rem;
 }
 
 .order-item-info p {
-    font-family: 'Inter', sans-serif;
     font-size: 0.75rem;
     color: var(--text-dim);
     margin-bottom: 0.25rem;
 }
 
 .order-item-price {
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.85rem;
     color: var(--text-muted);
 }
@@ -268,13 +260,11 @@ select.form-control {
 }
 
 .summary-row span:first-child {
-    font-family: 'Inter', sans-serif;
     font-size: 0.85rem;
     color: var(--text-muted);
 }
 
 .summary-row span:last-child {
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.85rem;
     color: var(--text);
 }
@@ -301,7 +291,7 @@ select.form-control {
     background: var(--text);
     color: var(--bg);
     border: none;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.85rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -329,7 +319,6 @@ select.form-control {
     justify-content: center;
     gap: 0.5rem;
     margin-top: 1rem;
-    font-family: 'Inter', sans-serif;
     font-size: 0.75rem;
     color: var(--text-dim);
 }
@@ -528,7 +517,7 @@ select.form-control {
                         <span>₱{{ cart_total|floatformat:2 }}</span>
                     </div>
                     
-                    <button type="submit" class="place-order-btn">Place Order</button>
+                    <button type="button" onclick="showUnavailableCheckout(); return false;" class="place-order-btn">Place Order</button>
                     
                     <div class="secure-badge">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

@@ -27,7 +27,7 @@
 }
 
 .hero-eyebrow {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.75rem;
     color: var(--text-dim);
     letter-spacing: 0.25em;
@@ -37,16 +37,16 @@
 }
 
 .hero-title {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-ui);
     font-size: clamp(4rem, 20vw, 14rem);
-    font-weight: 400;
+    font-weight: bolder;
     letter-spacing: 0.02em;
     margin-bottom: 1rem;
     line-height: 0.85;
 }
 
 .hero-subtitle {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.85rem;
     color: var(--text-muted);
     letter-spacing: 0.2em;
@@ -70,7 +70,6 @@
     background: var(--text);
     color: var(--bg);
     text-decoration: none;
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.8rem;
     letter-spacing: 0.02em;
     font-weight: 600;
@@ -108,7 +107,6 @@
     background: transparent;
     color: var(--text);
     text-decoration: none;
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.8rem;
     letter-spacing: 0.02em;
     font-weight: 600;
@@ -141,7 +139,7 @@
 }
 
 .hero-scroll-indicator span {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.65rem;
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -185,20 +183,20 @@
 }
 
 .quote-mark {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 6rem;
     color: var(--border);
     line-height: 1;
     position: absolute;
-    top: -2rem;
+    top: -3rem;
     left: 50%;
     transform: translateX(-50%);
-    opacity: 0.3;
+    opacity: 0.5;
     pointer-events: none;
 }
 
 .intro-quote {
-    font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-family: var(--font-body);
     font-size: clamp(1.1rem, 3vw, 1.5rem);
     line-height: 1.8;
     color: var(--text-muted);
@@ -215,7 +213,7 @@
 }
 
 .intro-attribution {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.7rem;
     color: var(--text-dim);
     letter-spacing: 0.2em;
@@ -238,7 +236,7 @@
 }
 
 .section-eyebrow {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.7rem;
     color: var(--text-dim);
     letter-spacing: 0.2em;
@@ -249,7 +247,7 @@
 }
 
 .section-title {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(2.5rem, 8vw, 4rem);
     font-weight: 400;
     letter-spacing: 0.02em;
@@ -312,7 +310,7 @@
     align-items: center;
     justify-content: center;
     color: var(--text-dim);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.875rem;
 }
 
@@ -323,7 +321,7 @@
     background: rgba(250, 250, 250, 0.95);
     color: var(--bg);
     padding: 0.4rem 0.875rem;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.65rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -395,7 +393,6 @@
     background: var(--text);
     color: var(--bg);
     border: none;
-    font-family: 'Space Grotesk', sans-serif;
     font-size: 0.75rem;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -435,7 +432,7 @@
 }
 
 .quick-add-info {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.75rem;
     color: var(--text-muted);
     text-transform: uppercase;
@@ -449,7 +446,7 @@
 }
 
 .out-of-stock, .no-variants {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.8rem;
     color: #ef4444;
     text-transform: uppercase;
@@ -463,7 +460,7 @@
 }
 
 .product-info h3 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.95rem;
     font-weight: 500;
     margin-bottom: 0.5rem;
@@ -476,7 +473,7 @@
 }
 
 .product-price {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.9rem;
     color: var(--text-muted);
     font-weight: 500;
@@ -493,7 +490,7 @@
     gap: 0.75rem;
     color: var(--text-muted);
     text-decoration: none;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.8rem;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -542,16 +539,16 @@
 }
 
 .editorial-title {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(2rem, 5vw, 3rem);
-    font-weight: 400;
+    font-weight: bold;
     line-height: 1.1;
     margin-bottom: 1.5rem;
     letter-spacing: 0.02em;
 }
 
 .editorial-text {
-    font-family: 'Geist Mono', 'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+    font-family: var(--font-body);
     color: var(--text-muted);
     line-height: 1.8;
     font-size: 1rem;
@@ -564,7 +561,7 @@
     gap: 0.5rem;
     color: var(--text);
     text-decoration: none;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.8rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -598,7 +595,7 @@
     align-items: center;
     justify-content: center;
     color: var(--text-dim);
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: 2rem;
     letter-spacing: 0.1em;
     border: 1px solid var(--border);
@@ -662,7 +659,7 @@
 }
 
 .value-card h3 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.85rem;
     letter-spacing: 0.05em;
     text-transform: uppercase;
@@ -672,7 +669,7 @@
 }
 
 .value-card p {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 0.875rem;
     color: var(--text-muted);
     line-height: 1.6;
@@ -704,7 +701,7 @@
 }
 
 .newsletter-title {
-    font-family: 'Bebas Neue', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(2rem, 6vw, 3rem);
     font-weight: 400;
     margin-bottom: 0.75rem;
@@ -713,7 +710,7 @@
 }
 
 .newsletter-text {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 0.95rem;
     color: var(--text-muted);
     margin-bottom: 2rem;
@@ -738,10 +735,9 @@
     border: 1px solid var(--border);
     padding: 1rem 1.25rem;
     color: var(--text);
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 0.95rem;
     outline: none;
-    border-radius: 10px;
     transition: all 0.3s ease;
 }
 
@@ -762,13 +758,12 @@
     color: var(--bg);
     border: none;
     padding: 1rem 1.5rem;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 0.8rem;
     letter-spacing: 0.02em;
     text-transform: uppercase;
     font-weight: 600;
     cursor: pointer;
-    border-radius: 10px;
     transition: all 0.4s var(--ease-out-expo);
 }
 
@@ -778,7 +773,7 @@
 }
 
 .newsletter-disclaimer {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 0.75rem;
     color: var(--text-dim);
 }
@@ -819,7 +814,7 @@
     }
     
     .hero-title{
-        font-size: 8.5rem;
+        font-size: 5rem;
     }
     .hero-subtitle{
         font-size: 0.7rem;
@@ -1429,7 +1424,7 @@
             <span class="section-eyebrow">The Atelier</span>
             <h2 class="editorial-title">
                 Crafted with intention.<br>
-                <span class="gradient-text">Designed for permanence.</span>
+                Designed for permanence.<br>
             </h2>
             <p class="editorial-text">
                 Each piece is thoughtfully designed to transcend seasons. We believe in the beauty of restraint, the power of simplicity, and the importance of quality that speaks for itself.
@@ -1533,8 +1528,8 @@ function handleNewsletterSubmit(e) {
                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="2" style="margin: 0 auto 1rem; display: block;">
                     <path d="M20 6L9 17l-5-5"/>
                 </svg>
-                <p style="font-family: Space Grotesk, sans-serif; color: var(--text); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Welcome to the Inner Circle</p>
-                <p style="font-family: Inter, sans-serif; color: var(--text-muted); font-size: 0.9rem;">Check your inbox for a confirmation email.</p>
+                <p style="font-family: var(--font-heading); color: var(--text); font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">Welcome to the Inner Circle</p>
+                <p style="font-family: var(--font-body); color: var(--text-muted); font-size: 0.9rem;">Check your inbox for a confirmation email.</p>
             </div>
         `;
         showToast('Successfully subscribed!', 'success');
